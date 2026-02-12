@@ -8,14 +8,9 @@ build
 !.env.example
 *.log
 *.txt
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!eslint.config.js
-!jest.config.js
-!.prettierrc
-!.eslintrc.json
+*errors.json
+recent_rooms.json
+final_check.json
 mongodb_data
 .git
 .github
