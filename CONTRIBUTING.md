@@ -1,6 +1,6 @@
-# Contributing to Shabucks
+# Contributing to Crammerly
 
-Thank you for your interest in contributing to Shabucks! We welcome contributions from everyone.
+Thank you for your interest in contributing to Crammerly! We welcome contributions from everyone.
 
 ## 🚀 Getting Started
 

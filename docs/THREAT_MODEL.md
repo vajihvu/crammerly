@@ -1,4 +1,4 @@
-# Threat Model - Shabucks Study Platform
+# Threat Model - Crammerly Study Platform
 
 ## 1. Attack Surface
 *   **Public API**: Versioned endpoints under `/api/v1/`.

@@ -1,4 +1,4 @@
-# Production Deployment Plan - Shabucks
+# Production Deployment Plan - Crammerly
 
 ## 🎯 Target Platforms
 *   **Backend**: Render or Railway (Best for Node/Express + MongoDB Atlas).

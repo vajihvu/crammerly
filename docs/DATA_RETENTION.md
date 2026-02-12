@@ -1,6 +1,6 @@
 # Data Retention & Lifecycle Policy
 
-This document outlines how Shabucks handles data lifetimes, automated cleanup, and deletion rules.
+This document outlines how Crammerly handles data lifetimes, automated cleanup, and deletion rules.
 
 ## 🕒 Automated Lifecycle Rules (TTL)
 

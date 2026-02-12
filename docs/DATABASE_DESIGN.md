@@ -1,4 +1,4 @@
-# Database Design: Crammer (Shabucks)
+# Database Design: Crammer (Crammerly)
 
 This document outlines the authoritative schema for Crammerly. The application uses a **Hybrid Multi-Database Architecture** to optimize for both high-concurrency real-time features and robust record management.
 

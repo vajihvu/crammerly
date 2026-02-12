@@ -23,15 +23,16 @@ jobs:
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
     - name: Build and push
+      id: docker_build
       uses: docker/build-push-action@v5
       with:
         context: .
         push: true
         tags: |
-          ${{ secrets.DOCKERHUB_USERNAME }}/shabucks:latest
-          ${{ secrets.DOCKERHUB_USERNAME }}/shabucks:${{ github.sha }}
-        cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/shabucks:buildcache
-        cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/shabucks:buildcache,mode=max
+          ${{ secrets.DOCKERHUB_USERNAME }}/crammerly:latest
+          ${{ secrets.DOCKERHUB_USERNAME }}/crammerly:${{ github.sha }}
+        cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/crammerly:buildcache
+        cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/crammerly:buildcache,mode=max
 
     - name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}

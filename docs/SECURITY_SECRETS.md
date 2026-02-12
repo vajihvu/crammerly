@@ -1,6 +1,6 @@
 # Security & Secret Management Policy
 
-This document defines how Shabucks manages credentials, API keys, and internal secrets to ensure zero-exposure and high rotation readiness.
+This document defines how Crammerly manages credentials, API keys, and internal secrets to ensure zero-exposure and high rotation readiness.
 
 ## 🛡️ Core Rules
 1. **Zero Logging**: No raw secrets (passwords, tokens, API keys) must ever appear in application logs or crash reports.

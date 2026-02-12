@@ -1,6 +1,6 @@
 # Authentication & Trust Flow: Crammerly
 
-This document defines the security architecture and trust boundaries for the Shabucks project.
+This document defines the security architecture and trust boundaries for the Crammerly project.
 
 ## 🔐 Hybrid Auth Architecture
 Crammerly uses a **Custom Identity Provider (Backend)** combined with **Supabase RLS** for data protection.
