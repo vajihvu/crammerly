@@ -51,7 +51,7 @@ const startServer = async () => {
         startMaintenanceScheduler();
     }
 
-    server = app.listen(config.port, () => {
+    server = app.listen(config.port, '0.0.0.0', () => {
         const diff = process.hrtime(startTime);
         const coldStartTime = (diff[0] * 1e3 + diff[1] * 1e-6).toFixed(2);
 
