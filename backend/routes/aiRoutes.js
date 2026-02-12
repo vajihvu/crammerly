@@ -9,7 +9,7 @@ import config from '../config/index.js';
 const router = express.Router();
 
 // Sensitive tokens to block
-const SENSITIVE_KEYWORDS = ['password', 'secret', 'API_KEY', 'MONGO_URI', 'JWT_SECRET', 'VITE_SUPABASE'];
+const SENSITIVE_KEYWORDS = ['password', 'secret', 'API_KEY', 'MONGO_URI', 'JWT_SECRET'];
 
 /**
  * @openapi
