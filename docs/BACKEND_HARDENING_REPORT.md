@@ -1,6 +1,6 @@
 # Backend Hardening Report
 
-This document summarizes the comprehensive security and stabilization measures implemented in the Shabucks backend.
+This document summarizes the comprehensive security and stabilization measures implemented in the Crammerly backend.
 
 ## 🛡️ 1. Account-Level Abuse Protection
 We have moved beyond simple IP-based rate limiting to protect individual user accounts from targeted brute-force and credential stuffing.

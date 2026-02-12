@@ -30,7 +30,7 @@ const logger = winston.createLogger({
         redact(),
         config.isProduction ? winston.format.json() : winston.format.prettyPrint()
     ),
-    defaultMeta: { service: 'shabucks-backend', env: config.env },
+    defaultMeta: { service: 'crammerly-backend', env: config.env },
     transports: [
         new winston.transports.Console()
     ]
