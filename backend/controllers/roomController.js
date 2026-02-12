@@ -1,5 +1,4 @@
 import Room from '../models/Room.js';
-import User from '../models/User.js';
 
 /**
  * @desc    Get all rooms
