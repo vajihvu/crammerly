@@ -114,13 +114,11 @@
     - If a previously used token is presented, the system detects a breach and revokes the entire session family for that user.
 - **Location**: `backend/models/Session.js`, `backend/utils/tokenService.js`
 
-### 11. **Security Hardening: Supabase RLS Sync** ✅
-- **Issue**: Backend and Supabase were using separate authentication contexts, making Row Level Security (RLS) difficult to implement.
-- **Fix**: 
-    - Updated backend to sign JWTs with Supabase-compatible claims (`sub`, `aud`, `role`, `email`).
-    - Added support for `SUPABASE_JWT_SECRET` in environment config.
-    - Updated `AuthProvider` in the frontend to automatically sync the backend JWT with the Supabase client.
-- **Location**: `backend/utils/tokenService.js`, `frontend/src/context/AuthContext.jsx`
+
+### 11. **Security Hardening: Backend Protection** ✅
+- **Issue**: Standard refresh tokens are vulnerable if stolen, as they can be reused indefinitely until expiration.
+- **Fix**: Already covered in section 10.
+- **Removed**: Supabase RLS Sync logic as it is no longer part of the project.
 
 ## Code Quality Improvements Made
 

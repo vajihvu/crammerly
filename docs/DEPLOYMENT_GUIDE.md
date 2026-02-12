@@ -35,8 +35,6 @@
 *   Set **Output Directory**: `dist`
 *   Configure ENV variables:
     *   `VITE_API_URL=https://your-backend-url.onrender.com/api/v1`
-    *   `VITE_SUPABASE_URL=...`
-    *   `VITE_SUPABASE_ANON_KEY=...`
 
 ---
 
