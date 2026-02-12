@@ -210,9 +210,8 @@ if (config.isProduction) {
     const distPath = path.join(__dirname, '../frontend/dist');
     app.use(express.static(distPath));
 
-    // Handle SPA routing: all unknown GET requests return index.html
-    app.get('*', (req, res, next) => {
-        // Only handle HTML requests or unknown paths, let error handler take care of API errors
+    // Handle SPA routing: Express 5 safe catch-all
+    app.use((req, res, next) => {
         if (!req.path.startsWith('/api')) {
             res.sendFile(path.join(distPath, 'index.html'));
         } else {
@@ -222,7 +221,10 @@ if (config.isProduction) {
 }
 
 // Error Handling
-app.use(notFound);
+app.use((req, res) => {
+    res.status(404).json({ error: "Route not found" });
+});
+
 app.use(errorHandler);
 
 export default app;
