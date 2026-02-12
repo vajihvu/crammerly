@@ -1,0 +1,152 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --bg-main: #EBE8E3;
+    --bg-surface: #F6F4F1;
+    --bg-card: #DFDAD2;
+    --border-dim: #CCC5BA;
+    --border-bright: #BCAF9F;
+    --accent-primary: #C9B59C;
+    --accent-secondary: #A68E74;
+    --accent-tertiary: #8D7B68;
+    --accent-success: #6A7A68;
+    --accent-warning: #B37D26;
+    --accent-danger: #934C32;
+    --text-primary: #1A1817;
+    --text-secondary: #4A4745;
+    --text-muted: #9E9B98;
+}
+
+html.dark {
+    --bg-main: #0B0A09;
+    --bg-surface: #141312;
+    --bg-card: #1E1C1A;
+    --border-dim: #2A2826;
+    --border-bright: #3D3935;
+    --accent-primary: #D6C7B4;
+    --accent-secondary: #B8A38B;
+    --accent-tertiary: #9E8D7A;
+    --accent-success: #9DB49A;
+    --accent-warning: #E5B76C;
+    --accent-danger: #D48B74;
+    --text-primary: #F2F0ED;
+    --text-secondary: #AAA7A4;
+    --text-muted: #7A7774;
+}
+
+@layer base {
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        @apply antialiased;
+    }
+
+    input,
+    textarea,
+    select {
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+    }
+
+    ::placeholder {
+        color: var(--text-muted);
+        opacity: 0.6;
+    }
+}
+
+/* Custom Scrollbar Styles - Global */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-bright);
+    border-radius: 100px;
+    border: 2px solid var(--bg-main);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-secondary);
+}
+
+/* For Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-bright) var(--bg-main);
+}
+
+/* Remove default scrollbar arrows */
+::-webkit-scrollbar-button {
+    display: none;
+}
+
+/* Custom Scrollbar Utility */
+.custom-scrollbar {
+    scrollbar-gutter: stable;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-bright);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+    background-clip: content-box;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #4A4642;
+    background-clip: content-box;
+}
+
+/* Theme Date/Time Pickers Globally */
+input[type="date"],
+input[type="time"] {
+    color-scheme: light;
+}
+
+.dark input[type="date"],
+.dark input[type="time"] {
+    color-scheme: dark;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: grayscale(1) contrast(0.5);
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator,
+.dark input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) grayscale(1) contrast(0.5);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}

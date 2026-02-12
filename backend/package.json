@@ -1,0 +1,42 @@
+{
+    "name": "crammerly-backend",
+    "private": true,
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "nodemon index.js",
+        "test": "cross-env NODE_ENV=test node --experimental-vm-modules ../node_modules/jest/bin/jest.js --runInBand",
+        "lint": "eslint .",
+        "build": "echo 'No build step required for Node.js backend' && exit 0"
+    },
+    "dependencies": {
+        "bcryptjs": "^3.0.3",
+        "cookie-parser": "^1.4.7",
+        "cors": "^2.8.6",
+        "dotenv": "^17.2.3",
+        "express": "^5.2.1",
+        "express-rate-limit": "^8.2.1",
+        "express-validator": "^7.3.1",
+        "express-winston": "^4.2.0",
+        "helmet": "^8.1.0",
+        "hpp": "^0.2.3",
+        "jsonwebtoken": "^9.0.3",
+        "mongoose": "^9.1.5",
+        "morgan": "^1.10.1",
+        "socket.io": "^4.8.3",
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^5.0.1",
+        "uuid": "^13.0.0",
+        "winston": "^3.19.0",
+        "xss-clean": "^0.1.4",
+        "zod": "^4.3.6"
+    },
+    "devDependencies": {
+        "cross-env": "^10.1.0",
+        "jest": "^30.2.0",
+        "mongodb-memory-server": "^11.0.1",
+        "nodemon": "^3.1.11",
+        "supertest": "^7.2.2"
+    }
+}

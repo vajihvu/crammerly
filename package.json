@@ -1,0 +1,30 @@
+{
+  "name": "crammerly-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "frontend:dev": "npm run dev --workspace=frontend",
+    "backend:dev": "npm run dev --workspace=backend",
+    "dev": "concurrently \"npm run frontend:dev\" \"npm run backend:dev\"",
+    "build": "concurrently \"npm run build --workspace=frontend\" \"npm run build --workspace=backend\"",
+    "test": "npm run test --workspace=backend",
+    "lint": "concurrently \"npm run lint --workspace=frontend\" \"npm run lint --workspace=backend\"",
+    "db:seed": "node backend/scripts/seed.js",
+    "security:audit": "node backend/scripts/security_guard.js",
+    "env:sync": "npm run env:sync --workspace=backend",
+    "audit": "npm audit",
+    "audit:fix": "npm audit fix",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "husky": "^9.1.7"
+  }
+}
