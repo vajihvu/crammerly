@@ -1,70 +1,63 @@
 # Database Design: Crammer (Crammerly)
 
-This document outlines the authoritative schema for Crammerly. The application uses a **Hybrid Multi-Database Architecture** to optimize for both high-concurrency real-time features and robust record management.
+This document outlines the authoritative schema for Crammerly. The application uses a **Consolidated MongoDB Architecture** to optimize for both real-time collaboration features and robust record management.
 
 ## 🗄️ Architecture Overview
-- **Supabase (PostgreSQL)**: Primary store for Real-time collaboration, Rooms, Social graph, and Profiles.
-- **Backend (MongoDB)**: Primary store for User Authentication, Personal Records, and To-Do items.
-
----
-
-## 🔵 Relational Schema (Supabase / Postgres)
-*Status: Enforced via SQL Migrations in `/supabase/migrations/`*
-
-### 1. `profiles`
-| Column | Type | Notes |
-| :--- | :--- | :--- |
-| `id` | uuid | PK (references auth.users) |
-| `full_name` | text | Display name |
-| `username` | text | Unique handle |
-| `tag` | text | Discriminator |
-| `bio` | text | Biography |
-| `interests` | text[] | Study topics |
-| `skills` | text[] | Skills |
-| `social_links`| jsonb | GitHub/LinkedIn URLs |
-| `banner_color`| text | Hex code |
-
-### 2. `rooms`
-| Column | Type | Notes |
-| :--- | :--- | :--- |
-| `id` | uuid | PK |
-| `code` | text | Unique 6-char code |
-| `name` | text | Room name |
-| `topic` | text | Category |
-| `task` | text | Current goal |
-| `privacy` | text | Public/Private |
-| `creator_id` | uuid | FK -> profiles.id |
-
-### 3. `messages`
-| Column | Type | Notes |
-| :--- | :--- | :--- |
-| `id` | uuid | PK |
-| `room_id` | uuid | FK -> rooms.id |
-| `sender_id` | uuid | FK -> profiles.id |
-| `content` | text | Message text |
-| `type` | text | text/file/sticker |
+- **Backend (MongoDB)**: Central store for all application data, including:
+    - User Authentication & Profiles
+    - Real-time Collaboration (Rooms)
+    - Social Graph (Friends & Messages)
+    - Personal Records & To-Do items
 
 ---
 
 ## 🟢 Document Schema (MongoDB / Mongoose)
 *Status: Enforced via Mongoose Schemas in `/backend/models/`*
 
-### 4. `users`
+### 1. `users`
 | Field | Type | Notes |
 | :--- | :--- | :--- |
 | `_id` | ObjectId | PK |
 | `email` | String | Unique, Validated |
 | `password` | String | Bcrypt Hashed |
 | `name` | String | Display Name |
+| `username` | String | Unique Handle |
+| `tag` | String | Discriminator |
+| `bio` | String | Biography |
+| `interests` | [String] | Study topics |
+| `skills` | [String] | Skills |
+| `socialLinks` | Object | GitHub/LinkedIn URLs |
+| `bannerColor` | String | Hex code |
 
-### 5. `todos`
+### 2. `rooms`
 | Field | Type | Notes |
 | :--- | :--- | :--- |
-| `user_id` | String | Index |
+| `_id` | ObjectId | PK |
+| `code` | String | Unique 6-char code |
+| `name` | String | Room name |
+| `topic` | String | Category |
+| `task` | String | Current goal |
+| `privacy` | String | Public/Private |
+| `creator` | ObjectId | FK -> users._id |
+| `members` | [Array] | Current participants |
+
+### 3. `messages`
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `_id` | ObjectId | PK |
+| `room` | ObjectId | FK -> rooms._id |
+| `sender` | ObjectId| FK -> users._id |
+| `content` | String | Message text |
+| `type` | String | text/file/sticker |
+
+### 4. `todos`
+| Field | Type | Notes |
+| :--- | :--- | :--- |
+| `user` | ObjectId | FK -> users._id |
 | `text` | String | Required |
 | `completed`| Boolean| Default: false |
 
-### 6. `records`
+### 5. `records`
 | Field | Type | Notes |
 | :--- | :--- | :--- |
 | `user` | ObjectId | FK -> users._id |
@@ -74,8 +67,7 @@ This document outlines the authoritative schema for Crammerly. The application u
 ---
 
 ## 📈 Versioning & Migrations
-- **Supabase**: Versioned SQL files in `supabase/migrations/`. 
 - **Backend**: Schema enforced at the application level via Mongoose and `express-validator`.
-- **Sync**: A `version` table in Postgres tracks the current migration state.
+- **Consistency**: Real-time updates are synchronized via Socket.io events and confirmed against the MongoDB store.
 
 *Last Updated: February 2026*
