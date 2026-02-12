@@ -1,5 +1,5 @@
 /**
- * Friends API Service (Backend Pending)
+ * Friends API Service (Stub)
  * Handles friendships and social searching.
  */
 export const friendsApi = {
@@ -7,7 +7,7 @@ export const friendsApi = {
      * Fetch all friends/requests for a user
      */
     getAll: async (userId) => {
-        // TODO: Implement backend friends logic
+        console.log('Fetching friends for', userId);
         return [];
     },
 
@@ -15,6 +15,7 @@ export const friendsApi = {
      * Send a friend request
      */
     sendRequest: async (userId, friendId) => {
+        console.log('Sending request from', userId, 'to', friendId);
         return { success: true };
     },
 
@@ -22,6 +23,7 @@ export const friendsApi = {
      * Accept a friend request
      */
     acceptRequest: async (friendshipId) => {
+        console.log('Accepting friendship', friendshipId);
         return { success: true };
     },
 
@@ -29,6 +31,7 @@ export const friendsApi = {
      * Remove or reject a friend
      */
     remove: async (friendshipId) => {
+        console.log('Removing friendship', friendshipId);
         return true;
     },
 
@@ -36,6 +39,7 @@ export const friendsApi = {
      * Search for users to add
      */
     search: async (query) => {
+        console.log('Searching for users with query:', query);
         return [];
     }
 };

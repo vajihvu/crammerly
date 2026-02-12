@@ -98,20 +98,20 @@ export default function Crammer() {
   const [focusSession, setFocusSession] = useState(null);
   const [studyStats, setStudyStats] = useState({ totalMinutes: 0, sessionCount: 0 });
 
-  const loadStudyStats = useCallback(async () => {
-    try {
-      const stats = await studyApi.sessions.getStats();
-      setStudyStats(stats);
-    } catch (err) {
-      console.error('Failed to load study stats:', err);
-    }
-  }, []);
 
   useEffect(() => {
     if (authUser) {
-      loadStudyStats();
+      const fetchStats = async () => {
+        try {
+          const stats = await studyApi.sessions.getStats();
+          setStudyStats(stats);
+        } catch (err) {
+          console.error('Failed to load study stats:', err);
+        }
+      };
+      fetchStats();
     }
-  }, [authUser, loadStudyStats]);
+  }, [authUser]);
 
   // Bootstrap environment
   useEffect(() => {
@@ -143,16 +143,6 @@ export default function Crammer() {
     localStorage.setItem('crammer_theme', theme);
   }, [theme]);
 
-  useEffect(() => {
-    if (authUser) {
-      const userId = authUser._id || authUser.id;
-      setCurrentUser(prev => ({
-        ...prev,
-        ...authUser,
-        id: userId,
-      }));
-    }
-  }, [authUser]);
 
   useEffect(() => {
     if (!authUser) {
@@ -162,9 +152,11 @@ export default function Crammer() {
     } else {
       if (modals.auth) closeModal('auth');
       if (isFirstVisit) {
-        openModal('welcome');
-        localStorage.setItem('crammer_not_first_visit', 'true');
-        setIsFirstVisit(false);
+        setTimeout(() => {
+          openModal('welcome');
+          localStorage.setItem('crammer_not_first_visit', 'true');
+          setIsFirstVisit(false);
+        }, 0);
       }
     }
   }, [authUser, isFirstVisit, openModal, hasClosedAuth, modals.auth, closeModal]);
@@ -187,21 +179,17 @@ export default function Crammer() {
     }
   }, []);
 
-  const refreshCurrentRoom = useCallback(async () => {
-    if (!currentRoom) return;
-    try {
-      const latestRooms = await roomsApi.getAll();
-      const latestCurrent = latestRooms.find(r => r.id === currentRoom.id);
-      if (latestCurrent) {
-        setCurrentRoom(latestCurrent);
-      }
-    } catch (error) {
-      console.error('Failed to refresh current room:', error);
-    }
-  }, [currentRoom]);
 
   useEffect(() => {
-    loadRooms();
+    const fetchRooms = async () => {
+      try {
+        const loadedRooms = await roomsApi.getAll();
+        setRooms(loadedRooms);
+      } catch (err) {
+        console.error('Room loading error:', err);
+      }
+    };
+    fetchRooms();
 
     const socket = getSocket();
     if (socket) {
@@ -351,7 +339,12 @@ export default function Crammer() {
       await studyApi.sessions.end(focusSession._id);
       setFocusSession(null);
       addToast('Focus session ended. Well done!', 'success');
-      loadStudyStats();
+      try {
+        const stats = await studyApi.sessions.getStats();
+        setStudyStats(stats);
+      } catch (err) {
+        console.error('Failed to refresh study stats:', err);
+      }
     } catch (err) {
       console.error('Failed to end focus session:', err);
     }
@@ -412,7 +405,7 @@ export default function Crammer() {
     }
   };
 
-  const updateRoom = async (updatedRoom) => {
+  const updateRoom = async () => {
     addToast('Feature pending backend update', 'info');
     return false;
   };
