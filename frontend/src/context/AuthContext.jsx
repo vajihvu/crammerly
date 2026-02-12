@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
         }
     });
 
-    const [loading, setLoading] = useState(false);
+    const [loading] = useState(false);
 
     const logout = useCallback(async () => {
         try {
