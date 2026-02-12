@@ -6,8 +6,17 @@ import { initSocket, disconnectSocket } from '../utils/socket';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(() => {
+        try {
+            const raw = localStorage.getItem('userInfo');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            localStorage.removeItem('userInfo');
+            return null;
+        }
+    });
+
+    const [loading, setLoading] = useState(false);
 
     const logout = useCallback(async () => {
         try {
@@ -21,21 +30,6 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     useEffect(() => {
-        // Initialize auth from localStorage safely
-        let storedUser = null;
-        try {
-            const raw = localStorage.getItem('userInfo');
-            if (raw) storedUser = JSON.parse(raw);
-        } catch {
-            // Corrupted value, clear it
-            localStorage.removeItem('userInfo');
-        }
-
-        if (storedUser) {
-            setUser(storedUser);
-        }
-        setLoading(false);
-
         // Listen for global unauthorized events
         const handleUnauthorized = () => {
             logout();

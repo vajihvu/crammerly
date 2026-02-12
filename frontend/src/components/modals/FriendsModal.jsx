@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, UserPlus, MessageCircle, Video, Phone, Paperclip, Smile, Image as ImageIcon, Send, Mic, Search, MoreVertical, Shield, FileText, Music, ArrowLeft, PhoneCall, Plus, Camera, Trash2, StopCircle, Sticker, User, Sparkles, Check, TrendingUp } from 'lucide-react';
+import { X, UserPlus, MessageCircle, Video, Paperclip, Smile, Send, Mic, Search, FileText, ArrowLeft, PhoneCall, Sticker, User, Sparkles, Check, TrendingUp, Loader } from 'lucide-react';
 import FriendItem from './friends/FriendItem';
 import SuggestionItem from './friends/SuggestionItem';
 import { friendsApi } from '../../api';
