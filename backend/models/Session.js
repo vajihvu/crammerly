@@ -10,8 +10,10 @@ const sessionSchema = new mongoose.Schema({
     refreshTokenHash: {
         type: String,
         required: true,
+        unique: true,
         index: true
     },
+
     previousTokenHashes: {
         type: [String],
         default: []
@@ -56,6 +58,9 @@ const sessionSchema = new mongoose.Schema({
 
 // Auto-delete expired sessions
 sessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+// Optimize session lookups for device management
+sessionSchema.index({ user: 1, isValid: 1 });
 
 const Session = mongoose.model('Session', sessionSchema);
 export default Session;

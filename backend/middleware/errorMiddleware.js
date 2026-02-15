@@ -1,6 +1,7 @@
 import config from '../config/index.js';
 import { logger } from '../utils/logger.js';
 import crypto from 'crypto';
+import { ZodError } from 'zod';
 
 const ERROR_HINTS = {
     'AUTH_INVALID': 'Double check your email and password, or try resetting it.',
@@ -50,11 +51,11 @@ export const errorHandler = (err, req, res, _next) => {
         message = 'This entry already exists';
     }
 
-    // Handle Zod errors
-    if (err.name === 'ZodError') {
+    // Handle Zod errors (checking by name AND issues to be super safe)
+    if (err instanceof ZodError || err.name === 'ZodError' || err.issues) {
         statusCode = 400;
         code = 'VAL_SCHEMA_FAIL';
-        details = err.errors;
+        details = err.errors || err.issues;
     }
 
     // Support custom error codes
@@ -75,7 +76,8 @@ export const errorHandler = (err, req, res, _next) => {
         meta: {
             timestamp: new Date().toISOString(),
             path: req.originalUrl,
-            requestId: req.requestId
+            requestId: req.requestId,
+            ...err.meta
         }
     };
 
@@ -88,6 +90,10 @@ export const errorHandler = (err, req, res, _next) => {
         stack: err.stack
     });
 
+    if (statusCode === 500 && config.isTest) {
+        console.error('CRITICAL 500 ERROR:', err);
+    }
+
     res.status(statusCode).json(errorPayload);
 };
 
@@ -97,5 +103,6 @@ export const errorHandler = (err, req, res, _next) => {
 export const notFound = (req, res, next) => {
     const error = new Error(`Not Found - ${req.originalUrl}`);
     res.status(404);
+    error.code = 'RES_NOT_FOUND';
     next(error);
 };

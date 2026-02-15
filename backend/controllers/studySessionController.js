@@ -8,19 +8,26 @@ import asyncHandler from '../utils/asyncHandler.js';
  */
 export const startSession = asyncHandler(async (req, res) => {
     const { roomId, task } = req.body;
+    const userId = req.user._id;
+
+    // 0. Policy: Prevent multiple active sessions (Race condition prevention)
+    const existingActive = await StudySession.findOne({ userId, endTime: { $exists: false } });
+    if (existingActive) {
+        existingActive.endTime = new Date();
+        await existingActive.save();
+    }
 
     const session = await StudySession.create({
-        userId: req.user._id,
+        userId,
         roomId,
         taskCompleted: task,
         startTime: new Date()
     });
 
-    res.status(201).json({
-        success: true,
-        data: session
-    });
+
+    return res.sendSuccess(session, 201);
 });
+
 
 /**
  * @desc    End a study session
@@ -41,11 +48,9 @@ export const endSession = asyncHandler(async (req, res) => {
     session.endTime = new Date();
     await session.save();
 
-    res.json({
-        success: true,
-        data: session
-    });
+    return res.sendSuccess(session);
 });
+
 
 /**
  * @desc    Get all study sessions for user
@@ -57,11 +62,9 @@ export const getSessions = asyncHandler(async (req, res) => {
         .sort({ startTime: -1 })
         .limit(50);
 
-    res.json({
-        success: true,
-        data: sessions
-    });
+    return res.sendSuccess(sessions);
 });
+
 
 /**
  * @desc    Get aggregated study stats
@@ -80,8 +83,6 @@ export const getStats = asyncHandler(async (req, res) => {
         }
     ]);
 
-    res.json({
-        success: true,
-        data: stats[0] || { totalMinutes: 0, sessionCount: 0 }
-    });
+    return res.sendSuccess(stats[0] || { totalMinutes: 0, sessionCount: 0 });
 });
+

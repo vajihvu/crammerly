@@ -11,10 +11,11 @@ beforeAll(async () => {
     try {
         mongo = await MongoMemoryServer.create({
             binary: {
-                version: '4.4.18',
+                version: '6.0.14'
             }
         });
         const uri = mongo.getUri();
+
         console.log("MongoMemoryServer started at:", uri);
         process.env.MONGO_URI = uri;
         await mongoose.connect(uri);

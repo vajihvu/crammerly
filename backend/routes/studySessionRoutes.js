@@ -6,6 +6,12 @@ import {
     getStats
 } from '../controllers/studySessionController.js';
 import { protect } from '../middleware/auth.js';
+import { validate, validateParams } from '../middleware/validator.js';
+import { startSessionSchema, endSessionSchema } from '../schemas/session.schema.js';
+import { mongoIdSchema } from '../schemas/common.schema.js';
+import { z } from 'zod';
+
+const idParamSchema = z.object({ id: mongoIdSchema });
 
 const router = express.Router();
 
@@ -35,7 +41,7 @@ router.get('/', getSessions);
  *       201:
  *         description: Session started
  */
-router.post('/start', startSession);
+router.post('/start', validate(startSessionSchema), startSession);
 
 /**
  * @openapi
@@ -53,7 +59,7 @@ router.post('/start', startSession);
  *       200:
  *         description: Session ended
  */
-router.put('/:id/end', endSession);
+router.put('/:id/end', validateParams(idParamSchema), validate(endSessionSchema), endSession);
 
 /**
  * @openapi

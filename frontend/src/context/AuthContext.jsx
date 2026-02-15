@@ -70,8 +70,12 @@ export const AuthProvider = ({ children }) => {
         try {
             const response = await authApi.register(userData);
             if (response.success) {
-                localStorage.setItem('userInfo', JSON.stringify(response.data));
-                setUser(response.data);
+                // If the response contains a token, log them in (legacy/bypass)
+                // If it contains a message/verificationToken, it's a pending verification
+                if (response.data?.token) {
+                    localStorage.setItem('userInfo', JSON.stringify(response.data));
+                    setUser(response.data);
+                }
                 return response.data;
             }
             throw new Error(response?.error?.message || response?.message || 'Registration failed');

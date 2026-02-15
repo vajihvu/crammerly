@@ -1,8 +1,14 @@
 import express from 'express';
 import { getTodos, createTodo, toggleTodo, deleteTodo } from '../controllers/todoController.js';
 import { protect } from '../middleware/auth.js';
-import { validate } from '../middleware/validator.js';
-import { todoSchema } from '../schemas/common.schema.js';
+import { validate, validateParams } from '../middleware/validator.js';
+import { createTodoSchema, updateTodoSchema } from '../schemas/todo.schema.js';
+import { mongoIdSchema } from '../schemas/common.schema.js';
+import { z } from 'zod';
+
+const idParamSchema = z.object({ id: mongoIdSchema });
+
+
 
 const router = express.Router();
 
@@ -44,7 +50,8 @@ router.route('/')
      *       201:
      *         description: Todo created
      */
-    .post(validate(todoSchema), createTodo);
+    .post(validate(createTodoSchema), createTodo);
+
 
 /**
  * @openapi
@@ -63,7 +70,9 @@ router.route('/')
  *         description: Todo updated
  */
 router.route('/:id')
-    .put(toggleTodo)
+    .put(validateParams(idParamSchema), validate(updateTodoSchema), toggleTodo)
+
+
     /**
      * @openapi
      * /todos/{id}:
@@ -80,6 +89,7 @@ router.route('/:id')
      *       200:
      *         description: Todo removed
      */
-    .delete(deleteTodo);
+    .delete(validateParams(idParamSchema), deleteTodo);
+
 
 export default router;

@@ -27,15 +27,11 @@ export const getRecords = asyncHandler(async (req, res) => {
     const hasMore = records.length === limit;
     const nextCursor = hasMore ? records[records.length - 1].createdAt : null;
 
-    res.json({
-        success: true,
-        data: {
-            records,
-            nextCursor,
-            hasMore
-        },
-        message: records.length === 0 && !cursor ? "Your study feed is empty. Start a focus session or create a manual record to begin!" : undefined
-    });
+    return res.sendSuccess({
+        records,
+        nextCursor,
+        hasMore
+    }, 200, records.length === 0 && !cursor ? "Your study feed is empty. Start a focus session or create a manual record to begin!" : undefined);
 });
 
 /**
@@ -58,11 +54,9 @@ export const createRecord = asyncHandler(async (req, res) => {
         tags: cleanTags,
     });
 
-    res.status(201).json({
-        success: true,
-        data: record
-    });
+    return res.sendSuccess(record, 201);
 });
+
 
 /**
  * @desc    Get single record
@@ -73,11 +67,9 @@ export const getRecordById = asyncHandler(async (req, res, _next) => {
     const record = await Record.findOne({ _id: req.params.id, userId: req.user._id });
 
     if (record) {
-        res.json({
-            success: true,
-            data: record
-        });
+        return res.sendSuccess(record);
     } else {
+
         const error = new Error('Record not found');
         error.statusCode = 404;
         error.code = 'RES_NOT_FOUND';
@@ -100,11 +92,9 @@ export const updateRecord = asyncHandler(async (req, res) => {
         record.tags = req.body.tags || record.tags;
 
         const updatedRecord = await record.save();
-        res.json({
-            success: true,
-            data: updatedRecord
-        });
+        return res.sendSuccess(updatedRecord);
     } else {
+
         const error = new Error('Record not found');
         error.statusCode = 404;
         error.code = 'RES_NOT_FOUND';
@@ -122,11 +112,9 @@ export const deleteRecord = asyncHandler(async (req, res) => {
 
     if (record) {
         await record.deleteOne();
-        res.json({
-            success: true,
-            message: 'Record removed'
-        });
+        return res.sendSuccess({ message: 'Record removed' });
     } else {
+
         const error = new Error('Record not found');
         error.statusCode = 404;
         error.code = 'RES_NOT_FOUND';

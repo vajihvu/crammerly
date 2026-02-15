@@ -16,8 +16,9 @@ export const getAllRooms = async (req, res) => {
         task: room.task,
         topic: room.topic,
         privacy: room.privacy,
-        code: room.code,
+        code: (room.privacy === 'Public' || room.creator_id?.toString() === req.user._id.toString() || room.members.some(m => m.user?._id?.toString() === req.user._id.toString())) ? room.code : undefined,
         creator_id: room.creator_id?._id,
+
         scheduleDate: room.schedule_date,
         scheduleTime: room.schedule_time,
         members: room.members.map(m => ({
@@ -27,8 +28,9 @@ export const getAllRooms = async (req, res) => {
         }))
     }));
 
-    res.json({ success: true, data: formattedRooms });
+    return res.sendSuccess(formattedRooms);
 };
+
 
 /**
  * @desc    Create a room
@@ -48,8 +50,9 @@ export const createRoom = async (req, res) => {
         members: [{ user: req.user._id, progress: [] }]
     });
 
-    res.status(201).json({ success: true, data: room });
+    return res.sendSuccess(room, 201);
 };
+
 
 /**
  * @desc    Join a room
@@ -58,8 +61,19 @@ export const createRoom = async (req, res) => {
 export const joinRoom = async (req, res) => {
     const room = await Room.findById(req.params.id);
     if (!room) {
-        return res.status(404).json({ success: false, message: 'Room not found' });
+        return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
     }
+
+
+    // Authorization: Private rooms require the correct code
+    if (room.privacy === 'Private') {
+        const { code } = req.body;
+        if (!code || code.toUpperCase() !== room.code) {
+            return res.sendError('Invalid or missing code for this private room', 403, 'AUTH_FORBIDDEN');
+        }
+    }
+
+
 
     const isMember = room.members.some(m => m.user.toString() === req.user._id.toString());
     if (!isMember) {
@@ -74,8 +88,7 @@ export const joinRoom = async (req, res) => {
             });
         });
     }
-
-    res.json({ success: true, message: 'Joined successfully' });
+    return res.sendSuccess(null, 200, 'Joined successfully');
 };
 
 /**
@@ -85,10 +98,11 @@ export const joinRoom = async (req, res) => {
 export const getRoomByCode = async (req, res) => {
     const room = await Room.findOne({ code: req.params.code.toUpperCase() });
     if (!room) {
-        return res.status(404).json({ success: false, message: 'Room not found' });
+        return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
     }
-    res.json({ success: true, data: room });
+    return res.sendSuccess(room);
 };
+
 
 /**
  * @desc    Delete room
@@ -97,16 +111,18 @@ export const getRoomByCode = async (req, res) => {
 export const deleteRoom = async (req, res) => {
     const room = await Room.findById(req.params.id);
     if (!room) {
-        return res.status(404).json({ success: false, message: 'Room not found' });
+        return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
     }
 
     if (room.creator_id.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ success: false, message: 'Not authorized' });
+        return res.sendError('Not authorized', 403, 'AUTH_FORBIDDEN');
     }
 
+
     await room.deleteOne();
-    res.json({ success: true, message: 'Room deleted' });
+    return res.sendSuccess(null, 200, 'Room deleted');
 };
+
 
 /**
  * @desc    Update progress in room
@@ -116,12 +132,15 @@ export const updateProgress = async (req, res) => {
     const { task } = req.body;
     const room = await Room.findById(req.params.id);
 
-    if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
+    if (!room) {
+        return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
+    }
 
     const memberIndex = room.members.findIndex(m => m.user.toString() === req.user._id.toString());
     if (memberIndex === -1) {
-        return res.status(403).json({ success: false, message: 'Not a member of this room' });
+        return res.sendError('Not a member of this room', 403, 'AUTH_FORBIDDEN');
     }
+
 
     room.members[memberIndex].progress.push({ task, time: new Date() });
     await room.save();
@@ -134,5 +153,6 @@ export const updateProgress = async (req, res) => {
         });
     });
 
-    res.json({ success: true, data: room.members[memberIndex].progress });
+    return res.sendSuccess(room.members[memberIndex].progress);
 };
+

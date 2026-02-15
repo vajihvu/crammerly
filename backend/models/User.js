@@ -13,13 +13,23 @@ const userSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Please provide a password'],
-        minlength: 8,
+        minlength: 10,
+
+        validate: {
+            validator: function (v) {
+                // Minimum requirements: 1 upper, 1 lower, 1 number, 1 special
+                // This is a basic regex check; controllers use zxcvbn for deeper entropy analysis
+                return /[A-Z]/.test(v) && /[a-z]/.test(v) && /[0-9]/.test(v) && /[^A-Za-z0-9]/.test(v);
+            },
+            message: 'Password must be at least 10 characters and contain an uppercase letter, lowercase letter, number, and special character. It must also have high entropy (not be a common pattern).'
+        },
         select: false // Don't return password by default
     },
     name: {
         type: String,
         required: [true, 'Please provide a name'],
-        trim: true
+        trim: true,
+        index: true
     },
     isActive: {
         type: Boolean,
@@ -37,6 +47,10 @@ const userSchema = new mongoose.Schema({
     },
     lockUntil: {
         type: Date
+    },
+    totalLockouts: {
+        type: Number,
+        default: 0
     },
     requiresCaptcha: {
         type: Boolean,
@@ -57,13 +71,45 @@ const userSchema = new mongoose.Schema({
     },
     tag: {
         type: String,
-        default: () => Math.floor(1000 + Math.random() * 9000).toString()
+        unique: true,
+        index: true,
+        default: () => Math.floor(100000 + Math.random() * 900000).toString() // Increased to 6 digits for unique scaling
     },
     interests: {
         type: [String],
         default: []
+    },
+    tokenVersion: {
+        type: Number,
+        default: 0,
+        select: false
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false,
+        index: true
+    },
+    emailVerificationToken: {
+        type: String,
+        select: false,
+        index: true
+    },
+    emailVerificationExpires: {
+        type: Date,
+        select: false
+    },
+    resetPasswordToken: {
+        type: String,
+        select: false,
+        index: true
+    },
+    resetPasswordExpires: {
+        type: Date,
+        select: false
     }
 }, {
+
+
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }
@@ -93,6 +139,7 @@ userSchema.methods.incLoginAttempts = async function () {
             lockUntil: Date.now() + 30 * 60 * 1000,
             requiresCaptcha: true
         };
+        updates.$inc.totalLockouts = 1;
     }
 
     return this.updateOne(updates);
@@ -116,18 +163,28 @@ userSchema.pre('save', async function () {
         this.name = this.name.normalize('NFKC').trim();
     }
 
-    // 2. Password Hashing & History
-    if (!this.isModified('password')) return;
+    // 2. Password Hashing & History Safeguard
+    if (this.isModified('password')) {
+        // If not a new user, we need the OLD hash to move it to history
+        if (!this.isNew) {
+            // We fetch the latest stored document to get the current hash before updating
+            const oldUser = await this.constructor.findById(this._id).select('+password');
+            if (oldUser && oldUser.password) {
+                this.previousPasswords.unshift(oldUser.password);
+                if (this.previousPasswords.length > 5) {
+                    this.previousPasswords.pop();
+                }
+                // Increment tokenVersion to revoke all existing JWTs on password change
+                this.tokenVersion = (this.tokenVersion || 0) + 1;
+            }
+        }
 
-    const salt = await bcrypt.genSalt(12); // Increased cost for production
-
-    // If this is an update (not a new user), we might want to move current password to history
-    // but wait, usually we check reuse BEFORE calling save() in the controller 
-    // to give a better error message.
-    // However, as a safeguard, we'll store the hash.
-
-    this.password = await bcrypt.hash(this.password, salt);
+        const salt = await bcrypt.genSalt(12);
+        this.password = await bcrypt.hash(this.password, salt);
+    }
 });
+
+
 
 // Method to verify if password was previously used
 userSchema.methods.isPasswordPreviouslyUsed = async function (plainPassword) {

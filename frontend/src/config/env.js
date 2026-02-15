@@ -7,6 +7,9 @@ const config = {
     // API URL for backend calls
     apiUrl: import.meta.env.VITE_API_URL || '/api/v1',
 
+    // Monitoring
+    sentryDsn: import.meta.env.VITE_SENTRY_DSN,
+
     // Feature flags
     features: {
         aiRecommendations: import.meta.env.VITE_ENABLE_AI === 'true',

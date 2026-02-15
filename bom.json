@@ -1,0 +1,19 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.4",
+  "metadata": {
+    "timestamp": "2026-02-15T16:15:28.896Z",
+    "component": {
+      "name": "crammerly-monorepo",
+      "version": "1.0.0",
+      "type": "application"
+    }
+  },
+  "components": [
+    {
+      "name": "express-mongo-sanitize",
+      "version": "^2.2.0",
+      "type": "library"
+    }
+  ]
+}

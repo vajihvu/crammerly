@@ -15,15 +15,14 @@ export const runCleanups = async () => {
 
     try {
         // 1. Cleanup: Expired/Invalid Sessions
-        // Mongoose TTL index handles expiration, but we might want to manually 
+        // Mongoose TTL index handles expiration, but we manually 
         // purge sessions marked as invalid/suspicious older than 30 days.
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         const sessionResult = await Session.deleteMany({
-            $or: [
-                { isValid: false, updatedAt: { $lt: thirtyDaysAgo } },
-                { isSuspicious: true, updatedAt: { $lt: thirtyDaysAgo } }
-            ]
+            isValid: false,
+            revokedAt: { $lt: thirtyDaysAgo }
         });
+
         if (sessionResult.deletedCount > 0) {
             logger.info(`Cleaned up ${sessionResult.deletedCount} old invalid sessions.`);
         }

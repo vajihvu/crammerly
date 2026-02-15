@@ -20,6 +20,7 @@ function WelcomeModal({ onClose }) {
                     <h2 className="text-3xl sm:text-5xl font-[1000] text-brand-text tracking-tighter uppercase mb-4 leading-none">
                         Welcome to <span className="text-brand-primary">Crammerly</span>
                     </h2>
+
                     <p className="text-sm sm:text-lg text-brand-text-dim font-bold max-w-md mb-12 uppercase tracking-widest opacity-60">
                         Your Ultimate Collaborative Study Hub
                     </p>

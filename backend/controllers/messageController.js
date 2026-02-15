@@ -1,13 +1,31 @@
 import Message from '../models/Message.js';
+import Room from '../models/Room.js';
+
 
 /**
  * @desc    Get all messages for a room
  * @route   GET /api/v1/messages/:roomId
  */
 export const getMessagesByRoom = async (req, res) => {
-    const messages = await Message.find({ room_id: req.params.roomId })
+    const { roomId } = req.params;
+
+    // Authorization: Check if user is a member of the room
+    const room = await Room.findById(roomId);
+    if (!room) {
+        return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
+    }
+
+
+    const isMember = room.members.some(m => m.user.toString() === req.user._id.toString());
+    if (!isMember) {
+        return res.sendError('You must be a member of this room to view messages', 403, 'AUTH_FORBIDDEN');
+    }
+
+
+    const messages = await Message.find({ room_id: roomId })
         .populate('sender_id', 'name tag avatar')
         .sort({ createdAt: 1 });
+
 
     const formattedMessages = messages.map(m => ({
         id: m._id,
@@ -20,18 +38,33 @@ export const getMessagesByRoom = async (req, res) => {
         timestamp: m.createdAt
     }));
 
-    res.json({ success: true, data: formattedMessages });
+    return res.sendSuccess(formattedMessages);
 };
+
 
 /**
  * @desc    Send a message
  * @route   POST /api/v1/messages/:roomId
  */
 export const sendMessage = async (req, res) => {
+    const { roomId } = req.params;
     const { content, type, fileData } = req.body;
 
+    // Authorization: Check if user is a member of the room
+    const room = await Room.findById(roomId);
+    if (!room) {
+        return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
+    }
+
+
+    const isMember = room.members.some(m => m.user.toString() === req.user._id.toString());
+    if (!isMember) {
+        return res.sendError('You must be a member of this room to send messages', 403, 'AUTH_FORBIDDEN');
+    }
+
+
     const message = await Message.create({
-        room_id: req.params.roomId,
+        room_id: roomId,
         sender_id: req.user._id,
         content,
         type: type || 'text',
@@ -56,5 +89,6 @@ export const sendMessage = async (req, res) => {
         emitToRoom(req.params.roomId, 'new_message', formatted);
     });
 
-    res.status(201).json({ success: true, data: formatted });
+    return res.sendSuccess(formatted, 201);
 };
+

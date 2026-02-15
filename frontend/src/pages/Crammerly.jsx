@@ -39,7 +39,7 @@ if (typeof window !== 'undefined' && !window.storage) {
   window.storage = storage;
 }
 
-export default function Crammer() {
+export default function Crammerly() {
   const { user: authUser, loading: isAuthLoading, logout: handleAuthLogout } = useAuth();
   const { addToast } = useUI();
   const [view, setView] = useState('home');

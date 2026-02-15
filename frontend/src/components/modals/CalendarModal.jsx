@@ -10,7 +10,7 @@ function CalendarModal({ onClose, openConfirm }) {
 
     // Load data from localStorage on mount
     useEffect(() => {
-        const savedTasks = localStorage.getItem('crammerly_calendar_tasks');
+        const savedTasks = localStorage.getItem('Crammerly_calendar_tasks');
         if (savedTasks) {
             try {
                 const parsed = JSON.parse(savedTasks);
@@ -24,7 +24,7 @@ function CalendarModal({ onClose, openConfirm }) {
 
     // Save data to localStorage whenever they change
     useEffect(() => {
-        localStorage.setItem('crammerly_calendar_tasks', JSON.stringify(tasks));
+        localStorage.setItem('Crammerly_calendar_tasks', JSON.stringify(tasks));
     }, [tasks]);
 
     const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();

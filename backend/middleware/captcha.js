@@ -11,17 +11,20 @@ export const verifyCaptcha = async (req, res, next) => {
         return next();
     }
 
+    // Safety: If secret key is missing in production, log critical error but let users through 
+    // to avoid blocking all traffic due to configuration error.
+    if (!config.turnstileSecretKey) {
+        logger.error('CRITICAL ERROR: Cloudflare Turnstile secret key is missing in production!');
+        return next();
+    }
+
+
     const token = req.body['cf-turnstile-response'] || req.headers['x-captcha-token'];
 
     if (!token) {
-        return res.status(400).json({
-            success: false,
-            error: {
-                code: 'CAPTCHA_MISSING',
-                message: 'CAPTCHA token is missing'
-            }
-        });
+        return res.sendError('CAPTCHA token is missing', 400, 'CAPTCHA_MISSING');
     }
+
 
     try {
         const formData = new URLSearchParams();
@@ -43,24 +46,13 @@ export const verifyCaptcha = async (req, res, next) => {
             errors: response.data['error-codes']
         });
 
-        return res.status(400).json({
-            success: false,
-            error: {
-                code: 'CAPTCHA_INVALID',
-                message: 'CAPTCHA verification failed',
-                details: response.data['error-codes']
-            }
-        });
+        return res.sendError('CAPTCHA verification failed', 400, 'CAPTCHA_INVALID');
     } catch (error) {
+
         logger.error('CAPTCHA service error', { error: error.message });
         // In case of service error, we might want to let the request through 
         // depending on the security requirements. For now, we fail closed.
-        return res.status(500).json({
-            success: false,
-            error: {
-                code: 'CAPTCHA_SERVICE_ERROR',
-                message: 'Failed to verify CAPTCHA'
-            }
-        });
+        return res.sendError('Failed to verify CAPTCHA', 500, 'CAPTCHA_SERVICE_ERROR');
     }
 };
+

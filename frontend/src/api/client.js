@@ -9,6 +9,8 @@ const client = axios.create({
     baseURL: env.apiUrl,
     headers: {
         'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest', // Traditional CSRF protection
+        'X-CSRF-Token': 'XMLHttpRequest',    // Custom CSRF protection
     },
     withCredentials: true, // Handle cookies for refresh tokens
 });
@@ -60,7 +62,13 @@ client.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                const { data } = await axios.post(`${env.apiUrl}/auth/refresh`, {}, { withCredentials: true });
+                const { data } = await axios.post(`${env.apiUrl}/auth/refresh`, {}, {
+                    withCredentials: true,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-Token': 'XMLHttpRequest'
+                    }
+                });
 
                 if (data?.success && data.data?.token) {
                     const newToken = data.data.token;

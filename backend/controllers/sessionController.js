@@ -31,11 +31,9 @@ export const getSessions = async (req, res, next) => {
             isCurrent: s.refreshTokenHash === currentTokenHash
         }));
 
-        res.json({
-            success: true,
-            data: sanitizedSessions
-        });
+        return res.sendSuccess(sanitizedSessions);
     } catch (error) {
+
         next(error);
     }
 };
@@ -73,11 +71,9 @@ export const revokeSession = async (req, res, next) => {
             metadata: { sessionId: session._id }
         });
 
-        res.json({
-            success: true,
-            message: 'Session revoked successfully'
-        });
+        return res.sendSuccess({ message: 'Session revoked successfully' });
     } catch (error) {
+
         next(error);
     }
 };

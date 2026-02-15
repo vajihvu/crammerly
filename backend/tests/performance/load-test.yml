@@ -1,0 +1,32 @@
+config:
+  target: "http://localhost:5000/api/v1"
+  phases:
+    - duration: 60
+      arrivalRate: 17 # ~1000 logins per minute (1000/60 = 16.6)
+      name: "Sustained Login Peak"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      X-Requested-With: "XMLHttpRequest"
+
+scenarios:
+  - name: "Credential Verification Surge"
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "loadtest@crammerly.io"
+            password: "SecurePassword123!"
+          # We expect 429 after 10 attempts per IP
+          expect:
+            - statusCode: [200, 429, 401]
+
+  - name: "Session Refresh Abuse Protocol"
+    flow:
+      - loop:
+          - post:
+              url: "/auth/refresh"
+              # Simulate invalid/expired refresh token abuse
+              cookie:
+                refreshToken: "corrupted_or_expired_token_cluster"
+          count: 5

@@ -6,13 +6,20 @@
     "scripts": {
         "start": "node index.js",
         "dev": "nodemon index.js",
-        "test": "cross-env NODE_ENV=test node --experimental-vm-modules ../node_modules/jest/bin/jest.js --runInBand",
+        "test": "node scripts/jest-wrapper.js",
+        "test:load": "artillery run tests/performance/load-test.yml",
         "lint": "eslint .",
+        "db:migrate": "node scripts/migrate.js",
+        "db:seed": "node scripts/seed.js",
+        "db:sync-indexes": "node scripts/sync_indexes.js",
         "build": "echo 'No build step required for Node.js backend' && exit 0"
     },
     "dependencies": {
+        "@sentry/node": "^10.38.0",
+        "@sentry/profiling-node": "^10.38.0",
         "axios": "^1.13.5",
         "bcryptjs": "^3.0.3",
+        "bullmq": "^5.69.1",
         "cookie-parser": "^1.4.7",
         "cors": "^2.8.6",
         "dotenv": "^17.2.3",
@@ -25,16 +32,19 @@
         "jsonwebtoken": "^9.0.3",
         "mongoose": "^9.1.5",
         "morgan": "^1.10.1",
+        "rate-limit-redis": "^4.3.1",
+        "redis": "^5.10.0",
         "socket.io": "^4.8.3",
         "swagger-jsdoc": "^6.2.8",
         "swagger-ui-express": "^5.0.1",
         "uuid": "^13.0.0",
         "winston": "^3.19.0",
         "xss-clean": "^0.1.4",
-        "zod": "^4.3.6"
+        "zod": "^4.3.6",
+        "zxcvbn": "^4.4.2"
     },
     "devDependencies": {
-        "cross-env": "^10.1.0",
+        "artillery": "^2.0.30",
         "jest": "^30.2.0",
         "mongodb-memory-server": "^11.0.1",
         "nodemon": "^3.1.11",

@@ -8,7 +8,7 @@ describe('End-to-End User Flows', () => {
     const testUser = {
         name: 'E2E User',
         email: 'e2e@example.com',
-        password: 'Password123!',
+        password: 'Correct-Horse-Battery-Staple-2026!',
     };
 
     beforeEach(async () => {
@@ -16,37 +16,54 @@ describe('End-to-End User Flows', () => {
         await Session.deleteMany({});
     }, 30000);
 
-    it('should complete a full Happy Path: Register -> Action -> Logout', async () => {
-        // 1. REGISTER (Implicitly logs in)
+    it('should complete a full Happy Path: Register -> Verify -> Login -> Action -> Logout', async () => {
+        // 1. REGISTER
         const regRes = await request(app)
             .post('/api/v1/auth/register')
             .send(testUser);
 
         expect(regRes.status).toBe(201);
-        const accessToken = regRes.body.data.token;
-        const refreshToken = regRes.header['set-cookie'][0].split(';')[0].split('=')[1];
+        expect(regRes.body.data.message).toContain('verify your account');
 
-        // 2. ACTION (Protected Route - Get Profile)
+        // 2. VERIFY (Simulate email verification in DB)
+        await User.updateOne({ email: testUser.email }, { isEmailVerified: true });
+
+        // 3. LOGIN
+        const loginRes = await request(app)
+            .post('/api/v1/auth/login')
+            .send({
+                email: testUser.email,
+                password: testUser.password
+            });
+
+        expect(loginRes.status).toBe(200);
+        const accessToken = loginRes.body.data.token;
+        const refreshToken = loginRes.header['set-cookie'][0].split(';')[0].split('=')[1];
+
+        // 4. ACTION (Protected Route - Get Profile)
         const profileRes = await request(app)
             .get('/api/v1/auth/profile')
             .set('Authorization', `Bearer ${accessToken}`);
 
         expect(profileRes.status).toBe(200);
 
-        // 3. LOGOUT
+        // 5. LOGOUT
         const logoutRes = await request(app)
             .post('/api/v1/auth/logout')
+            .set('Authorization', `Bearer ${accessToken}`)
             .set('Cookie', [`refreshToken=${refreshToken}`]);
 
         expect(logoutRes.status).toBe(200);
 
-        // 4. VERIFY (All sessions for this user should be gone or current revoked)
-        const sessions = await Session.find({ user: regRes.body.data._id, isValid: true });
+        // 6. VERIFY SESSIONS
+        const sessions = await Session.find({ user: loginRes.body.data.user.id, isValid: true });
         expect(sessions.length).toBe(0);
     }, 30000);
 
     it('should handle Password Change flow correctly (Critical Path)', async () => {
         await request(app).post('/api/v1/auth/register').send(testUser);
+        await User.updateOne({ email: testUser.email }, { isEmailVerified: true });
+
         const loginRes = await request(app).post('/api/v1/auth/login').send({
             email: testUser.email,
             password: testUser.password
@@ -55,7 +72,7 @@ describe('End-to-End User Flows', () => {
         expect(loginRes.status).toBe(200);
         const accessToken = loginRes.body.data.token;
 
-        const newPassword = 'NewPassword123!';
+        const newPassword = 'Better-Horse-Battery-Staple-2027!';
         const updateRes = await request(app)
             .put('/api/v1/auth/profile')
             .set('Authorization', `Bearer ${accessToken}`)
@@ -80,7 +97,7 @@ describe('End-to-End User Flows', () => {
     }, 30000);
 
     it('should block breached passwords (HIBP-style Policy)', async () => {
-        const breachedPassword = 'BreachedPassword123!'; // Passess Zod, fails Breach Check
+        const breachedPassword = 'Strong-BREACHED-Passphrase-2026!'; // Passes Zod/zxcvbn, fails Breach Check due to simulation
         const regRes = await request(app)
             .post('/api/v1/auth/register')
             .send({

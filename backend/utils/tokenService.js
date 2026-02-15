@@ -2,17 +2,17 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import Session from '../models/Session.js';
 import config from '../config/index.js';
+import { notifyTokenReuse, notifySuspiciousIpChange } from './securityNotifier.js';
 
-export const generateAccessToken = (userOrId) => {
-    const isObject = typeof userOrId === 'object' && userOrId !== null;
-    const userId = isObject ? (userOrId._id || userOrId.id) : userOrId;
-    const email = isObject ? userOrId.email : '';
-    const name = isObject ? userOrId.name : '';
+export const generateAccessToken = (user, sessionId) => {
+    if (!sessionId) {
+        throw new Error('Access token generation requires an active sessionId for security binding.');
+    }
 
     const payload = {
-        id: userId,
-        email: email,
-        name: name
+        id: user._id || user.id,
+        sessionId: sessionId,
+        tokenVersion: user.tokenVersion ?? 0
     };
 
     const secret = config.jwt.secret;
@@ -32,14 +32,17 @@ export const hashToken = (token) => {
     return crypto.createHash('sha256').update(token).digest('hex');
 };
 
+export const generateVerificationToken = () => {
+    return crypto.randomBytes(32).toString('hex');
+};
+
 const normalizeIp = (ip) => (ip && ip.startsWith('::ffff:') ? ip.substring(7) : ip);
 
-export const rotateRefreshToken = async (oldToken, userId, userAgent, ipAddress) => {
+export const rotateRefreshToken = async (req, oldToken, userAgent, ipAddress) => {
     const oldHash = hashToken(oldToken);
 
-    // 0. Check for invalid or reuse
+    // 0. Check for invalid or reuse globally
     const session = await Session.findOne({
-        user: userId,
         $or: [
             { refreshTokenHash: oldHash },
             { previousTokenHashes: oldHash }
@@ -47,18 +50,33 @@ export const rotateRefreshToken = async (oldToken, userId, userAgent, ipAddress)
     });
 
     if (!session || !session.isValid || session.expiresAt < new Date()) {
-        throw new Error('Invalid or expired refresh token');
+        const error = new Error('Invalid or expired refresh token');
+        error.code = 'AUTH_REVOKED';
+        error.statusCode = 401;
+        throw error;
     }
+
+    const userId = session.user;
 
     // Reuse detection: If the token is in previousTokenHashes, it was already rotated.
     if (session.previousTokenHashes.includes(oldHash)) {
         console.error(`🚨 CRITICAL: Refresh token reuse detected for user ${userId}. Revoking session family.`);
         session.isValid = false;
         session.isSuspicious = true;
+
+        session.revokedAt = new Date();
         await session.save();
-        // Option: Revoke ALL sessions for this user for maximum safety
-        await Session.updateMany({ user: userId }, { isValid: false });
+        // Revoke ALL sessions for this user for maximum safety
+        await Session.updateMany(
+            { user: userId, isValid: true },
+            { isValid: false, revokedAt: new Date() }
+        );
+
+        // ALERT: Token reuse is a high-confidence indicator of theft
+        await notifyTokenReuse(req, { _id: userId }, { tokenHash: oldHash });
+
         throw new Error('Security breach detected: Token reuse');
+
     }
 
     // 1. Detection: Same token from different IP
@@ -69,8 +87,14 @@ export const rotateRefreshToken = async (oldToken, userId, userAgent, ipAddress)
         console.warn(`SECURITY ALERT: Session IP mismatch for user ${userId}. Revoking session.`);
         session.isValid = false;
         session.isSuspicious = true;
+        session.revokedAt = new Date();
         await session.save();
+
+        // ALERT: Session hijacking or proxy change
+        await notifySuspiciousIpChange(req, { _id: userId }, lastIp, currentIp);
+
         const error = new Error('Session anomaly: IP address mismatch');
+
         error.code = 'SEC_SESSION_ANOMALY';
         error.statusCode = 401;
         throw error;
@@ -78,31 +102,36 @@ export const rotateRefreshToken = async (oldToken, userId, userAgent, ipAddress)
 
     // 2. Detection: Excessive refresh attempts
     session.refreshCount += 1;
-    if (session.refreshCount > 100) {
+    if (session.refreshCount > 50) { // Slightly stricter for production
         console.warn(`SECURITY ALERT: Excessive refresh attempts for user ${userId}. Revoking session.`);
         session.isValid = false;
+        session.revokedAt = new Date();
         await session.save();
-        const error = new Error('Session anomaly: Excessive refresh attempts');
+        const error = new Error('Security policy: Excessive refresh attempts detected.');
         error.code = 'SEC_SESSION_EXCESSIVE';
         error.statusCode = 401;
         throw error;
     }
 
-    // Generate new token
+    // 3. Rotation Logic: Strictly ordered to prevent race conditions or partial updates
     const newToken = generateRefreshToken();
     const newHash = hashToken(newToken);
 
-    // Update session (Rotate)
-    session.previousTokenHashes.push(oldHash);
+    // Record history for vaulting/reuse detection
+    session.previousTokenHashes.push(session.refreshTokenHash);
+
     // Keep history manageable (last 5 tokens)
     if (session.previousTokenHashes.length > 5) {
         session.previousTokenHashes.shift();
     }
+
+    // Update with new credentials
     session.refreshTokenHash = newHash;
-    session.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+    session.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days rolling
     session.lastUsedAt = new Date();
     session.userAgent = userAgent || session.userAgent;
-    session.ipAddress = currentIp; // Store normalized IP
+    session.ipAddress = currentIp;
+
     await session.save();
 
     return newToken;

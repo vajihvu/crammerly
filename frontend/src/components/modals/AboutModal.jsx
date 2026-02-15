@@ -15,8 +15,9 @@ function AboutModal({ onClose }) {
                 </div>
 
                 <div className="mb-8 md:mb-10 pt-4">
-                    <h1 className="text-3xl md:text-4xl font-[1000] text-brand-text tracking-tighter uppercase leading-none mb-4">CRAMMER<span className="text-brand-primary">LY</span></h1>
+                    <h1 className="text-3xl md:text-4xl font-[1000] text-brand-text tracking-tighter uppercase leading-none mb-4">CRAMMERL<span className="text-brand-primary">Y</span></h1>
                     <div className="inline-block px-4 py-1.5 bg-brand-primary/10 rounded-full border border-brand-primary/20">
+
                         <p className="text-[9px] md:text-[10px] font-black text-brand-primary uppercase tracking-[0.4em]">PRO VERSION 1.2.0</p>
                     </div>
                 </div>
@@ -52,6 +53,7 @@ function AboutModal({ onClose }) {
                         by Global Edge Team
                     </div>
                     <p className="text-[8px] md:text-[9px] font-medium text-brand-muted mt-3 uppercase tracking-widest">© 2026 Crammerly Systems Inc. All rights reserved.</p>
+
                 </div>
             </div>
         </div>

@@ -17,7 +17,7 @@ async function verify() {
 
     // Verify MongoDB
     try {
-        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/crammerly');
+        await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/Crammerly');
         const collections = await mongoose.connection.db.listCollections().toArray();
         const names = collections.map(c => c.name);
         console.log("✅ MongoDB Connection: OK");
