@@ -60,7 +60,7 @@ jobs:
       - name: Hardened Security Audit
         run: npm run security:audit
       - name: Archive SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: crammerly-sbom
           path: bom.json
