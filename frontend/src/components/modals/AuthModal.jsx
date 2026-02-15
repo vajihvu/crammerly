@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Sparkles, Mail, Lock, ArrowRight, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
+import PasswordStrengthMeter from '../auth/PasswordStrengthMeter';
 
 function AuthModal({ onClose, onGoogleLogin }) {
   const { login, register } = useAuth();
@@ -110,6 +111,9 @@ function AuthModal({ onClose, onGoogleLogin }) {
                   required
                 />
               </div>
+              {isSignUp && password && (
+                <PasswordStrengthMeter password={password} userInputs={[name, email]} />
+              )}
             </div>
 
             {error && <p className="text-[10px] font-bold text-brand-danger uppercase tracking-wider text-center bg-brand-danger/10 p-3 rounded-xl border border-brand-danger/20">{error}</p>}
@@ -142,10 +146,26 @@ function AuthModal({ onClose, onGoogleLogin }) {
 
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="mt-8 py-4 text-xs font-black text-brand-primary uppercase tracking-[0.15em] hover:opacity-70 transition-opacity w-full text-center"
+            className="mt-8 py-2 text-xs font-black text-brand-primary uppercase tracking-[0.15em] hover:opacity-70 transition-opacity w-full text-center"
           >
             {isSignUp ? 'Already have credentials? Log In' : 'Need authorization? Create Account'}
           </button>
+
+          {!isSignUp && (
+            <button
+              onClick={() => {
+                onClose();
+                // Navigate to forgot password using window.location or we could use Link/useNavigate
+                // but since this is a modal that might be used anywhere, 
+                // and we're inside the context of Router, window.location is a safe bet for quick exit.
+                // Better: navigate via prop or just window.location.href
+                window.location.href = '/forgot-password';
+              }}
+              className="mt-2 py-2 text-[10px] font-bold text-brand-text-dim uppercase tracking-widest hover:text-brand-primary transition-colors w-full text-center"
+            >
+              Forgot Secret Credentials?
+            </button>
+          )}
         </div>
 
         <button

@@ -49,7 +49,7 @@ export const observabilityMiddleware = (req, res, next) => {
     next();
 };
 
-const SENSITIVE_FIELDS = ['password', 'token', 'refreshToken', 'secret', 'key', 'auth', 'authorization'];
+const SENSITIVE_FIELDS = ['password', 'token', 'refreshToken', 'secret', 'key', 'auth', 'authorization', 'cookie', 'xsrf', 'csrf'];
 
 const scrubSensitiveData = (data) => {
     if (!data || typeof data !== 'object') return data;

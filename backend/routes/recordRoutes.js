@@ -7,8 +7,13 @@ import {
     deleteRecord,
 } from '../controllers/recordController.js';
 import { protect } from '../middleware/auth.js';
-import { validate } from '../middleware/validator.js';
+import { validate, validateParams } from '../middleware/validator.js';
 import { recordSchema, updateRecordSchema } from '../schemas/record.schema.js';
+import { mongoIdSchema } from '../schemas/common.schema.js';
+import { z } from 'zod';
+
+const idParamSchema = z.object({ id: mongoIdSchema });
+
 
 const router = express.Router();
 
@@ -104,8 +109,9 @@ router.route('/')
  *         description: Record removed
  */
 router.route('/:id')
-    .get(getRecordById)
-    .put(validate(updateRecordSchema), updateRecord)
-    .delete(deleteRecord);
+    .get(validateParams(idParamSchema), getRecordById)
+    .put(validateParams(idParamSchema), validate(updateRecordSchema), updateRecord)
+    .delete(validateParams(idParamSchema), deleteRecord);
+
 
 export default router;

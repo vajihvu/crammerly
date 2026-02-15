@@ -7,28 +7,38 @@ import {
     generateAccessToken,
     generateRefreshToken,
     hashToken,
-    rotateRefreshToken
+    rotateRefreshToken,
+    generateVerificationToken
 } from '../utils/tokenService.js';
 import { logAuditEvent } from '../middleware/auditMiddleware.js';
 import {
     notifyNewDeviceLogin,
     notifyPasswordChange,
-    checkBreachedPassword
+    notifyRepeatedLockouts,
+    checkBreachedPassword,
+    sendVerificationEmail,
+    sendPasswordResetEmail
 } from '../utils/securityNotifier.js';
+import { validatePasswordStrength } from '../utils/passwordPolicy.js';
 
 const COOKIE_OPTIONS = {
+    path: '/api/v1/auth/refresh',
     httpOnly: true,
     secure: config.isProduction,
     sameSite: 'strict',
+    domain: config.jwt.cookieDomain,
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days (Matches config.jwt.refreshExpiresIn logic)
 };
+
 
 /**
  * @desc    Register a new user
  * @route   POST /api/v1/auth/register
  */
 export const registerUser = async (req, res, next) => {
-    const { name, email, password } = req.body;
+    let { name, email, password } = req.body;
+    email = email.toLowerCase().trim();
+
 
     try {
         const userExists = await User.findOne({ email });
@@ -50,42 +60,56 @@ export const registerUser = async (req, res, next) => {
             return next(error);
         }
 
-        const user = await User.create({ name, email, password });
+        // 1. Policy: Entropy & Pattern Check
+        const strength = validatePasswordStrength(password, [name, email]);
+        if (!strength.isValid) {
+            await logAuditEvent({ req, event: 'AUTH_REGISTER', status: 'FAILURE', metadata: { email, reason: 'WEAK_ENTROPY' } });
+            const error = new Error(`Security Policy: ${strength.feedback}. ${strength.suggestion || ''}`);
+            error.statusCode = 400;
+            error.code = 'SEC_PWD_WEAK';
+            return next(error);
+        }
 
-        // Simple device detection
-        const userAgent = req.headers['user-agent'] || 'Unknown';
-        let deviceName = 'Unknown Device';
-        if (userAgent.includes('Windows')) deviceName = 'Windows PC';
-        else if (userAgent.includes('Macintosh')) deviceName = 'Mac';
-        else if (userAgent.includes('Android')) deviceName = 'Android Device';
-        else if (userAgent.includes('iPhone')) deviceName = 'iPhone';
+        // 2. Policy: Email Verification Setup
+        const verificationToken = generateVerificationToken();
+        const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-        // Create session
-        const refreshToken = generateRefreshToken();
-        await Session.create({
-            user: user._id,
-            refreshTokenHash: hashToken(refreshToken),
-            userAgent,
-            deviceName,
-            ipAddress: req.ip,
-            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        const user = await User.create({
+            name,
+            email,
+            password,
+            isEmailVerified: false,
+            emailVerificationToken: hashToken(verificationToken),
+            emailVerificationExpires: verificationExpires
         });
 
-        await logAuditEvent({ req, user: user._id, event: 'AUTH_REGISTER', status: 'SUCCESS' });
+        await logAuditEvent({ req, user: user._id, event: 'AUTH_REGISTER', status: 'SUCCESS', metadata: { method: 'EMAIL' } });
 
-        res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
-        res.status(201).json({
-            success: true,
-            data: {
-                _id: user._id,
-                name: user.name,
+        // 3. Dispatch Verification Loop (Strict separation of Registration/Authentication)
+        await sendVerificationEmail(req, user, verificationToken);
+
+        return res.sendSuccess({
+            message: 'Registration successful! Please check your email and verify your account to log in.',
+            user: {
+                id: user._id,
                 email: user.email,
-                token: generateAccessToken(user)
-            }
-        });
+                name: user.name
+            },
+            // Only expose token in dev for simulator/testing ease
+            ...(config.isProduction ? {} : { verificationToken })
+        }, 201);
     } catch (error) {
+        // Handle E11000 duplicate key error (Race condition safeguard)
+        if (error.code === 11000) {
+            await logAuditEvent({ req, event: 'AUTH_REGISTER', status: 'FAILURE', metadata: { email, reason: 'RACE_CONDITION_DUPLICATE' } });
+            const duplicateError = new Error('User with this email or tag already exists');
+            duplicateError.statusCode = 400;
+            duplicateError.code = 'RES_DUPLICATE';
+            return next(duplicateError);
+        }
         next(error);
     }
+
 };
 
 /**
@@ -93,16 +117,27 @@ export const registerUser = async (req, res, next) => {
  * @route   POST /api/v1/auth/login
  */
 export const loginUser = async (req, res, next) => {
-    const { email, password } = req.body;
+    let { email, password } = req.body;
+    email = email.toLowerCase().trim();
+
 
     try {
-        const user = await User.findOne({ email }).select('+password loginAttempts lockUntil requiresCaptcha');
+        const user = await User.findOne({ email }).select('+password loginAttempts lockUntil requiresCaptcha isEmailVerified');
 
         if (!user) {
             await logAuditEvent({ req, event: 'AUTH_LOGIN', status: 'FAILURE', metadata: { email, reason: 'NOT_FOUND' } });
             const error = new Error('Invalid email or password');
             error.statusCode = 401;
             error.code = 'AUTH_INVALID';
+            throw error;
+        }
+
+        // 0. Verify Email Status
+        if (!user.isEmailVerified) {
+            await logAuditEvent({ req, user: user._id, event: 'AUTH_LOGIN', status: 'FAILURE', metadata: { reason: 'EMAIL_UNVERIFIED' } });
+            const error = new Error('Your email is not verified. Please check your inbox for the activation link.');
+            error.statusCode = 403;
+            error.code = 'AUTH_UNVERIFIED';
             throw error;
         }
 
@@ -140,7 +175,7 @@ export const loginUser = async (req, res, next) => {
 
             // Create session
             const refreshToken = generateRefreshToken();
-            await Session.create({
+            const session = await Session.create({
                 user: user._id,
                 refreshTokenHash: hashToken(refreshToken),
                 userAgent,
@@ -155,18 +190,25 @@ export const loginUser = async (req, res, next) => {
             await logAuditEvent({ req, user: user._id, event: 'AUTH_LOGIN', status: 'SUCCESS' });
 
             res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
-            res.json({
-                success: true,
-                data: {
-                    _id: user._id,
+            return res.sendSuccess({
+                token: generateAccessToken(user, session._id),
+                user: {
+                    id: user._id,
                     name: user.name,
-                    email: user.email,
-                    token: generateAccessToken(user)
+                    email: user.email
                 }
             });
         } else {
             // Increment failures on password mismatch
             await user.incLoginAttempts();
+
+            // RE-FETCH: To get updated loginAttempts and totalLockouts if changed by incLoginAttempts
+            const updatedUser = await User.findById(user._id).select('loginAttempts totalLockouts lockUntil email');
+
+            // ALERT: Repeated Lockouts (Brute Force Anomaly)
+            if (updatedUser.totalLockouts >= 3) {
+                await notifyRepeatedLockouts(req, updatedUser, updatedUser.totalLockouts);
+            }
 
             await logAuditEvent({ req, event: 'AUTH_LOGIN', status: 'FAILURE', metadata: { email, reason: 'PASSWORD_MISMATCH' } });
 
@@ -200,33 +242,27 @@ export const refreshAccessToken = async (req, res, next) => {
     }
 
     try {
-        const hash = hashToken(oldRefreshToken);
-        const session = await Session.findOne({ refreshTokenHash: hash, isValid: true });
-
-        if (!session) {
-            const error = new Error('Invalid or expired session');
-            error.statusCode = 401;
-            error.code = 'AUTH_REVOKED';
-            throw error;
-        }
-
         const newRefreshToken = await rotateRefreshToken(
+            req,
             oldRefreshToken,
-            session.user,
             req.headers['user-agent'],
             req.ip
         );
 
+        // rotateRefreshToken ensures session is valid and not reused.
+        // We fetch the session again or just the user.
+        const hash = hashToken(newRefreshToken);
+        const session = await Session.findOne({ refreshTokenHash: hash });
         const user = await User.findById(session.user);
         if (!user) throw new Error('User not found');
 
         await logAuditEvent({ req, user: session.user, event: 'AUTH_REFRESH', status: 'SUCCESS' });
 
         res.cookie('refreshToken', newRefreshToken, COOKIE_OPTIONS);
-        res.json({
-            success: true,
-            data: { token: generateAccessToken(user) }
+        return res.sendSuccess({
+            token: generateAccessToken(user, session._id)
         });
+
     } catch (error) {
         await logAuditEvent({ req, event: 'AUTH_REFRESH', status: 'FAILURE', metadata: { reason: error.message } });
         console.error('Refresh Token Error:', error.message);
@@ -246,28 +282,50 @@ export const logoutUser = async (req, res, next) => {
         const refreshToken = req.cookies.refreshToken;
         if (refreshToken) {
             const hash = hashToken(refreshToken);
-            await Session.deleteOne({ refreshTokenHash: hash });
+            const session = await Session.findOne({ refreshTokenHash: hash });
+
+            if (session) {
+                session.isValid = false;
+                session.revokedAt = new Date();
+                await session.save();
+            }
+
             await logAuditEvent({ req, event: 'AUTH_LOGOUT', status: 'SUCCESS' });
         }
-        res.clearCookie('refreshToken');
-        res.json({ success: true, message: 'Logged out successfully' });
+
+        res.clearCookie('refreshToken', COOKIE_OPTIONS);
+        return res.sendSuccess({ message: 'Logged out' });
     } catch (error) {
         next(error);
     }
 };
 
-export const getUserProfile = async (req, res, next) => {
+/**
+ * @desc    Logout all devices
+ * @route   POST /api/v1/auth/logout-all
+ */
+export const logoutAllDevices = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user._id);
-        if (user) {
-            res.json({ success: true, data: { _id: user._id, name: user.name, email: user.email } });
-        } else {
-            res.status(404);
-            throw new Error('User not found');
-        }
+        // Increment tokenVersion to revoke all current access tokens
+        await User.findByIdAndUpdate(req.user._id, { $inc: { tokenVersion: 1 } });
+
+        await Session.updateMany(
+            { user: req.user._id, isValid: true },
+            { isValid: false, revokedAt: new Date() }
+        );
+
+        await logAuditEvent({ req, user: req.user._id, event: 'AUTH_LOGOUT_ALL', status: 'SUCCESS' });
+        res.clearCookie('refreshToken', COOKIE_OPTIONS);
+        return res.sendSuccess({ message: 'Logged out from all devices' });
     } catch (error) {
         next(error);
     }
+};
+
+
+
+export const getUserProfile = async (req, res) => {
+    return res.sendSuccess(req.user);
 };
 
 export const updateUserProfile = async (req, res, next) => {
@@ -303,46 +361,57 @@ export const updateUserProfile = async (req, res, next) => {
                 throw error;
             }
 
-            // 3. Update history before hashing new one
-            user.previousPasswords.unshift(user.password);
-            if (user.previousPasswords.length > 5) {
-                user.previousPasswords.pop();
+            // 3. Policy: Entropy & Pattern Check
+            const strength = validatePasswordStrength(newPassword, [user.name, user.email]);
+            if (!strength.isValid) {
+                const error = new Error(`Security Policy: ${strength.feedback}. ${strength.suggestion || ''}`);
+                error.statusCode = 400;
+                error.code = 'SEC_PWD_WEAK';
+                throw error;
             }
 
-            // 4. Set new password (hashing happens in pre-save hook)
+            // 4. Set new password (model pre-save handles history & versioning automatically)
             user.password = newPassword;
 
-            // 5. Revoke all existing sessions
-            await Session.updateMany({ user: user._id }, { isValid: false });
+            // 4. Invalidate EVERYTHING (Global Revocation)
+            // tokenVersion is handled in pre-save, but we ensure sessions are explicitly revoked here
+            await Session.updateMany(
+                { user: user._id, isValid: true },
+                {
+                    isValid: false,
+                    revokedAt: new Date()
+                }
+            );
 
-            // 6. Notify user
+            // 5. Notify user
             await notifyPasswordChange(req, user);
         }
 
+
         const updatedUser = await user.save();
 
+
         // If password changed, issue new refresh token & session
+        let newSessionId = req.sessionId;
         if (passwordChanged) {
             const refreshToken = generateRefreshToken();
-            await Session.create({
+            const session = await Session.create({
                 user: user._id,
                 refreshTokenHash: hashToken(refreshToken),
                 userAgent: req.headers['user-agent'],
                 ipAddress: req.ip,
                 expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
             });
+            newSessionId = session._id;
 
             res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
         }
 
-        res.json({
-            success: true,
-            data: {
-                _id: updatedUser._id,
-                name: updatedUser.name,
-                email: updatedUser.email,
-                token: generateAccessToken(updatedUser)
-            }
+        return res.sendSuccess({
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            token: generateAccessToken(updatedUser, newSessionId)
         });
     } catch (error) {
         next(error);
@@ -350,23 +419,39 @@ export const updateUserProfile = async (req, res, next) => {
 };
 
 export const deactivateUser = async (req, res, next) => {
+    const { password } = req.body;
+
     try {
-        const user = await User.findById(req.user._id);
-        if (user) {
-            user.isActive = false;
-            await user.save();
-            await Session.deleteMany({ user: user._id }); // Revoke all sessions
-            await logAuditEvent({ req, user: user._id, event: 'USER_DEACTIVATE', status: 'SUCCESS' });
-            res.clearCookie('refreshToken');
-            res.json({ success: true, message: 'Account deactivated successfully' });
-        } else {
-            res.status(404);
-            throw new Error('User not found');
+        const user = await User.findById(req.user._id).select('+password');
+        if (!user) {
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            throw error;
         }
+
+        if (!password || !(await user.matchPassword(password))) {
+            const error = new Error('Incorrect password. Account deactivation requires confirmation.');
+            error.statusCode = 401;
+            error.code = 'AUTH_INVALID';
+            throw error;
+        }
+
+        user.isActive = false;
+        await user.save();
+        await Session.updateMany(
+            { user: user._id, isValid: true },
+            { isValid: false, revokedAt: new Date() }
+        ); // Revoke all sessions
+
+        await logAuditEvent({ req, user: user._id, event: 'USER_DEACTIVATE', status: 'SUCCESS' });
+        res.clearCookie('refreshToken', COOKIE_OPTIONS);
+        return res.sendSuccess({ message: 'Account deactivated successfully' });
+
     } catch (error) {
         next(error);
     }
 };
+
 
 /**
  * @desc    Get user onboarding state
@@ -381,20 +466,23 @@ export const getOnboardingState = async (req, res, next) => {
             throw new Error('User not found');
         }
 
+        const [todoCount, recordCount] = await Promise.all([
+            Todo.countDocuments({ user_id: user._id }),
+            Record.countDocuments({ userId: user._id })
+        ]);
+
         const steps = [
             { id: 'profile', label: 'Complete Profile', done: !!user.name },
-            { id: 'todo', label: 'Create First Todo', done: (await Todo.countDocuments({ user_id: user._id })) > 0 },
-            { id: 'record', label: 'Log First Study Session', done: (await Record.countDocuments({ userId: user._id })) > 0 }
+            { id: 'todo', label: 'Create First Todo', done: todoCount > 0 },
+            { id: 'record', label: 'Log First Study Session', done: recordCount > 0 }
         ];
 
-        res.json({
-            success: true,
-            data: {
-                isOnboarded: user.isOnboarded,
-                steps,
-                nextStep: steps.find(s => !s.done) || null
-            }
+        return res.sendSuccess({
+            isOnboarded: user.isOnboarded,
+            steps,
+            nextStep: steps.find(s => !s.done) || null
         });
+
     } catch (error) {
         next(error);
     }
@@ -409,6 +497,236 @@ export const completeOnboarding = async (req, res, next) => {
     try {
         await User.findByIdAndUpdate(req.user._id, { isOnboarded: true });
         res.json({ success: true, message: 'Onboarding completed! Welcome to the premium experience.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Get all active sessions for the user
+ * @route   GET /api/v1/auth/sessions
+ * @access  Private
+ */
+export const getUserSessions = async (req, res, next) => {
+    try {
+        const sessions = await Session.find({
+            user: req.user._id,
+            isValid: true,
+            expiresAt: { $gt: new Date() }
+        }).sort({ lastUsedAt: -1 }).lean();
+
+        // Need hashToken to identify current session from cookie
+        const { hashToken } = await import('../utils/tokenService.js');
+
+        // Identify current session by matching the refresh token hash if cookie exists
+        let currentSessionHash = null;
+        if (req.cookies.refreshToken) {
+            currentSessionHash = hashToken(req.cookies.refreshToken);
+        }
+
+        const formattedSessions = sessions.map(s => ({
+            id: s._id,
+            deviceName: s.deviceName,
+            ipAddress: s.ipAddress,
+            userAgent: s.userAgent,
+            lastUsedAt: s.lastUsedAt,
+            isCurrent: s.refreshTokenHash === currentSessionHash
+        }));
+
+        return res.sendSuccess(formattedSessions);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Revoke a specific session
+ * @route   DELETE /api/v1/auth/sessions/:id
+ * @access  Private
+ */
+export const revokeSession = async (req, res, next) => {
+    try {
+        const session = await Session.findById(req.params.id);
+
+        if (!session) {
+            const error = new Error('Session record not found.');
+            error.statusCode = 404;
+            error.code = 'RES_NOT_FOUND';
+            throw error;
+        }
+
+        // Ownership Check: Only the owner can revoke their own device sessions
+        if (session.user.toString() !== req.user._id.toString()) {
+            console.warn(`SECURITY ALERT: User ${req.user._id} attempted to revoke session ${session._id} belonging to user ${session.user}`);
+            const error = new Error('Access Denied: You do not have permission to revoke this session.');
+            error.statusCode = 403;
+            error.code = 'AUTH_FORBIDDEN';
+            throw error;
+        }
+
+        session.isValid = false;
+        session.revokedAt = new Date();
+        await session.save();
+
+        await logAuditEvent({
+            req,
+            user: req.user._id,
+            event: 'AUTH_SESSION_REVOKE',
+            status: 'SUCCESS',
+            metadata: { sessionId: session._id, device: session.deviceName }
+        });
+
+        return res.sendSuccess({ message: 'Session revoked successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Verify email using token
+ * @route   GET /api/v1/auth/verify-email/:token
+ */
+export const verifyEmail = async (req, res, next) => {
+    try {
+        const { token } = req.params;
+        const hashedToken = hashToken(token);
+
+        const user = await User.findOne({
+            emailVerificationToken: hashedToken,
+            emailVerificationExpires: { $gt: Date.now() }
+        }).select('+password +previousPasswords');
+
+        if (!user) {
+            const error = new Error('Verification token is invalid or has expired');
+            error.statusCode = 400;
+            error.code = 'AUTH_VERIFY_INVALID';
+            throw error;
+        }
+
+        user.isEmailVerified = true;
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpires = undefined;
+        await user.save();
+
+        await logAuditEvent({
+            req,
+            user: user._id,
+            event: 'AUTH_VERIFY_EMAIL',
+            status: 'SUCCESS'
+        });
+
+        return res.sendSuccess({ message: 'Email verified successfully! You can now log in.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Request password reset token
+ * @route   POST /api/v1/auth/forgot-password
+ */
+export const forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+        if (!user) {
+            // Security: Don't reveal if user exists
+            return res.sendSuccess({ message: 'If an account exists with that email, a reset link has been sent.' });
+        }
+
+        const resetToken = generateVerificationToken();
+        user.resetPasswordToken = hashToken(resetToken);
+        user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // 15 minutes (Short Expiry Policy)
+
+        await user.save();
+
+        await logAuditEvent({
+            req,
+            user: user._id,
+            event: 'AUTH_PWD_RESET_REQUEST',
+            status: 'SUCCESS'
+        });
+
+        // 3. Dispatch Reset Loop
+        await sendPasswordResetEmail(req, user, resetToken);
+
+        return res.sendSuccess({
+            message: 'If an account exists with that email, a password reset link has been sent to your inbox.',
+            // Only expose token in dev for simulator/testing ease
+            ...(config.isProduction ? {} : { resetToken })
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Reset password using token
+ * @route   POST /api/v1/auth/reset-password/:token
+ */
+export const resetPassword = async (req, res, next) => {
+    try {
+        const { token } = req.params;
+        const { password } = req.body;
+        const hashedToken = hashToken(token);
+
+        const user = await User.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: { $gt: Date.now() }
+        }).select('+password +previousPasswords');
+
+        if (!user) {
+            const error = new Error('Password reset token is invalid or has expired');
+            error.statusCode = 400;
+            error.code = 'AUTH_RESET_INVALID';
+            throw error;
+        }
+
+        // 1. Policy: Entropy & Pattern Check
+        const strength = validatePasswordStrength(password, [user.name, user.email]);
+        if (!strength.isValid) {
+            const error = new Error(`Security Policy: ${strength.feedback}. ${strength.suggestion || ''}`);
+            error.statusCode = 400;
+            error.code = 'SEC_PWD_WEAK';
+            throw error;
+        }
+
+        // 2. Policy: Reuse Prevention
+        const isReused = await user.isPasswordPreviouslyUsed(password);
+        if (isReused) {
+            const error = new Error('Security Policy: You cannot reuse a recent password.');
+            error.statusCode = 400;
+            error.code = 'SEC_PWD_REUSE';
+            throw error;
+        }
+
+        // 3. Update password & clear reset fields
+        user.password = password;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+
+        // 4. Invalidate EVERYTHING (Global Revocation)
+        // Resetting password must cryptographically kill all existing access tokens via version rotation
+        // and explicitly mark all refresh sessions as invalid.
+        await Session.updateMany(
+            { user: user._id, isValid: true },
+            {
+                isValid: false,
+                revokedAt: new Date()
+            }
+        );
+
+        await user.save();
+
+        await logAuditEvent({
+            req,
+            user: user._id,
+            event: 'AUTH_PWD_RESET_SUCCESS',
+            status: 'SUCCESS'
+        });
+
+        return res.sendSuccess({ message: 'Password has been reset successfully. You can now log in.' });
     } catch (error) {
         next(error);
     }

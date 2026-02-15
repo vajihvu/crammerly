@@ -6,20 +6,51 @@ import { logger } from './utils/logger.js';
 import { performancePlugin } from './middleware/performancePlugin.js';
 import { startMaintenanceScheduler } from './utils/maintenanceService.js';
 import { initSocket } from './utils/socket.js';
+import { initBackgroundJobs } from './utils/scheduler.js';
+import './workers/cleanupWorker.js'; // Start worker
+
 
 // Apply global mongoose performance tracking
 mongoose.plugin(performancePlugin);
 
-// Database connection
-const connectDB = async () => {
+// Database connection with retry logic
+const connectDB = async (retryCount = 0) => {
+    const maxRetries = 5;
+    const retryDelay = Math.min(Math.pow(2, retryCount) * 1000, 30000); // Exponential backoff
+
+    // Mongoose Connection Event Observers (Operational Monitoring)
+    mongoose.connection.on('disconnected', () => {
+        logger.warn('⚠️ MongoDB Disconnected! Connection drop detected.');
+    });
+
+    mongoose.connection.on('reconnected', () => {
+        logger.info('✅ MongoDB Reconnected. Persistence restored.');
+    });
+
+    mongoose.connection.on('error', (err) => {
+        logger.error(`❌ MongoDB Connection Error: ${err.message}`, { fatal: false });
+    });
+
     try {
-        const conn = await mongoose.connect(config.mongoUri);
+        const conn = await mongoose.connect(config.mongoUri, {
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        });
         logger.info(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
-        logger.error(`Database Connection Error: ${error.message}`);
+        logger.error(`Database Connection Error (Attempt ${retryCount + 1}/${maxRetries}): ${error.message}`);
+
+        if (retryCount < maxRetries - 1) {
+            logger.info(`Retrying in ${retryDelay / 1000} seconds...`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            return connectDB(retryCount + 1);
+        }
+
+        logger.error('CRITICAL: Database connection failed after maximum retries.');
         process.exit(1);
     }
 };
+
 
 // Startup Self-Test (Sanity checks)
 const startupSelfTest = async () => {
@@ -49,7 +80,9 @@ const startServer = async () => {
     if (!config.isTest) {
         await connectDB();
         startMaintenanceScheduler();
+        await initBackgroundJobs();
     }
+
 
     server = app.listen(config.port, '0.0.0.0', () => {
         const diff = process.hrtime(startTime);

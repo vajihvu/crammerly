@@ -8,12 +8,9 @@ import Todo from '../models/Todo.js';
 export const getTodos = async (req, res, next) => {
     try {
         const todos = await Todo.find({ user_id: req.user._id });
-        res.json({
-            success: true,
-            data: todos,
-            message: todos.length === 0 ? "You haven't added any tasks yet. Stay productive and add your first one!" : undefined
-        });
+        return res.sendSuccess(todos, 200, todos.length === 0 ? "You haven't added any tasks yet. Stay productive and add your first one!" : undefined);
     } catch (error) {
+
         next(error);
     }
 };
@@ -31,10 +28,7 @@ export const createTodo = async (req, res, next) => {
             text,
             completed: false
         });
-        res.status(201).json({
-            success: true,
-            data: todo
-        });
+        return res.sendSuccess(todo, 201);
     } catch (error) {
         next(error);
     }
@@ -51,11 +45,9 @@ export const toggleTodo = async (req, res, next) => {
         if (todo) {
             todo.completed = !todo.completed;
             const updatedTodo = await todo.save();
-            res.json({
-                success: true,
-                data: updatedTodo
-            });
+            return res.sendSuccess(updatedTodo);
         } else {
+
             const error = new Error('Todo not found');
             error.statusCode = 404;
             error.code = 'RES_NOT_FOUND';
@@ -76,11 +68,9 @@ export const deleteTodo = async (req, res, next) => {
         const todo = await Todo.findOne({ _id: req.params.id, user_id: req.user._id });
         if (todo) {
             await todo.deleteOne();
-            res.json({
-                success: true,
-                message: 'Todo removed'
-            });
+            return res.sendSuccess({ message: 'Todo removed' });
         } else {
+
             const error = new Error('Todo not found');
             error.statusCode = 404;
             error.code = 'RES_NOT_FOUND';

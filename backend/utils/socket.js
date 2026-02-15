@@ -8,7 +8,7 @@ let io;
 export const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: [config.clientUrl, 'http://localhost:5173', 'https://crammerly.io'],
+            origin: config.clientUrls,
             methods: ['GET', 'POST'],
             credentials: true
         }

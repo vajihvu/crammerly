@@ -1,0 +1,39 @@
+config:
+  target: "http://localhost:5000/api/v1"
+  phases:
+    - duration: 30
+      arrivalRate: 5
+      name: "Sustained Abuse Load"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+
+scenarios:
+  - name: "Login Bruteforce/Abuse"
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "abuse_test@crammerly.io"
+            password: "wrong_password_123"
+          expect:
+            - statusCode: [401, 429]
+
+  - name: "Refresh Token Spam"
+    flow:
+      - post:
+          url: "/auth/refresh"
+          headers:
+            Cookie: "refreshToken=fake_token_spam"
+          expect:
+            - statusCode: [401, 429, 403]
+
+  - name: "Large Payload Attack"
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "bot@evil.com"
+            password: "THIS_IS_A_VERY_LONG_PASSWORD_THAT_INTENDS_TO_STRETCH_THE_LIMITS_OF_THE_JSON_PARSER_WHICH_IS_CAPPED_AT_10KB_SO_WE_ARE_SENDING_A_SUBSTANTIAL_AMOUNT_OF_DATA_HERE_TO_SEE_IF_THE_APP_REJECTS_IT_PROPERLY_AS_EXPECTED_BY_THE_SECURITY_CONFIGURATION_ESTABLISHED_IN_APP_JS_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A_A"
+          expect:
+            - statusCode: [413, 400, 429]

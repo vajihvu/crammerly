@@ -11,14 +11,9 @@ export const depthLimit = (maxDepth = 5) => {
         if (req.body && typeof req.body === 'object') {
             const depth = getDepth(req.body);
             if (depth > maxDepth) {
-                return res.status(400).json({
-                    success: false,
-                    error: {
-                        code: 'VAL_MALFORMED_JSON',
-                        message: `Body depth of ${depth} exceeds limit of ${maxDepth}`
-                    }
-                });
+                return res.sendError(`Body depth of ${depth} exceeds limit of ${maxDepth}`, 400, 'VAL_MALFORMED_JSON');
             }
+
         }
         next();
     };

@@ -10,10 +10,10 @@ describe('Account Lockout Integration Tests', () => {
 
     it('should lock account after 5 failed attempts', async () => {
         const email = 'lockout@test.com';
-        const password = 'Password123';
+        const password = 'Correct-Horse-Battery-Staple-2026!';
 
         // Create user
-        await User.create({ name: 'Lockout User', email, password });
+        await User.create({ name: 'Lockout User', email, password, isEmailVerified: true });
 
         // 5 failed attempts
         for (let i = 0; i < 5; i++) {
@@ -37,8 +37,8 @@ describe('Account Lockout Integration Tests', () => {
 
     it('should reset attempts after high failures but before lockout on successful login', async () => {
         const email = 'reset@test.com';
-        const password = 'Password123';
-        await User.create({ name: 'Reset User', email, password });
+        const password = 'Correct-Horse-Battery-Staple-2026!';
+        await User.create({ name: 'Reset User', email, password, isEmailVerified: true });
 
         // 3 failed attempts
         for (let i = 0; i < 3; i++) {
@@ -54,6 +54,7 @@ describe('Account Lockout Integration Tests', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
+
 
         // Verify in DB that attempts are 0
         const user = await User.findOne({ email });

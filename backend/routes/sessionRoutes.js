@@ -1,6 +1,11 @@
 import express from 'express';
 import { getSessions, revokeSession } from '../controllers/sessionController.js';
 import { protect } from '../middleware/auth.js';
+import { validateParams } from '../middleware/validator.js';
+import { mongoIdSchema } from '../schemas/common.schema.js';
+import { z } from 'zod';
+
+const idParamSchema = z.object({ id: mongoIdSchema });
 
 const router = express.Router();
 
@@ -41,6 +46,6 @@ router.get('/', getSessions);
  *       200:
  *         description: Session revoked
  */
-router.delete('/:id', revokeSession);
+router.delete('/:id', validateParams(idParamSchema), revokeSession);
 
 export default router;

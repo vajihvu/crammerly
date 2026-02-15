@@ -7,13 +7,22 @@ import {
     deactivateUser,
     refreshAccessToken,
     logoutUser,
+    logoutAllDevices,
     getOnboardingState,
-    completeOnboarding
+    completeOnboarding,
+    getUserSessions,
+    revokeSession,
+    verifyEmail,
+    forgotPassword,
+    resetPassword
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validator.js';
 import { verifyCaptcha } from '../middleware/captcha.js';
-import { registerSchema, loginSchema } from '../schemas/auth.schema.js';
+import { registerSchema, loginSchema, updateProfileSchema, resetPasswordSchema } from '../schemas/auth.schema.js';
+import { csrfGuard } from '../middleware/csrf.js';
+import { loginLimiter, refreshLimiter } from '../middleware/rateLimiter.js';
+
 
 const router = express.Router();
 
@@ -80,7 +89,7 @@ router.post('/register', verifyCaptcha, validate(registerSchema), registerUser);
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', verifyCaptcha, validate(loginSchema), loginUser);
+router.post('/login', loginLimiter, verifyCaptcha, validate(loginSchema), loginUser);
 
 /**
  * @openapi
@@ -95,7 +104,7 @@ router.post('/login', verifyCaptcha, validate(loginSchema), loginUser);
  *       401:
  *         description: Session expired
  */
-router.post('/refresh', refreshAccessToken);
+router.post('/refresh', refreshLimiter, csrfGuard, refreshAccessToken);
 
 /**
  * @openapi
@@ -108,7 +117,10 @@ router.post('/refresh', refreshAccessToken);
  *       200:
  *         description: Logged out
  */
-router.post('/logout', logoutUser);
+router.post('/logout', protect, csrfGuard, logoutUser);
+
+router.post('/logout-all', protect, logoutAllDevices);
+
 
 router.route('/profile')
     /**
@@ -134,7 +146,8 @@ router.route('/profile')
      *       200:
      *         description: Profile updated
      */
-    .put(protect, updateUserProfile)
+    .put(protect, validate(updateProfileSchema), updateUserProfile)
+
     /**
      * @openapi
      * /auth/profile:
@@ -173,5 +186,104 @@ router.get('/onboarding', protect, getOnboardingState);
  *         description: Onboarding completed
  */
 router.post('/onboarding/complete', protect, completeOnboarding);
+
+/**
+ * @openapi
+ * /auth/sessions:
+ *   get:
+ *     tags: [Authentication]
+ *     summary: List all active device sessions
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: List of sessions
+ */
+router.get('/sessions', protect, getUserSessions);
+
+/**
+ * @openapi
+ * /auth/sessions/{id}:
+ *   delete:
+ *     tags: [Authentication]
+ *     summary: Revoke a specific session
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     security: [{ bearerAuth: [] }]
+ *     responses:
+ *       200:
+ *         description: Session revoked
+ */
+router.delete('/sessions/:id', protect, revokeSession);
+
+/**
+ * @openapi
+ * /auth/verify-email/{token}:
+ *   get:
+ *     tags: [Authentication]
+ *     summary: Verify user email
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Email verified
+ *       400:
+ *         description: Invalid or expired token
+ */
+router.get('/verify-email/:token', verifyEmail);
+
+/**
+ * @openapi
+ * /auth/forgot-password:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Request password reset
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, example: "user@example.com" }
+ *     responses:
+ *       200:
+ *         description: Success message
+ */
+router.post('/forgot-password', forgotPassword);
+
+/**
+ * @openapi
+ * /auth/reset-password/{token}:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Reset password using token
+ *     parameters:
+ *       - in: path
+ *         name: token
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [password]
+ *             properties:
+ *               password: { type: string, example: "NewStrongPassword123!" }
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ */
+router.post('/reset-password/:token', csrfGuard, validate(resetPasswordSchema), resetPassword);
 
 export default router;

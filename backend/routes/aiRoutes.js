@@ -1,7 +1,8 @@
 import express from 'express';
 import { protect } from '../middleware/auth.js';
 import axios from 'axios';
-import { body, validationResult } from 'express-validator';
+import { validate } from '../middleware/validator.js';
+import { chatSchema } from '../schemas/ai.schema.js';
 import { logAgentActivity } from '../utils/securityLogger.js';
 import { logAuditEvent } from '../middleware/auditMiddleware.js';
 import config from '../config/index.js';
@@ -45,23 +46,8 @@ const SENSITIVE_KEYWORDS = ['password', 'secret', 'API_KEY', 'MONGO_URI', 'JWT_S
 router.post(
     '/chat',
     protect,
-    [
-        body('message').not().isEmpty().withMessage('Message is required').trim().escape(),
-        body('context').optional().isArray()
-    ],
+    validate(chatSchema),
     async (req, res, next) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({
-                success: false,
-                error: {
-                    code: 'VAL_SCHEMA_FAIL',
-                    message: 'Validation failed',
-                    details: errors.array()
-                }
-            });
-        }
-
         const { message, context = [] } = req.body;
 
         // 1. Guard against Prompt Injection & Data Exfiltration
@@ -73,14 +59,9 @@ router.post(
             await logAgentActivity('SUSPICIOUS_PROMPT', req.user._id, { message });
             await logAuditEvent({ req, event: 'AI_SUSPICIOUS_PROMPT', status: 'FAILURE', metadata: { message } });
 
-            return res.status(400).json({
-                success: false,
-                error: {
-                    code: 'SEC_SENSITIVE_CONTENT',
-                    message: 'Security alert: Your prompt contains restricted keywords.'
-                }
-            });
+            return res.sendError('Security alert: Your prompt contains restricted keywords.', 400, 'SEC_SENSITIVE_CONTENT');
         }
+
 
         try {
             // 2. Proxy request to deepseek (or any AI)
@@ -111,11 +92,9 @@ router.post(
             await logAgentActivity('AI_REQUEST', req.user._id, { model: 'deepseek-chat' });
             await logAuditEvent({ req, event: 'AI_CHAT_SUCCESS', status: 'SUCCESS' });
 
-            res.json({
-                success: true,
-                data: response.data
-            });
+            return res.sendSuccess(response.data);
         } catch (error) {
+
             await logAgentActivity('AI_ERROR', req.user._id, { error: error.message });
             await logAuditEvent({ req, event: 'AI_CHAT_ERROR', status: 'FAILURE', metadata: { error: error.message } });
 
@@ -123,5 +102,6 @@ router.post(
         }
     }
 );
+
 
 export default router;

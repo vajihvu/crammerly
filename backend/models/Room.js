@@ -34,7 +34,7 @@ const roomSchema = new mongoose.Schema({
     code: {
         type: String,
         uppercase: true,
-        index: true
+        index: { unique: true, sparse: true }
     },
     creator_id: {
         type: mongoose.Schema.Types.ObjectId,

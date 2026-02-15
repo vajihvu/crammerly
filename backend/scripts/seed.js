@@ -10,30 +10,38 @@ import Message from '../models/Message.js';
 import config from '../config/index.js';
 
 const seedData = async () => {
-    console.log('🌱 Starting database seeding...');
+    // 1. Strict Production Guard
+    if (config.isProduction || process.env.NODE_ENV === 'production') {
+        console.error('🛑 CRITICAL ERROR: Seeding is blocked in production environments to prevent data loss.');
+        process.exit(1);
+    }
+
+    console.log('🌱 Starting development database seeding...');
 
     try {
         await mongoose.connect(config.mongoUri);
         console.log('Connected to MongoDB');
 
-        // Clean existing data
+        // 2. Clean existing data (Only safe because we already checked for production)
         await User.deleteMany({});
         await Session.deleteMany({});
         await Room.deleteMany({});
         await Message.deleteMany({});
-        console.log('Cleaned existing Users, Sessions, Rooms, and Messages');
+        console.log('🧹 Cleaned existing development data');
 
         // Create Dev User
         const devUser = await User.create({
             name: 'Dev Admin',
-            email: 'admin@crammerly.io',
+            email: 'admin@Crammerly.io',
+
             password: 'Password123!', // Note: This will be hashed by pre-save hook
             role: 'admin',
             isOnboarded: true,
             tag: '0001'
         });
 
-        console.log('✅ Created Dev Admin: admin@crammerly.io / Password123!');
+        console.log('✅ Created Dev Admin: admin@Crammerly.io / Password123!');
+
 
         // Create a public room
         const demoRoom = await Room.create({
@@ -52,6 +60,7 @@ const seedData = async () => {
             room_id: demoRoom._id,
             sender_id: devUser._id,
             content: 'Welcome to Crammerly! This is a fresh MongoDB-powered room.',
+
             type: 'text'
         });
 

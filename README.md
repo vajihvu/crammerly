@@ -2,6 +2,7 @@
 
 Crammerly is a modern study platform with integrated AI-assisted learning. It is built with a security-first mindset, focusing on both standard web vulnerabilities and AI-specific risks.
 
+
 ## 🚀 Quickstart
 
 ### 1. Prerequisites

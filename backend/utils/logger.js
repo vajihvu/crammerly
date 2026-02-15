@@ -2,7 +2,11 @@ import winston from 'winston';
 import config from '../config/index.js';
 
 // Keys to redact from logs for security/compliance
-const REDACT_KEYS = ['password', 'token', 'refreshToken', 'JWT_SECRET', 'MONGO_URI', 'DEEPSEEK_API_KEY'];
+const REDACT_KEYS = [
+    'password', 'token', 'refreshToken', 'JWT_SECRET', 'MONGO_URI',
+    'DEEPSEEK_API_KEY', 'x-csrf-token', 'xsrf', 'csrf', 'cookie',
+    'SENTRY_DSN', 'VITE_SENTRY_DSN'
+];
 
 const redact = winston.format((info) => {
     const result = { ...info };
@@ -31,6 +35,7 @@ const logger = winston.createLogger({
         config.isProduction ? winston.format.json() : winston.format.prettyPrint()
     ),
     defaultMeta: { service: 'crammerly-backend', env: config.env },
+
     transports: [
         new winston.transports.Console()
     ]

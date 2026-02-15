@@ -29,9 +29,26 @@ const auditLogSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now,
-        expires: '90d' // Automatically clean up logs after 90 days
+        immutable: true,
+        expires: '365d' // Increased retention for production compliance
     }
 });
+
+// HARDENING: Prevent any updates to audit logs (Immutability)
+auditLogSchema.pre('save', async function () {
+    if (!this.isNew) {
+        throw new Error('CRITICAL: Audit logs are immutable and cannot be modified.');
+    }
+});
+
+// Prevent deletions via middleware if possible (soft protection)
+auditLogSchema.pre('remove', async function () {
+    throw new Error('CRITICAL: Audit logs cannot be deleted.');
+});
+
+// COMPOUND INDEX: For fast security forensics
+auditLogSchema.index({ event: 1, createdAt: -1 });
+auditLogSchema.index({ user: 1, createdAt: -1 });
 
 const AuditLog = mongoose.model('AuditLog', auditLogSchema);
 export default AuditLog;

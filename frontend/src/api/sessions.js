@@ -9,7 +9,7 @@ export const sessionsApi = {
      * Fetch list of active sessions for the current user
      */
     getAll: () =>
-        client.get('/sessions').then(res => {
+        client.get('/auth/sessions').then(res => {
             const data = res.data;
             return data.success ? data.data : (data.data || data);
         }),
@@ -18,5 +18,5 @@ export const sessionsApi = {
      * Revoke a specific session
      */
     revoke: (id) =>
-        client.delete(`/sessions/${id}`).then(res => res.data.success),
+        client.delete(`/auth/sessions/${id}`).then(res => res.data.success),
 };

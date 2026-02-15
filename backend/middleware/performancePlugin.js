@@ -10,7 +10,7 @@ export const performancePlugin = (schema) => {
         next();
     });
 
-    schema.post(['find', 'findOne', 'countDocuments', 'aggregate', 'save', 'updateOne', 'deleteOne'], function (res, next) {
+    schema.post(['find', 'findOne', 'countDocuments', 'aggregate', 'save', 'updateOne', 'deleteOne'], function (_res) {
         if (this._startTime) {
             const diff = process.hrtime(this._startTime);
             const durationMs = (diff[0] * 1e3 + diff[1] * 1e-6).toFixed(2);
@@ -24,6 +24,5 @@ export const performancePlugin = (schema) => {
                 model: modelName
             });
         }
-        next();
     });
 };

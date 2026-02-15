@@ -2,14 +2,12 @@
 
 Thank you for your interest in contributing to Crammerly! We welcome contributions from everyone.
 
+
 ## 🚀 Getting Started
 
 1.  **Fork the repo** on GitHub.
 2.  **Clone your fork** locally.
 3.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
 4.  **Create a branch** for your changes:
     ```bash
     git checkout -b feature/your-feature-name

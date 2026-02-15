@@ -9,7 +9,7 @@ describe('Session management Integration Tests', () => {
     const testUser = {
         name: 'Test User',
         email: 'session@example.com',
-        password: 'Password123!',
+        password: 'Correct-Horse-Battery-Staple-2026!',
     };
 
     let token;
@@ -18,15 +18,31 @@ describe('Session management Integration Tests', () => {
     beforeEach(async () => {
         await User.deleteMany({});
         await Session.deleteMany({});
-        const res = await request(app).post(`${API_V1}/auth/register`).send(testUser);
-        if (res.status !== 201) {
-            throw new Error(`Auth failed: ${JSON.stringify(res.body)}`);
+
+        // 1. Register
+        const regRes = await request(app).post(`${API_V1}/auth/register`).send(testUser);
+        if (regRes.status !== 201) {
+            throw new Error(`Registration failed: ${JSON.stringify(regRes.body)}`);
         }
-        token = res.body.data.token;
-        userId = res.body.data._id;
+
+        // 2. Verify Email (Mandatory for Login)
+        await User.updateOne({ email: testUser.email }, { isEmailVerified: true });
+
+        // 3. Login to get token
+        const loginRes = await request(app).post(`${API_V1}/auth/login`).send({
+            email: testUser.email,
+            password: testUser.password
+        });
+
+        if (loginRes.status !== 200) {
+            throw new Error(`Login failed: ${JSON.stringify(loginRes.body)}`);
+        }
+
+        token = loginRes.body.data.token;
+        userId = loginRes.body.data.user.id;
     });
 
-    describe(`GET ${API_V1}/sessions`, () => {
+    describe(`GET ${API_V1}/auth/sessions`, () => {
         it('should return all active sessions for the user', async () => {
             // Create another session (simulate second login)
             await request(app).post(`${API_V1}/auth/login`).send({
@@ -35,7 +51,7 @@ describe('Session management Integration Tests', () => {
             });
 
             const res = await request(app)
-                .get(`${API_V1}/sessions`)
+                .get(`${API_V1}/auth/sessions`)
                 .set('Authorization', `Bearer ${token}`);
 
             expect(res.status).toBe(200);
@@ -47,21 +63,21 @@ describe('Session management Integration Tests', () => {
         });
 
         it('should fail if not authenticated', async () => {
-            const res = await request(app).get(`${API_V1}/sessions`);
+            const res = await request(app).get(`${API_V1}/auth/sessions`);
             expect(res.status).toBe(401);
         });
     });
 
-    describe(`DELETE ${API_V1}/sessions/:id`, () => {
+    describe(`DELETE ${API_V1}/auth/sessions/:id`, () => {
         it('should revoke a session', async () => {
             const sessionsRes = await request(app)
-                .get(`${API_V1}/sessions`)
+                .get(`${API_V1}/auth/sessions`)
                 .set('Authorization', `Bearer ${token}`);
 
             const sessionId = sessionsRes.body.data[0].id;
 
             const res = await request(app)
-                .delete(`${API_V1}/sessions/${sessionId}`)
+                .delete(`${API_V1}/auth/sessions/${sessionId}`)
                 .set('Authorization', `Bearer ${token}`);
 
             expect(res.status).toBe(200);
@@ -74,7 +90,7 @@ describe('Session management Integration Tests', () => {
 
         it('should fail if session does not belong to user', async () => {
             const res = await request(app)
-                .delete(`${API_V1}/sessions/65bc48e3e4f3a539c8000000`) // Non-existent ID
+                .delete(`${API_V1}/auth/sessions/65bc48e3e4f3a539c8000000`) // Non-existent ID
                 .set('Authorization', `Bearer ${token}`);
 
             expect(res.status).toBe(404);
