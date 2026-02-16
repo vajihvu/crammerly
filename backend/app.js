@@ -124,6 +124,7 @@ const corsOptions = {
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
     credentials: true,
+    maxAge: 86400 // Cache preflight for 24 hours
 };
 app.use(cors(corsOptions));
 

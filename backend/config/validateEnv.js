@@ -26,8 +26,11 @@ const envSchema = z.object({
     DATABASE_URL: z.string().optional(),
     DB_URL: z.string().optional(),
     JWT_SECRET: z.string().min(64, "JWT_SECRET must be at least 64 characters long for production security"),
-    CLIENT_URL: z.string().url("CLIENT_URL must be a valid URL (e.g., https://crammerly.io)"),
+    CLIENT_URL: z.string()
+        .transform(val => val.split(',').map(url => url.trim()))
+        .pipe(z.array(z.string().url("Each CLIENT_URL must be a valid URL"))),
     COOKIE_DOMAIN: z.string().min(1, "COOKIE_DOMAIN is required to prevent cross-site session leakage"),
+
 
     // SMTP Credentials (Required for registration & pass recovery)
     SMTP_HOST: z.string().min(1, "SMTP_HOST is required"),
