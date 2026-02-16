@@ -22,9 +22,10 @@ const envSchema = z.object({
     NODE_ENV: z.string().default(nodeEnv),
     PORT: z.string().transform(Number).default('5000'),
     // Support multiple names for the database connection string
-    MONGO_URI: z.string().optional(),
-    DATABASE_URL: z.string().optional(),
-    DB_URL: z.string().optional(),
+    MONGO_URI: z.string().min(1, "MONGO_URI cannot be empty").optional(),
+    DATABASE_URL: z.string().min(1, "DATABASE_URL cannot be empty").optional(),
+    DB_URL: z.string().min(1, "DB_URL cannot be empty").optional(),
+
     JWT_SECRET: z.string().min(64, "JWT_SECRET must be at least 64 characters long for production security"),
     CLIENT_URL: z.string()
         .transform(val => val.split(',').map(url => url.trim()))
