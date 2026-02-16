@@ -25,7 +25,6 @@ COPY --chown=app:app backend/ ./backend/
 
 # Copy dependencies from deps stage
 COPY --from=deps --chown=app:app /app/node_modules ./node_modules
-COPY --from=deps --chown=app:app /app/backend/node_modules ./backend/node_modules
 
 # Copy package manifest
 COPY --from=deps --chown=app:app /app/package.json ./package.json
