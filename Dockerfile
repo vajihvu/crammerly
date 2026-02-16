@@ -1,5 +1,6 @@
 # Stage 1: Dependency Resolver
 FROM node:22-alpine AS deps
+LABEL maintainer="crammerly-dev"
 WORKDIR /app
 
 # Copy package files for workspace
