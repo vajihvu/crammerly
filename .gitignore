@@ -72,3 +72,6 @@ vite.config.ts.timestamp-*
 smoke_results*.txt
 bom.json
 test_output_*.txt
+.vercel
+.netlify
+.cache
