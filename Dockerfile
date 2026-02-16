@@ -8,7 +8,7 @@ COPY backend/package*.json ./backend/
 
 # Install only production dependencies
 # This creates a lean node_modules for the final image
-RUN npm ci --workspace=backend --omit=dev
+RUN npm ci --workspace=backend --omit=dev --ignore-scripts
 
 # Stage 2: Runtime Environment
 FROM node:20-alpine AS runner
