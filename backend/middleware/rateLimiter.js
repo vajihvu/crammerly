@@ -69,3 +69,25 @@ export const apiLimiter = rateLimit({
         }
     }
 });
+
+/**
+ * AI Cost-Exhaustion Protection Limiter
+ * DeepSeek/AI credits are expensive. This guard prevents a single actor from 
+ * draining the API wallet.
+ */
+export const aiLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5, // Strictly limit to 5 AI requests per hour
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: store,
+    skip: () => config.isTest,
+    message: {
+        success: false,
+        error: {
+            code: 'API_AI_QUOTA_EXCEEDED',
+            message: 'AI quota exceeded for this hour. Please try again later.'
+        }
+    }
+});
+
