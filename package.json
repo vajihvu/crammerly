@@ -23,7 +23,7 @@
     "env:sync": "npm run env:sync --workspace=backend",
     "audit": "npm audit",
     "audit:fix": "npm audit fix",
-    "prepare": "node -e \"if(process.env.NODE_ENV !== 'production' && !process.env.CI) process.exit(0); else process.exit(1)\" || husky"
+    "prepare": "node -e \"if(!process.env.CI && process.env.NODE_ENV !== 'production') { try { require('husky').install() } catch (e) { console.log('Husky not found, skipping install') } }\""
   },
   "devDependencies": {
     "concurrently": "^9.2.1",
