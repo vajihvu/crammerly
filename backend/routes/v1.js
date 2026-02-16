@@ -6,6 +6,7 @@ import todoRoutes from './todoRoutes.js';
 import studySessionRoutes from './studySessionRoutes.js';
 import roomRoutes from './roomRoutes.js';
 import messageRoutes from './messageRoutes.js';
+import { aiLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
@@ -17,7 +18,7 @@ const router = express.Router();
 
 router.use('/auth', authRoutes);
 router.use('/records', recordRoutes);
-router.use('/ai', aiRoutes);
+router.use('/ai', aiLimiter, aiRoutes);
 router.use('/todos', todoRoutes);
 router.use('/study-sessions', studySessionRoutes);
 router.use('/rooms', roomRoutes);

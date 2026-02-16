@@ -10,7 +10,6 @@ import hpp from 'hpp';
 import morgan from 'morgan';
 import { nosqlSanitize } from './middleware/nosqlSanitize.js';
 import cookieParser from 'cookie-parser';
-// import xss from 'xss-clean';
 import swaggerUi from 'swagger-ui-express';
 import swaggerSpec from './config/swagger.js';
 import config from './config/index.js';
@@ -29,8 +28,10 @@ import { depthLimit } from './middleware/security.js';
 import { responseEnhancer } from './middleware/responseEnhancer.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import { csrfGuard } from './middleware/csrf.js';
+import { xssSanitize } from './middleware/xss.js';
 
 const app = express();
+
 
 // 0. Instrumentation (Sentry first)
 if (config.sentryDsn) {
@@ -95,7 +96,18 @@ app.set('trust proxy', 1);
 
 // 1. Security Headers (Helmet first)
 app.use(helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            imgSrc: ["'self'", "data:", "https://*.sentry.io"],
+            connectSrc: ["'self'", ...config.clientUrls, "https://*.sentry.io"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        }
+    },
     frameguard: { action: "deny" },
     hsts: {
         maxAge: 31536000,
@@ -130,7 +142,7 @@ if (config.isDevelopment) {
 }
 
 // 6. Data Sanitization & Security
-// app.use(xss());
+app.use(xssSanitize);
 app.use(responseEnhancer);
 app.use(nosqlSanitize);
 app.use(depthLimit(5));
