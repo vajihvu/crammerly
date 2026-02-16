@@ -16,7 +16,7 @@ let jestPath;
 try {
     // Try resolving from the current workspace or root
     jestPath = fileURLToPath(await import.meta.resolve('jest/bin/jest.js'));
-} catch (e) {
+} catch (_e) {
     // Fallback for some node versions/environments
     jestPath = path.resolve(__dirname, '../../node_modules/jest/bin/jest.js');
 }
