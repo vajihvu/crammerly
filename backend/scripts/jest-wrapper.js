@@ -11,8 +11,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 process.env.NODE_ENV = 'test';
 
-// Path to Jest executable
-const jestPath = path.resolve(__dirname, '../../node_modules/jest/bin/jest.js');
+// Path to Jest executable - Resolve dynamically for portability
+let jestPath;
+try {
+    // Try resolving from the current workspace or root
+    jestPath = fileURLToPath(await import.meta.resolve('jest/bin/jest.js'));
+} catch (e) {
+    // Fallback for some node versions/environments
+    jestPath = path.resolve(__dirname, '../../node_modules/jest/bin/jest.js');
+}
 
 const args = [
     '--experimental-vm-modules',

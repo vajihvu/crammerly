@@ -7,13 +7,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootPath = path.resolve(__dirname, '..');
 
 // Load env vars from the appropriate file
-const nodeEnv = process.env.NODE_ENV || 'development';
+const initialNodeEnv = process.env.NODE_ENV;
+const nodeEnv = initialNodeEnv || 'development';
 dotenv.config({ path: path.resolve(rootPath, `.env.${nodeEnv}`) });
 // Also load from .env as fallback
 dotenv.config({ path: path.resolve(rootPath, '.env') });
 
+// Force preserve initial NODE_ENV if it was set (dotenv shouldn't overwrite, but we ensure it)
+if (initialNodeEnv) {
+    process.env.NODE_ENV = initialNodeEnv;
+}
+
 const envSchema = z.object({
-    NODE_ENV: z.enum(['development', 'staging', 'production', 'test']).default('development'),
+    NODE_ENV: z.string().default(nodeEnv),
     PORT: z.string().transform(Number).default('5000'),
     // Support multiple names for the database connection string
     MONGO_URI: z.string().optional(),

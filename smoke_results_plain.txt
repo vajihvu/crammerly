@@ -1,3 +1,0 @@
-???? Starting Final Production Smoke Test Suite...
-
---- 1. Register & Login ---
