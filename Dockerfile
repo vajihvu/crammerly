@@ -1,5 +1,5 @@
 # Stage 1: Dependency Resolver
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 
 # Copy package files for workspace
@@ -11,7 +11,7 @@ COPY backend/package*.json ./backend/
 RUN npm ci --workspace=backend --omit=dev --ignore-scripts
 
 # Stage 2: Runtime Environment
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 # Create a system user for the application

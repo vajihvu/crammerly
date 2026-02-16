@@ -6,7 +6,10 @@ export const csrfGuard = (req, res, next) => {
     const stateChangingMethods = ['POST', 'PUT', 'DELETE', 'PATCH'];
 
     // skip in tests unless explicitly requested for security testing
-    if (config.isTest && !req.headers['x-test-csrf-enforce']) {
+    // We check both config and direct process.env to bridge any module loading sync issues
+    const isTestMode = config.isTest || process.env.NODE_ENV === 'test';
+
+    if (isTestMode && !req.headers['x-test-csrf-enforce']) {
         return next();
     }
 
