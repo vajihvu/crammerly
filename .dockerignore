@@ -13,3 +13,11 @@ docker-compose*.yml
 tests
 docs
 scripts
+.github
+.husky
+README_DEPLOY.md
+bom.json
+test_output_*.txt
+smoke_results.txt
+*.md
+
