@@ -369,23 +369,35 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
   }
 
   return (
-    <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-start justify-center p-0 sm:p-4 pt-2 sm:pt-4 pb-6 overflow-y-auto animate-in fade-in duration-300" onClick={onClose}>
-      <div className="bg-brand-surface w-full max-w-5xl min-h-screen sm:min-h-0 sm:h-[85vh] rounded-none sm:rounded-[40px] border-0 sm:border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 font-inter" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-center justify-center p-4 sm:p-8 overflow-y-auto animate-in fade-in duration-300" onClick={onClose}>
+      <div className="bg-brand-surface w-full max-w-5xl h-[85vh] rounded-[40px] border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 font-inter" onClick={(e) => e.stopPropagation()}>
 
         <div className="px-3.5 sm:px-8 py-4 sm:py-6 flex items-center justify-between border-b border-brand-border/50 bg-brand-bg/50 backdrop-blur-xl shrink-0 gap-2 sm:gap-4">
           <div className="flex items-center gap-1.5 sm:gap-6 min-w-0">
             <button onClick={onClose} className="p-1.5 sm:p-2 hover:bg-brand-muted/20 rounded-full transition-all shrink-0">
               <ArrowLeft size={18} className="text-brand-text sm:w-6 sm:h-6" />
             </button>
-            <h2 className="text-[15px] sm:text-2xl font-black text-brand-text tracking-tight leading-none uppercase pt-0.5 truncate">Friends</h2>
+            <h2 className="text-[15px] sm:text-2xl font-black text-brand-text tracking-tight uppercase truncate">Friends</h2>
           </div>
           {!showAddFriend && (
-            <button
-              onClick={() => setShowAddFriend(true)}
-              className="text-brand-text font-black text-[9px] sm:text-[11px] uppercase tracking-widest hover:text-brand-primary transition-colors bg-brand-muted/20 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-brand-border shrink-0"
-            >
-              Add Friends
-            </button>
+            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+              <div className="relative group flex-1 xs:flex-none">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-muted group-focus-within:text-brand-primary transition-colors" size={14} />
+                <input
+                  type="text"
+                  placeholder="Search friends..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-brand-bg border border-brand-border/80 rounded-xl text-[11px] text-brand-text focus:outline-none focus:ring-1 focus:ring-brand-primary/30 focus:border-brand-primary placeholder:text-brand-muted transition-all font-bold w-40 sm:w-64"
+                />
+              </div>
+              <button
+                onClick={() => setShowAddFriend(true)}
+                className="text-brand-text font-black text-[9px] sm:text-[11px] uppercase tracking-widest hover:text-brand-primary transition-colors bg-brand-muted/20 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-brand-border shrink-0"
+              >
+                Add Friends
+              </button>
+            </div>
           )}
         </div>
 
@@ -418,23 +430,11 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
           <div className="w-full md:flex-1 flex flex-col border-b md:border-b-0 md:border-r border-brand-border/30 shrink-0 md:shrink md:overflow-hidden min-h-[500px] md:min-h-0">
             {!showAddFriend ? (
               <>
-                <div className="px-4 sm:px-8 py-4 sm:py-6 bg-brand-bg/50 backdrop-blur-md shrink-0 border-b border-brand-border/10">
 
-                  <div className="relative group">
-                    <Search className="absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-brand-muted group-focus-within:text-brand-primary transition-colors" size={18} sm:size={20} />
-                    <input
-                      type="text"
-                      placeholder="Search friends..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-12 sm:pl-14 pr-4 sm:pr-6 py-3 sm:py-4 bg-brand-bg border border-brand-border rounded-[20px] sm:rounded-[24px] text-sm sm:text-base text-brand-text focus:ring-1 focus:ring-brand-primary focus:border-brand-primary placeholder:text-brand-muted transition-all font-bold"
-                    />
-                  </div>
-                </div>
 
-                <div className="md:flex-1 overflow-visible md:overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-10 custom-scrollbar bg-brand-bg">
+                <div className="md:flex-1 overflow-visible md:overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-10 custom-scrollbar bg-brand-bg flex flex-col">
                   {Object.keys(groupedFriends).sort().length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 opacity-60">
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] opacity-60">
                       <User size={64} className="text-brand-muted mb-4" />
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-muted">No Friends Found</p>
                     </div>
@@ -523,9 +523,9 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
             </div>
 
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar flex flex-col">
               {filteredSuggestions.length === 0 ? (
-                <div className="text-center py-10 opacity-70">
+                <div className="flex-1 flex flex-col items-center justify-center opacity-70">
                   <TrendingUp className="mx-auto mb-3 text-brand-muted" size={32} />
                   <p className="text-[10px] font-black uppercase tracking-widest text-brand-muted">No suggestions</p>
                 </div>

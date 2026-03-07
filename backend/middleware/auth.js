@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import config from '../config/index.js';
+import logger from '../utils/logger.js';
 
 /**
  * Protect routes middleware
@@ -39,7 +40,7 @@ export const protect = async (req, res, next) => {
         // 1. Global Revocation Check (Token Version)
         // If tokenVersion mismatches, the user reset their password or performed a global logout
         if (decoded.tokenVersion === undefined || decoded.tokenVersion !== user.tokenVersion) {
-            console.warn(`SECURITY ALERT: Token version mismatch for user ${user._id} (expected v${user.tokenVersion}, got v${decoded.tokenVersion}). Revoking access.`);
+            logger.warn(`SECURITY ALERT: Token version mismatch for user ${user._id} (expected v${user.tokenVersion}, got v${decoded.tokenVersion}). Revoking access.`);
             const err = new Error('Security policy update: Your session has been revoked. Please log in again.');
             err.statusCode = 401;
             err.code = 'AUTH_SESSION_REVOKED';
@@ -64,7 +65,7 @@ export const protect = async (req, res, next) => {
         });
 
         if (!session) {
-            console.warn(`SECURITY ALERT: Access token tied to invalid or expired session ${decoded.sessionId} for user ${user._id}`);
+            logger.warn(`SECURITY ALERT: Access token tied to invalid or expired session ${decoded.sessionId} for user ${user._id}`);
             const err = new Error('Your session is no longer valid. Please log in again.');
             err.statusCode = 401;
             err.code = 'AUTH_SESSION_INVALID';
@@ -88,15 +89,15 @@ export const protect = async (req, res, next) => {
         let code = 'AUTH_EXPIRED';
 
         if (err.name === 'TokenExpiredError') {
-            console.log(`INFO: Access token expired for request at ${req.path}`);
+            logger.info(`Access token expired for request at ${req.path}`);
             message = 'Token expired';
             code = 'AUTH_EXPIRED';
         } else if (err.name === 'JsonWebTokenError') {
-            console.warn(`SECURITY ALERT: Invalid JWT signature/format at ${req.path}. Details: ${err.message}`);
+            logger.warn(`SECURITY ALERT: Invalid JWT signature/format at ${req.path}. Details: ${err.message}`);
             message = 'Invalid token';
             code = 'AUTH_INVALID';
         } else {
-            console.error('INTERNAL ERROR: JWT Verification Error:', err.message);
+            logger.error(`INTERNAL ERROR: JWT Verification Error: ${err.message}`);
         }
 
         const error = new Error(message);

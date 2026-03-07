@@ -14,26 +14,26 @@ function NotificationsDropdown({ notifications, setShowNotifications, clearAllNo
         ></div>
       )}
       <div
-        className={`${isPortal ? 'fixed right-4 sm:right-10 top-20' : 'fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-20 sm:top-[calc(100%+8px)]'} w-auto sm:w-96 !bg-brand-surface rounded-[28px] border border-brand-border shadow-dropdown max-h-[calc(100vh-120px)] sm:max-h-[500px] overflow-hidden flex flex-col z-[100000] animate-in fade-in zoom-in-95 duration-300 font-sans`}
+        className={`${isPortal ? 'fixed right-4 sm:right-10 top-20' : 'fixed sm:absolute inset-x-4 sm:inset-x-auto sm:right-0 top-20 sm:top-[calc(100%+8px)]'} w-[280px] sm:w-72 !bg-brand-surface rounded-[20px] border border-brand-border shadow-dropdown max-h-[calc(100vh-120px)] sm:max-h-[360px] overflow-hidden flex flex-col z-[100000] animate-in fade-in zoom-in-95 duration-300 font-sans`}
         onClick={(e) => e.stopPropagation()}
       >
 
         {/* Header */}
-        <div className="p-5 border-b border-brand-border flex items-center justify-between !bg-brand-surface">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-brand-primary/10 flex items-center justify-center rounded-lg border border-brand-primary/20">
-              <BellRing size={16} className="text-brand-primary" />
+        <div className="p-3.5 border-b border-brand-border flex items-center justify-between !bg-brand-surface">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-brand-primary/10 flex items-center justify-center rounded-lg border border-brand-primary/20">
+              <BellRing size={14} className="text-brand-primary" />
             </div>
-            <h3 className="font-black text-brand-text text-sm uppercase tracking-widest leading-none mt-0.5">Alerts</h3>
+            <h3 className="font-black text-brand-text text-xs uppercase tracking-widest leading-none mt-0.5">Alerts</h3>
           </div>
           <div className="flex items-center gap-3">
             {notifications.length > 0 && (
-              <button onClick={clearAllNotifications} className="text-[10px] font-black uppercase tracking-widest text-brand-text-dim hover:text-brand-primary transition-colors">
+              <button onClick={clearAllNotifications} className="text-[9px] font-black uppercase tracking-widest text-brand-text-dim hover:text-brand-primary transition-colors">
                 Clear all
               </button>
             )}
             <button onClick={() => setShowNotifications(false)} className="p-1.5 text-brand-text-dim hover:text-brand-text hover:bg-brand-bg rounded-full transition-all">
-              <X size={18} />
+              <X size={16} />
             </button>
           </div>
         </div>
@@ -47,27 +47,27 @@ function NotificationsDropdown({ notifications, setShowNotifications, clearAllNo
               <p className="text-[11px] font-black text-brand-text-dim uppercase tracking-[0.2em]">All Caught Up</p>
             </div>
           ) : (
-            <div className="p-4 space-y-2">
+            <div className="p-2.5 space-y-1">
               {notifications.map((notif) => (
                 <button
                   key={notif.id}
                   onClick={() => markNotificationAsRead(notif.id)}
-                  className={`w-full text-left p-4 transition-all rounded-[20px] border relative group ${notif.read
+                  className={`w-full text-left p-2.5 transition-all rounded-[14px] border relative group ${notif.read
                     ? 'bg-brand-surface border-brand-border/30 hover:bg-brand-bg opacity-70'
                     : 'bg-brand-card border-brand-primary/40 shadow-sm'
                     }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${notif.read ? 'bg-brand-muted' : 'bg-brand-primary animate-pulse'}`}></div>
+                  <div className="flex items-start gap-2.5">
+                    <div className={`w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${notif.read ? 'bg-brand-muted' : 'bg-brand-primary animate-pulse'}`}></div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-[13px] leading-relaxed ${notif.read ? 'text-brand-text-dim font-medium' : 'text-brand-text font-bold'}`}>
+                      <p className={`text-[11px] leading-snug ${notif.read ? 'text-brand-text-dim font-medium' : 'text-brand-text font-bold'}`}>
                         {notif.message}
                       </p>
-                      <p className="text-[10px] font-black text-brand-muted uppercase tracking-widest mt-2 px-1">
+                      <p className="text-[8px] font-black text-brand-muted uppercase tracking-widest mt-1 px-0.5">
                         {getTimeAgo(notif.time)}
                       </p>
                     </div>
-                    <div className="text-lg flex-shrink-0 grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
+                    <div className="text-[14px] flex-shrink-0 grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
                       {notif.type === 'room_invite' && '🏠'}
                       {notif.type === 'progress' && '✅'}
                       {notif.type === 'friend' && '👥'}

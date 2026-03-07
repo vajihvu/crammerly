@@ -4,6 +4,9 @@ export const authApi = {
     login: (email, password) =>
         client.post('/auth/login', { email, password }).then(res => res.data),
 
+    googleLogin: (token) =>
+        client.post('/auth/google', { token }).then(res => res.data),
+
     register: (userData) =>
         client.post('/auth/register', userData).then(res => res.data),
 

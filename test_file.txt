@@ -1,0 +1,11 @@
+import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
+
+/////////////////////////////
+//  Original logic preserved here, assuming no side-effects...
+/////////////////////////////
+
+const userSchema = Object.assign({}, User.schema);
+
+console.log('Validating default');

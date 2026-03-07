@@ -71,12 +71,12 @@ function AITutorTab({ room }) {
   };
 
   return (
-    <div className="bg-brand-card rounded-2xl border border-brand-border flex flex-col flex-1 min-h-[500px] shadow-xl">
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+    <div className="bg-brand-card rounded-2xl border border-brand-border flex flex-col flex-1 min-h-0 h-full overflow-hidden shadow-xl">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 flex flex-col">
         {messages.length === 0 ? (
-          <div className="text-center text-brand-text-dim py-20">
-            <Bot size={64} className="mx-auto mb-6 text-brand-primary/50 opacity-50" />
-            <h3 className="text-xl font-bold mb-2 text-brand-text">AI Study Assistant</h3>
+          <div className="flex-1 flex flex-col items-center justify-center text-brand-text-dim">
+            <Bot size={40} className="mx-auto mb-3 text-brand-primary/50 opacity-50" />
+            <h3 className="text-lg font-bold mb-1 text-brand-text">AI Study Assistant</h3>
             <p className="mb-4">Ask me anything about {room?.topic || 'this subject'}!</p>
             <div className="text-left max-w-md mx-auto space-y-2">
               <p className="text-sm text-brand-text-dim/70">Example questions:</p>
@@ -110,9 +110,9 @@ function AITutorTab({ room }) {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-3 sm:p-5 border-t border-brand-border/50 bg-brand-surface/30">
+      <div className="p-2 sm:p-3 border-t border-brand-border/50 bg-brand-surface/30 shrink-0">
         <div className="max-w-4xl mx-auto">
-          <div className="relative flex items-center bg-brand-bg/80 backdrop-blur-md rounded-[32px] border border-brand-border/50 p-1.5 shadow-premium transition-all focus-within:border-brand-primary/40 focus-within:ring-4 focus-within:ring-brand-primary/5">
+          <div className="relative flex items-center bg-brand-bg/80 backdrop-blur-md rounded-[32px] border-2 border-brand-border p-1.5 shadow-premium transition-all focus-within:border-brand-primary/40 focus-within:ring-4 focus-within:ring-brand-primary/5">
             <div className="flex-1 px-4">
               <input
                 type="text"

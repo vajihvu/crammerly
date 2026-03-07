@@ -16,11 +16,13 @@ const roomSchema = new mongoose.Schema({
     name: {
         type: String,
         required: [true, 'Room name is required'],
-        trim: true
+        trim: true,
+        maxlength: [100, 'Room name cannot exceed 100 characters']
     },
     task: {
         type: String,
-        trim: true
+        trim: true,
+        maxlength: [200, 'Task description cannot exceed 200 characters']
     },
     topic: {
         type: String,

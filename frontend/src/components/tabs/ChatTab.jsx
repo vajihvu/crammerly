@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Search, Send, Mic, X, Plus, MessageCircle, Paperclip, Smile, FileText } from 'lucide-react';
 import { messagesApi } from '../../api';
 import { getSocket, joinRoom, leaveRoom } from '../../utils/socket';
+import { ChatSkeleton, NetworkError } from '../ui/Skeletons';
 
 const MessageContent = ({ text }) => {
   const isCode = text.startsWith('```') && text.endsWith('```');
@@ -17,7 +18,7 @@ const MessageContent = ({ text }) => {
   return <p className="font-medium leading-relaxed text-left">{text}</p>;
 };
 
-function ChatTab({ room, currentUser, onSendMessage, addToast }) {
+function ChatTab({ room, currentUser, addToast }) {
   const [messages, setMessages] = useState([]);
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,6 +29,8 @@ function ChatTab({ room, currentUser, onSendMessage, addToast }) {
   const [showStickerPicker, setShowStickerPicker] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const [loadingMessages, setLoadingMessages] = useState(true);
+  const [messagesError, setMessagesError] = useState(null);
 
   const emojis = ['😀', '😂', '❤️', '👍', '🎉', '🔥', '💯', '✨', '🚀', '💪', '🧠', '📚', '✅', '👏', '🙌', '💡', '⭐', '🎯', '👀', '😎'];
   const gifs = [
@@ -41,8 +44,17 @@ function ChatTab({ room, currentUser, onSendMessage, addToast }) {
   useEffect(() => {
     // 1. Initial Fetch
     const loadMessages = async () => {
-      const data = await messagesApi.getAll(room.id);
-      setMessages(data);
+      setLoadingMessages(true);
+      setMessagesError(null);
+      try {
+        const data = await messagesApi.getAll(room.id);
+        setMessages(data);
+      } catch (err) {
+        console.error('Failed to load messages:', err);
+        setMessagesError('Failed to load messages');
+      } finally {
+        setLoadingMessages(false);
+      }
     };
     loadMessages();
 
@@ -71,11 +83,16 @@ function ChatTab({ room, currentUser, onSendMessage, addToast }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!message.trim()) return;
-    onSendMessage(message, 'text');
-    setMessage('');
-    setShowEmojiPicker(false);
+    try {
+      await messagesApi.send(room.id, { content: message.trim(), type: 'text' });
+      setMessage('');
+      setShowEmojiPicker(false);
+    } catch (err) {
+      if (addToast) addToast('Failed to send message', 'danger');
+      console.error('Send message error:', err);
+    }
   };
 
   const handleVoiceRecord = () => {
@@ -102,14 +119,18 @@ function ChatTab({ room, currentUser, onSendMessage, addToast }) {
     }
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const fileData = {
         name: file.name,
         size: file.size,
         type: file.type,
         data: event.target.result
       };
-      onSendMessage(`Shared file: ${file.name}`, 'file', fileData);
+      try {
+        await messagesApi.send(room.id, { content: `Shared file: ${file.name}`, type: 'file', fileData });
+      } catch (err) {
+        if (addToast) addToast('Failed to send file', 'danger');
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -119,13 +140,21 @@ function ChatTab({ room, currentUser, onSendMessage, addToast }) {
     setShowEmojiPicker(false);
   };
 
-  const handleGifClick = (gif) => {
-    onSendMessage(gif.name, 'gif', gif);
+  const handleGifClick = async (gif) => {
+    try {
+      await messagesApi.send(room.id, { content: gif.name, type: 'gif', fileData: gif });
+    } catch (err) {
+      if (addToast) addToast('Failed to send GIF', 'danger');
+    }
     setShowGifPicker(false);
   };
 
-  const handleStickerClick = (sticker) => {
-    onSendMessage(sticker, 'sticker');
+  const handleStickerClick = async (sticker) => {
+    try {
+      await messagesApi.send(room.id, { content: sticker, type: 'sticker' });
+    } catch (err) {
+      if (addToast) addToast('Failed to send sticker', 'danger');
+    }
     setShowStickerPicker(false);
   };
 
@@ -137,7 +166,7 @@ function ChatTab({ room, currentUser, onSendMessage, addToast }) {
     : (messages || []);
 
   return (
-    <div className="bg-brand-card rounded-2xl border border-brand-border flex flex-col flex-1 min-h-[500px]">
+    <div className="bg-brand-card rounded-2xl border border-brand-border flex flex-col flex-1 min-h-0 h-full overflow-hidden">
       <div className="p-3 border-b border-brand-border bg-brand-surface/50">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-bold text-sm">Chat Messages</h3>
@@ -163,9 +192,17 @@ function ChatTab({ room, currentUser, onSendMessage, addToast }) {
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
-        {filteredMessages.length === 0 ? (
-          <div className="text-center text-slate-400 py-20">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 flex flex-col">
+        {loadingMessages ? (
+          <ChatSkeleton />
+        ) : messagesError ? (
+          <NetworkError message={messagesError} onRetry={() => {
+            setLoadingMessages(true);
+            setMessagesError(null);
+            messagesApi.getAll(room.id).then(data => { setMessages(data); setLoadingMessages(false); }).catch(() => { setMessagesError('Failed to load messages'); setLoadingMessages(false); });
+          }} />
+        ) : filteredMessages.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
             <MessageCircle size={48} className="mx-auto mb-4 opacity-50" />
             <p>{showSearch && searchTerm ? 'No messages found' : 'No messages yet. Start chatting!'}</p>
           </div>
@@ -290,9 +327,9 @@ function ChatTab({ room, currentUser, onSendMessage, addToast }) {
         </div>
       )}
 
-      <div className="p-3 sm:p-5 border-t border-brand-border bg-brand-surface/30">
+      <div className="p-2 sm:p-3 border-t border-brand-border bg-brand-surface/30 shrink-0">
         <div className="max-w-4xl mx-auto">
-          <div className="relative flex items-center bg-brand-bg/80 backdrop-blur-md rounded-[32px] border border-brand-border/50 p-1.5 shadow-premium transition-all focus-within:border-brand-primary/40 focus-within:ring-4 focus-within:ring-brand-primary/5">
+          <div className="relative flex items-center bg-brand-bg/80 backdrop-blur-md rounded-[32px] border-2 border-brand-border p-1.5 shadow-premium transition-all focus-within:border-brand-primary/40 focus-within:ring-4 focus-within:ring-brand-primary/5">
             {/* Left Actions - Integrated Inside Bubble */}
             <div className="flex items-center gap-0.5 ml-1">
               <button

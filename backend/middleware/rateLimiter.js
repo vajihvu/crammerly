@@ -2,12 +2,13 @@ import rateLimit from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import { createClient } from 'redis';
 import config from '../config/index.js';
+import { logger } from '../utils/logger.js';
 import { notifyLoginSpike } from '../utils/securityNotifier.js';
 
 let store;
 if (config.redisUrl) {
     const redisClient = createClient({ url: config.redisUrl });
-    redisClient.connect().catch(err => console.error('Redis Rate Limit Store Error', err));
+    redisClient.connect().catch(err => logger.error(`Redis Rate Limit Store connection failed: ${err.message}`));
     store = new RedisStore({
         sendCommand: (...args) => redisClient.sendCommand(args),
     });
@@ -24,7 +25,7 @@ export const loginLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
-    skip: () => config.isTest,
+    skip: () => config.isTest || config.isDevelopment,
     handler: async (req, res, _next, options) => {
         await notifyLoginSpike(req, req.ip);
         res.status(options.statusCode).send(options.message);
@@ -44,7 +45,7 @@ export const refreshLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
-    skip: () => config.isTest,
+    skip: () => config.isTest || config.isDevelopment,
     message: {
         success: false,
         error: {
@@ -60,7 +61,7 @@ export const apiLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
-    skip: () => config.isTest,
+    skip: () => config.isTest || config.isDevelopment,
     message: {
         success: false,
         error: {
@@ -81,7 +82,7 @@ export const aiLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
-    skip: () => config.isTest,
+    skip: () => config.isTest || config.isDevelopment,
     message: {
         success: false,
         error: {

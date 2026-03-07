@@ -14,7 +14,10 @@ import {
     revokeSession,
     verifyEmail,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    googleLogin,
+    deleteAccount,
+    exportData
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validator.js';
@@ -91,6 +94,8 @@ router.post('/register', verifyCaptcha, validate(registerSchema), registerUser);
  */
 router.post('/login', loginLimiter, verifyCaptcha, validate(loginSchema), loginUser);
 
+router.post('/google', loginLimiter, verifyCaptcha, googleLogin);
+
 /**
  * @openapi
  * /auth/refresh:
@@ -119,7 +124,7 @@ router.post('/refresh', refreshLimiter, csrfGuard, refreshAccessToken);
  */
 router.post('/logout', protect, csrfGuard, logoutUser);
 
-router.post('/logout-all', protect, logoutAllDevices);
+router.post('/logout-all', protect, csrfGuard, logoutAllDevices);
 
 
 router.route('/profile')
@@ -258,7 +263,7 @@ router.get('/verify-email/:token', verifyEmail);
  *       200:
  *         description: Success message
  */
-router.post('/forgot-password', forgotPassword);
+router.post('/forgot-password', loginLimiter, forgotPassword);
 
 /**
  * @openapi
@@ -285,5 +290,11 @@ router.post('/forgot-password', forgotPassword);
  *         description: Password reset successful
  */
 router.post('/reset-password/:token', csrfGuard, validate(resetPasswordSchema), resetPassword);
+
+// GDPR — Right to Erasure (Art.17)
+router.delete('/account', protect, csrfGuard, deleteAccount);
+
+// GDPR — Right to Data Portability (Art.20)
+router.get('/data-export', protect, exportData);
 
 export default router;

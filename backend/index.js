@@ -13,23 +13,23 @@ import './workers/cleanupWorker.js'; // Start worker
 // Apply global mongoose performance tracking
 mongoose.plugin(performancePlugin);
 
+// Database connection event observers (registered once, outside connectDB)
+mongoose.connection.on('disconnected', () => {
+    logger.warn('⚠️ MongoDB Disconnected! Connection drop detected.');
+});
+
+mongoose.connection.on('reconnected', () => {
+    logger.info('✅ MongoDB Reconnected. Persistence restored.');
+});
+
+mongoose.connection.on('error', (err) => {
+    logger.error(`❌ MongoDB Connection Error: ${err.message}`, { fatal: false });
+});
+
 // Database connection with retry logic
 const connectDB = async (retryCount = 0) => {
     const maxRetries = 5;
     const retryDelay = Math.min(Math.pow(2, retryCount) * 1000, 30000); // Exponential backoff
-
-    // Mongoose Connection Event Observers (Operational Monitoring)
-    mongoose.connection.on('disconnected', () => {
-        logger.warn('⚠️ MongoDB Disconnected! Connection drop detected.');
-    });
-
-    mongoose.connection.on('reconnected', () => {
-        logger.info('✅ MongoDB Reconnected. Persistence restored.');
-    });
-
-    mongoose.connection.on('error', (err) => {
-        logger.error(`❌ MongoDB Connection Error: ${err.message}`, { fatal: false });
-    });
 
     try {
         const conn = await mongoose.connect(config.mongoUri, {
@@ -64,6 +64,19 @@ const startupSelfTest = async () => {
             throw new Error('JWT_SECRET too weak for production');
         }
 
+        // Test 3: Warn about degraded functionality if optional-but-important vars are missing
+        if (config.isProduction) {
+            if (!config.redisUrl) {
+                logger.warn('⚠️  REDIS_URL is not set. Rate limiting will fall back to per-process in-memory storage, which is NOT effective across multiple instances or restarts.');
+            }
+            if (!config.googleClientId) {
+                logger.warn('⚠️  GOOGLE_CLIENT_ID is not set. Google OAuth login will be unavailable.');
+            }
+            if (!config.sentryDsn) {
+                logger.warn('⚠️  SENTRY_DSN is not set. Errors will not be captured in Sentry.');
+            }
+        }
+
         logger.info('✅ Startup self-tests passed.');
     } catch (error) {
         logger.error('❌ Startup self-test FAILED', { error: error.message });
@@ -93,6 +106,9 @@ const startServer = async () => {
             coldStartTimeMs: parseFloat(coldStartTime)
         });
     });
+
+    // Hard 30s timeout on all requests — prevents hung connections exhausting the server
+    server.setTimeout(30_000);
 
     // Initialize Socket.io
     initSocket(server);

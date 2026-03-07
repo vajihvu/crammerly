@@ -4,7 +4,6 @@ import { roomsApi } from './rooms';
 import { todosApi } from './todos';
 import { recordsApi } from './records';
 import { studyApi } from './study';
-import { activityApi } from './activity';
 import { friendsApi } from './friends';
 import { messagesApi } from './messages';
 import { sessionsApi } from './sessions';
@@ -18,7 +17,6 @@ export {
     todosApi,
     recordsApi,
     studyApi,
-    activityApi,
     friendsApi,
     messagesApi,
     sessionsApi,
@@ -32,9 +30,9 @@ export default {
     todos: todosApi,
     records: recordsApi,
     study: studyApi,
-    activity: activityApi,
     friends: friendsApi,
     messages: messagesApi,
     sessions: sessionsApi,
     client,
 };
+

@@ -11,6 +11,8 @@ import {
     generateVerificationToken
 } from '../utils/tokenService.js';
 import { logAuditEvent } from '../middleware/auditMiddleware.js';
+import { parseDeviceName } from '../utils/parseDevice.js';
+import logger from '../utils/logger.js';
 import {
     notifyNewDeviceLogin,
     notifyPasswordChange,
@@ -20,6 +22,9 @@ import {
     sendPasswordResetEmail
 } from '../utils/securityNotifier.js';
 import { validatePasswordStrength } from '../utils/passwordPolicy.js';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(config.googleClientId);
 
 const COOKIE_OPTIONS = {
     path: '/api/v1/auth/refresh',
@@ -153,13 +158,9 @@ export const loginUser = async (req, res, next) => {
         const isMatch = await user.matchPassword(password);
 
         if (isMatch) {
-            // Simple device detection
+            // Shared device detection
             const userAgent = req.headers['user-agent'] || 'Unknown';
-            let deviceName = 'Unknown Device';
-            if (userAgent.includes('Windows')) deviceName = 'Windows PC';
-            else if (userAgent.includes('Macintosh')) deviceName = 'Mac';
-            else if (userAgent.includes('Android')) deviceName = 'Android Device';
-            else if (userAgent.includes('iPhone')) deviceName = 'iPhone';
+            const deviceName = parseDeviceName(userAgent);
 
             // New Device Notification Logic
             const existingSession = await Session.findOne({
@@ -228,6 +229,70 @@ export const loginUser = async (req, res, next) => {
     }
 };
 
+export const googleLogin = async (req, res, next) => {
+    try {
+        const { token } = req.body;
+        if (!token) {
+            const error = new Error('Google token is missing');
+            error.statusCode = 400;
+            return next(error);
+        }
+
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: config.googleClientId,
+        });
+        const payload = ticket.getPayload();
+        const { sub, email, name, picture } = payload;
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            user = await User.create({
+                email,
+                name,
+                googleId: sub,
+                avatar: picture,
+                isEmailVerified: true
+            });
+            await logAuditEvent({ req, user: user._id, event: 'AUTH_REGISTER', status: 'SUCCESS', metadata: { method: 'GOOGLE' } });
+        } else if (!user.googleId) {
+            user.googleId = sub;
+            if (picture && !user.avatar) user.avatar = picture;
+            await user.save();
+        }
+
+        // Create session
+        const refreshToken = generateRefreshToken();
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+        const deviceName = parseDeviceName(userAgent);
+
+        const session = await Session.create({
+            user: user._id,
+            refreshTokenHash: hashToken(refreshToken),
+            userAgent,
+            deviceName,
+            ipAddress: req.ip,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
+        await logAuditEvent({ req, user: user._id, event: 'AUTH_LOGIN', status: 'SUCCESS', metadata: { method: 'GOOGLE' } });
+
+        res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
+        return res.sendSuccess({
+            token: generateAccessToken(user, session._id),
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 /**
  * @desc    Refresh access token
  * @route   POST /api/v1/auth/refresh
@@ -265,7 +330,7 @@ export const refreshAccessToken = async (req, res, next) => {
 
     } catch (error) {
         await logAuditEvent({ req, event: 'AUTH_REFRESH', status: 'FAILURE', metadata: { reason: error.message } });
-        console.error('Refresh Token Error:', error.message);
+        logger.error(`Refresh Token Error: ${error.message}`);
         res.clearCookie('refreshToken');
         if (!error.statusCode) error.statusCode = 401;
         if (!error.code) error.code = 'AUTH_INVALID';
@@ -339,6 +404,16 @@ export const updateUserProfile = async (req, res, next) => {
         user.name = req.body.name || user.name;
         user.email = req.body.email || user.email;
 
+        // Profile fields
+        if (req.body.bio !== undefined) user.bio = req.body.bio;
+        if (req.body.institution !== undefined) user.institution = req.body.institution;
+        if (req.body.course !== undefined) user.course = req.body.course;
+        if (req.body.username !== undefined) user.username = req.body.username;
+        if (req.body.interests !== undefined) user.interests = req.body.interests;
+        if (req.body.skills !== undefined) user.skills = req.body.skills;
+        if (req.body.socialLinks !== undefined) user.socialLinks = req.body.socialLinks;
+        if (req.body.avatarUrl !== undefined) user.avatar = req.body.avatarUrl;
+
         const passwordChanged = !!req.body.password;
         if (passwordChanged) {
             const newPassword = req.body.password;
@@ -411,6 +486,15 @@ export const updateUserProfile = async (req, res, next) => {
             _id: updatedUser._id,
             name: updatedUser.name,
             email: updatedUser.email,
+            username: updatedUser.username,
+            tag: updatedUser.tag,
+            bio: updatedUser.bio,
+            institution: updatedUser.institution,
+            course: updatedUser.course,
+            interests: updatedUser.interests,
+            skills: updatedUser.skills,
+            socialLinks: updatedUser.socialLinks,
+            avatar: updatedUser.avatar,
             token: generateAccessToken(updatedUser, newSessionId)
         });
     } catch (error) {
@@ -557,7 +641,7 @@ export const revokeSession = async (req, res, next) => {
 
         // Ownership Check: Only the owner can revoke their own device sessions
         if (session.user.toString() !== req.user._id.toString()) {
-            console.warn(`SECURITY ALERT: User ${req.user._id} attempted to revoke session ${session._id} belonging to user ${session.user}`);
+            logger.warn(`SECURITY ALERT: User ${req.user._id} attempted to revoke session ${session._id} belonging to user ${session.user}`);
             const error = new Error('Access Denied: You do not have permission to revoke this session.');
             error.statusCode = 403;
             error.code = 'AUTH_FORBIDDEN';
@@ -727,6 +811,127 @@ export const resetPassword = async (req, res, next) => {
         });
 
         return res.sendSuccess({ message: 'Password has been reset successfully. You can now log in.' });
+    } catch (error) {
+        next(error);
+    }
+};
+/**
+ * @desc    Permanently delete account and all associated data (GDPR Art.17 — Right to Erasure)
+ * @route   DELETE /api/v1/auth/account
+ * @access  Private
+ */
+export const deleteAccount = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+        const { password } = req.body;
+
+        // Re-authenticate — require password confirmation to prevent CSRF-driven account wipes
+        const user = await User.findById(userId).select('+password');
+        if (!user) {
+            const error = new Error('User not found');
+            error.statusCode = 404;
+            return next(error);
+        }
+
+        // Skip password check for Google-only accounts (no local password)
+        if (user.password) {
+            if (!password) {
+                const error = new Error('Password confirmation is required to delete your account.');
+                error.statusCode = 400;
+                error.code = 'AUTH_REAUTH_REQUIRED';
+                return next(error);
+            }
+            const valid = await user.matchPassword(password);
+            if (!valid) {
+                const error = new Error('Incorrect password. Account deletion cancelled.');
+                error.statusCode = 401;
+                error.code = 'AUTH_INVALID_CREDENTIALS';
+                return next(error);
+            }
+        }
+
+        // Import data models dynamically to avoid circular deps at module load
+        const [Todo, StudySession, AuditLog, Message] = await Promise.all([
+            import('../models/Todo.js').then(m => m.default),
+            import('../models/StudySession.js').then(m => m.default),
+            import('../models/AuditLog.js').then(m => m.default),
+            import('../models/Message.js').then(m => m.default),
+        ]);
+
+        // Cascade delete all user data
+        await Promise.all([
+            Session.deleteMany({ user: userId }),
+            Todo.deleteMany({ userId }),
+            StudySession.deleteMany({ userId }),
+            Message.deleteMany({ sender_id: userId }),
+            AuditLog.deleteMany({ user: userId }),
+        ]);
+
+        await User.findByIdAndDelete(userId);
+
+        // Clear session cookie
+        res.clearCookie('refreshToken');
+
+        await logAuditEvent({
+            req,
+            user: userId,
+            event: 'AUTH_ACCOUNT_DELETE',
+            status: 'SUCCESS',
+            metadata: { method: user.password ? 'PASSWORD_CONFIRMED' : 'GOOGLE_ACCOUNT' }
+        });
+
+        logger.warn(`[GDPR] Account permanently deleted: ${userId}`);
+        return res.sendSuccess({ message: 'Your account and all associated data have been permanently deleted.' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * @desc    Export all personal data (GDPR Art.20 — Right to Data Portability)
+ * @route   GET /api/v1/auth/data-export
+ * @access  Private
+ */
+export const exportData = async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+
+        const [Todo, StudySession, AuditLog] = await Promise.all([
+            import('../models/Todo.js').then(m => m.default),
+            import('../models/StudySession.js').then(m => m.default),
+            import('../models/AuditLog.js').then(m => m.default),
+        ]);
+
+        const [user, sessions, todos, studySessions, auditLogs] = await Promise.all([
+            User.findById(userId).select('-password -previousPasswords -emailVerificationToken -resetPasswordToken'),
+            Session.find({ user: userId }).lean(),
+            Todo.find({ userId }).lean(),
+            StudySession.find({ userId }).lean(),
+            AuditLog.find({ user: userId }).lean(),
+        ]);
+
+        await logAuditEvent({
+            req,
+            user: userId,
+            event: 'AUTH_DATA_EXPORT',
+            status: 'SUCCESS'
+        });
+
+        const exportPayload = {
+            exportedAt: new Date().toISOString(),
+            requestedBy: userId,
+            data: {
+                profile: user,
+                sessions,
+                todos,
+                studySessions,
+                auditLog: auditLogs,
+            }
+        };
+
+        res.setHeader('Content-Disposition', `attachment; filename="crammerly-data-export-${userId}.json"`);
+        res.setHeader('Content-Type', 'application/json');
+        return res.send(JSON.stringify(exportPayload, null, 2));
     } catch (error) {
         next(error);
     }

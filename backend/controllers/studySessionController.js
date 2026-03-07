@@ -1,5 +1,7 @@
 import StudySession from '../models/StudySession.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import mongoose from 'mongoose';
+import { cacheGet, cacheSet, cacheInvalidate } from '../utils/cache.js';
 
 /**
  * @desc    Start a new study session
@@ -25,6 +27,7 @@ export const startSession = asyncHandler(async (req, res) => {
     });
 
 
+    await cacheInvalidate(`stats:${userId}`);
     return res.sendSuccess(session, 201);
 });
 
@@ -48,6 +51,7 @@ export const endSession = asyncHandler(async (req, res) => {
     session.endTime = new Date();
     await session.save();
 
+    await cacheInvalidate(`stats:${req.user._id}`);
     return res.sendSuccess(session);
 });
 
@@ -72,8 +76,12 @@ export const getSessions = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getStats = asyncHandler(async (req, res) => {
+    const cacheKey = `stats:${req.user._id}`;
+    const cached = await cacheGet(cacheKey);
+    if (cached) return res.sendSuccess(cached);
+
     const stats = await StudySession.aggregate([
-        { $match: { userId: req.user._id, endTime: { $exists: true } } },
+        { $match: { userId: new mongoose.Types.ObjectId(req.user._id), endTime: { $exists: true } } },
         {
             $group: {
                 _id: null,
@@ -83,6 +91,8 @@ export const getStats = asyncHandler(async (req, res) => {
         }
     ]);
 
-    return res.sendSuccess(stats[0] || { totalMinutes: 0, sessionCount: 0 });
+    const result = stats[0] || { totalMinutes: 0, sessionCount: 0 };
+    await cacheSet(cacheKey, result, 300); // 5-minute TTL
+    return res.sendSuccess(result);
 });
 

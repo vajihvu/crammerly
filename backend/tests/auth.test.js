@@ -161,4 +161,43 @@ describe('Auth Flow Integration Tests', () => {
             expect(res.body.error.code).toBe('AUTH_EXPIRED');
         });
     });
+
+    describe(`POST ${API_ROOT}/logout-all`, () => {
+        let accessToken;
+
+        beforeEach(async () => {
+            await User.deleteMany({});
+            await Session.deleteMany({});
+            await request(app).post(`${API_ROOT}/register`)
+                .set('X-Requested-With', 'XMLHttpRequest')
+                .send(testUser);
+            await User.updateOne({ email: testUser.email }, { isEmailVerified: true });
+
+            const res = await request(app).post(`${API_ROOT}/login`)
+                .set('X-Requested-With', 'XMLHttpRequest')
+                .send({ email: testUser.email, password: testUser.password });
+
+            accessToken = res.body.data?.token;
+        });
+
+        it('should block /logout-all without a CSRF header (CSRF enforcement)', async () => {
+            const res = await request(app)
+                .post(`${API_ROOT}/logout-all`)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .set('X-Test-CSRF-Enforce', 'true'); // Force CSRF check in test env
+
+            expect(res.status).toBe(403);
+            expect(res.body.error.code).toBe('SEC_CSRF_MISSING');
+        });
+
+        it('should succeed on /logout-all with a valid CSRF header', async () => {
+            const res = await request(app)
+                .post(`${API_ROOT}/logout-all`)
+                .set('Authorization', `Bearer ${accessToken}`)
+                .set('X-CSRF-Token', 'proof-of-intent');
+
+            expect(res.status).toBe(200);
+            expect(res.body.success).toBe(true);
+        });
+    });
 });

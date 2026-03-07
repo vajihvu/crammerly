@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         trim: true,
-        match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
+        match: [/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/, 'Please provide a valid email']
     },
     password: {
         type: String,
@@ -72,8 +72,7 @@ const userSchema = new mongoose.Schema({
     tag: {
         type: String,
         unique: true,
-        index: true,
-        default: () => Math.floor(100000 + Math.random() * 900000).toString() // Increased to 6 digits for unique scaling
+        index: true
     },
     interests: {
         type: [String],
@@ -161,6 +160,27 @@ userSchema.pre('save', async function () {
     }
     if (this.name) {
         this.name = this.name.normalize('NFKC').trim();
+    }
+
+    // Generate unique tag if it doesn't exist
+    if (!this.tag) {
+        let isUnique = false;
+        let attempts = 0;
+        const maxAttempts = 5;
+
+        while (!isUnique && attempts < maxAttempts) {
+            const newTag = Math.floor(100000 + Math.random() * 900000).toString();
+            const existing = await this.constructor.findOne({ tag: newTag });
+            if (!existing) {
+                this.tag = newTag;
+                isUnique = true;
+            }
+            attempts++;
+        }
+
+        if (!isUnique) {
+            throw new Error('Could not generate a unique user tag after multiple attempts');
+        }
     }
 
     // 2. Password Hashing & History Safeguard

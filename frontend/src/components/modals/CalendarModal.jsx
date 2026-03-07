@@ -104,8 +104,7 @@ function CalendarModal({ onClose, openConfirm }) {
         // Padding from prev month
         for (let i = startDay - 1; i >= 0; i--) {
             days.push(
-                <div key={`prev-${i}`} className="min-h-[80px] sm:min-h-[120px] p-1.5 sm:p-2 border-r border-b border-brand-border/30 bg-gray-50/50">
-                    <span className="text-[12px] sm:text-[14px] font-medium text-brand-text-dim/30">{prevMonthDays - i}</span>
+                <div key={`prev-${i}`} className="min-h-[50px] sm:min-h-[60px] p-1 sm:p-2 border-r border-b border-brand-border/30 bg-brand-bg/30 overflow-hidden">
                 </div>
             );
         }
@@ -125,10 +124,10 @@ function CalendarModal({ onClose, openConfirm }) {
             days.push(
                 <div
                     key={`day-${i}`}
-                    className={`min-h-[70px] sm:min-h-[100px] p-1.5 sm:p-2 border-r border-b border-brand-border/30 group hover:bg-brand-primary/5 transition-colors relative ${isToday ? 'bg-brand-primary/10' : ''}`}
+                    className={`min-h-[50px] sm:min-h-[60px] p-1 sm:p-2 border-r border-b border-brand-border/30 group hover:bg-brand-primary/5 transition-colors relative overflow-hidden flex flex-col ${isToday ? 'bg-brand-primary/10' : ''}`}
                     onDoubleClick={() => handleAddTask(i)}
                 >
-                    <div className="flex justify-between items-start mb-0.5 sm:mb-1">
+                    <div className="flex justify-between items-start mb-0.5 sm:mb-1 shrink-0">
                         <span className={`text-[12px] sm:text-[14px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full ${isToday ? 'bg-brand-primary text-white shadow-sm' : 'text-brand-text/60'}`}>{i}</span>
                         <button
                             onClick={() => handleAddTask(i)}
@@ -164,13 +163,11 @@ function CalendarModal({ onClose, openConfirm }) {
             );
         }
 
-        // Padding from next month
-        const totalSlots = 42;
-        const remainingSlots = totalSlots - days.length;
+        // Padding to complete the last row
+        const remainingSlots = (7 - (days.length % 7)) % 7;
         for (let i = 1; i <= remainingSlots; i++) {
             days.push(
-                <div key={`next-${i}`} className="min-h-[70px] sm:min-h-[100px] p-1.5 sm:p-2 border-r border-b border-brand-border/30 bg-gray-50/50">
-                    <span className="text-[12px] sm:text-[14px] font-medium text-brand-text-dim/30">{i}</span>
+                <div key={`next-${i}`} className="min-h-[50px] sm:min-h-[60px] p-1 sm:p-2 border-r border-b border-brand-border/30 bg-brand-bg/30 overflow-hidden">
                 </div>
             );
         }
@@ -179,19 +176,19 @@ function CalendarModal({ onClose, openConfirm }) {
     };
 
     return (
-        <div className="fixed inset-0 bg-brand-bg/90 backdrop-blur-2xl flex items-start justify-center p-0 sm:p-4 z-[150] animate-in fade-in duration-300 pt-2 sm:pt-4 pb-6" onClick={onClose}>
-            <div className="bg-brand-surface rounded-[40px] w-full max-w-4xl min-h-screen sm:min-h-0 sm:h-[85vh] flex flex-col shadow-premium border-0 sm:border border-brand-border/30 overflow-hidden relative font-sans" onClick={(e) => e.stopPropagation()}>
-                <div className="absolute top-4 right-4 sm:top-8 sm:right-8 z-10 flex items-center gap-3 sm:gap-6">
+        <div className="fixed inset-0 bg-brand-bg/90 backdrop-blur-2xl flex items-center justify-center p-4 sm:p-6 z-[150] animate-in fade-in duration-300" onClick={onClose}>
+            <div className="bg-brand-surface rounded-[32px] w-full max-w-4xl h-fit max-h-[95vh] flex flex-col shadow-premium border border-brand-border/30 overflow-hidden relative font-sans" onClick={(e) => e.stopPropagation()}>
+                <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10 flex items-center gap-3 sm:gap-4">
                     <span className="text-[10px] sm:text-[14px] font-black text-brand-text-dim/40 tracking-[0.2em] sm:tracking-[0.3em] uppercase">/ {currentYear}</span>
-                    <button onClick={onClose} className="p-2 sm:p-3 bg-brand-muted/10 hover:bg-brand-muted/20 text-brand-text rounded-xl sm:rounded-2xl transition-all">
-                        <X size={20} className="sm:w-6 sm:h-6" />
+                    <button onClick={onClose} className="p-2 bg-brand-muted/10 hover:bg-brand-muted/20 text-brand-text rounded-xl transition-all">
+                        <X size={20} className="sm:w-5 sm:h-5" />
                     </button>
                 </div>
 
-                <div className="p-4 sm:p-10 flex flex-col h-full mt-12 sm:mt-8">
+                <div className="p-6 sm:p-8 flex flex-col mt-4 sm:mt-0">
 
                     {/* Month Header */}
-                    <div className="flex items-center justify-center mb-6 sm:mb-10 gap-4 sm:gap-12 text-center">
+                    <div className="flex items-center justify-center mb-3 sm:mb-4 gap-4 sm:gap-12 text-center">
                         <button onClick={prevMonth} className="p-2 text-brand-text-dim hover:text-brand-text transition-all">
                             <ChevronLeft size={24} className="sm:w-8 sm:h-8" />
                         </button>
@@ -207,15 +204,15 @@ function CalendarModal({ onClose, openConfirm }) {
                     </div>
 
                     {/* Calendar Grid */}
-                    <div className="flex-1 overflow-y-auto no-scrollbar">
-                        <div className="grid grid-cols-7 text-center mb-2 sm:mb-4 gap-0">
+                    <div className="flex flex-col">
+                        <div className="grid grid-cols-7 text-center mb-1 sm:mb-2 gap-0 shrink-0">
                             {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(day => (
-                                <div key={day} className="text-[10px] sm:text-[11px] font-black text-brand-text/40 tracking-[0.2em] py-2 uppercase truncate px-0.5">
+                                <div key={day} className="text-[9px] sm:text-[11px] font-black text-brand-text/40 tracking-[0.2em] py-1 sm:py-2 uppercase truncate px-0.5">
                                     {day}
                                 </div>
                             ))}
                         </div>
-                        <div className="grid grid-cols-7 border-t border-l border-brand-border/30 rounded-t-xl overflow-hidden">
+                        <div className="grid grid-cols-7 border-t border-l border-brand-border/30 rounded-xl overflow-hidden">
                             {renderCalendar()}
                         </div>
                     </div>

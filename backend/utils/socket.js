@@ -1,7 +1,10 @@
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import config from '../config/index.js';
 import User from '../models/User.js';
+import Session from '../models/Session.js';
+import logger from './logger.js';
 
 let io;
 
@@ -15,6 +18,7 @@ export const initSocket = (server) => {
     });
 
     // Authentication middleware for Socket.io
+    // Mirrors the HTTP `protect` middleware for consistency
     io.use(async (socket, next) => {
         try {
             const token = socket.handshake.auth.token || socket.handshake.headers.authorization?.split(' ')[1];
@@ -24,10 +28,34 @@ export const initSocket = (server) => {
             }
 
             const decoded = jwt.verify(token, config.jwt.secret);
-            const user = await User.findById(decoded.id).select('-password');
+            const user = await User.findById(decoded.id).select('-password +tokenVersion');
 
             if (!user) {
                 return next(new Error('Authentication error: User not found'));
+            }
+
+            // 1. Account deactivation check
+            if (user.isActive === false) {
+                return next(new Error('Authentication error: Account deactivated'));
+            }
+
+            // 2. Token version check (password change / global logout)
+            if (decoded.tokenVersion === undefined || decoded.tokenVersion !== user.tokenVersion) {
+                return next(new Error('Authentication error: Session revoked'));
+            }
+
+            // 3. Session validity check
+            if (decoded.sessionId) {
+                const session = await Session.findOne({
+                    _id: decoded.sessionId,
+                    user: user._id,
+                    isValid: true,
+                    expiresAt: { $gt: new Date() }
+                });
+
+                if (!session) {
+                    return next(new Error('Authentication error: Session invalid or expired'));
+                }
             }
 
             socket.user = user;
@@ -38,34 +66,44 @@ export const initSocket = (server) => {
     });
 
     io.on('connection', (socket) => {
-        console.log(`🔌 User connected: ${socket.user.name} (${socket.id})`);
+        logger.info(`🔌 User connected: ${socket.user.name} (${socket.id})`);
 
         socket.on('join_room', (roomId) => {
             socket.join(roomId);
-            console.log(`👥 User ${socket.user.name} joined room: ${roomId}`);
+            logger.info(`👥 User ${socket.user.name} joined room: ${roomId}`);
         });
 
         socket.on('leave_room', (roomId) => {
             socket.leave(roomId);
-            console.log(`🚶 User ${socket.user.name} left room: ${roomId}`);
+            logger.info(`🚶 User ${socket.user.name} left room: ${roomId}`);
         });
 
-        socket.on('send_message', (data) => {
+        socket.on('send_message', async (data) => {
             // data: { roomId, content, type, fileData }
             const { roomId, content, type, fileData } = data;
 
-            // Broadcast to everyone in the room except sender (or use io.to for everyone)
-            // We typically broadcast to everyone so the sender gets the "official" message too
-            // or we emit back to sender.
+            // 1. Validate content
+            if (!content || typeof content !== 'string' || content.length === 0) return;
+            if (content.length > 5000) return; // Match Message model maxlength
 
-            // For now, let's assume the client adds its own message instantly, 
-            // and we just broadcast to others.
+            // 2. Basic XSS sanitization (mirrors middleware/xss.js)
+            const sanitized = content
+                .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/on\w+="[^"]*"/gi, '')
+                .replace(/on\w+='[^']*'/gi, '')
+                .replace(/javascript:[^"']*/gi, '');
+
+            // 3. Room membership check
+            const { default: Room } = await import('../models/Room.js');
+            const room = await Room.findById(roomId);
+            if (!room || !room.members.some(m => m.user.toString() === socket.user._id.toString())) return;
+
             socket.to(roomId).emit('new_message', {
-                id: Math.random().toString(36).substring(7), // Temporary ID if not saved to DB yet
+                id: crypto.randomUUID(),
                 sender_id: socket.user._id,
                 senderName: socket.user.name,
                 senderTag: socket.user.tag || '0000',
-                text: content,
+                text: sanitized,
                 type: type || 'text',
                 fileData: fileData || null,
                 timestamp: new Date().toISOString()
@@ -73,7 +111,7 @@ export const initSocket = (server) => {
         });
 
         socket.on('disconnect', () => {
-            console.log(`🔌 User disconnected: ${socket.id}`);
+            logger.info(`🔌 User disconnected: ${socket.id}`);
         });
     });
 

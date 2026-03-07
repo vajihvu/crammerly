@@ -1,57 +1,18 @@
-// src/components/modals/BlogsModal.jsx
+﻿// src/components/modals/BlogsModal.jsx
 import React, { useState } from 'react';
 import { X, ArrowLeft, BookOpen, Clock, User, Share2, ThumbsUp, MessageSquare } from 'lucide-react';
+import blogPosts from '../../data/blogPosts';
 
 function BlogsModal({ onClose }) {
     const [selectedBlog, setSelectedBlog] = useState(null);
 
-    const blogs = [
-        {
-            id: 1,
-            title: 'Top 10 Data Structures Hacks',
-            author: 'FOCUS MASTER',
-            time: '5 MIN READ',
-            category: 'COMPUTER SCIENCE',
-            date: 'Jan 24, 2026',
-            content: `Mastering data structures is the key to writing efficient code. Here are the top 10 hacks every developer should know:\n\n1. Use Hash Maps for O(1) lookups whenever possible.\n2. Understand the trade-offs between Arrays and Linked Lists.\n3. Master recursion, but be mindful of stack overflow.\n4. Circular buffers are great for streaming data.\n5. Binary Search is your best friend for sorted data.\n6. Use Tries for prefix-based searches.\n7. Min-Heaps/Max-Heaps are essential for priority queues.\n8. Don't forget about Space Complexity.\n9. Visualize your data structures before coding.\n10. Practice, practice, practice on Crammerly!`,
-            image: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800&q=80'
-        },
-        {
-            id: 2,
-            title: 'Future of Algorithms',
-            author: 'TECH INSIDER',
-            time: '8 MIN READ',
-            category: 'ARTIFICIAL INTELLIGENCE',
-            date: 'Jan 22, 2026',
-            content: `As we move further into the decade, algorithms are becoming more autonomous and specialized. Machine learning is no longer just a buzzword; it's a fundamental part of how we process information.\n\nQuantum algorithms are on the horizon, promising to solve problems that are currently impossible for classical computers. Adaptive algorithms that learn from real-time data are becoming the standard in high-frequency trading and personalized medicine.`,
-            image: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&q=80'
-        },
-        {
-            id: 3,
-            title: 'The Art of Deep Work',
-            author: 'PRODUCTIVITY NINJA',
-            time: '6 MIN READ',
-            category: 'LIFESTYLE',
-            date: 'Jan 20, 2026',
-            content: `Deep work is the ability to focus without distraction on a cognitively demanding task. It's a skill that allows you to quickly master complicated information and produce better results in less time.\n\nIn our world of constant notifications and shallow work, those who can master the art of deep work will have a massive competitive advantage. Set aside blocks of time, turn off your phone, and dive deep into your studies.`,
-            image: 'https://images.unsplash.com/photo-1484417894907-623942c8ee29?w=800&q=80'
-        },
-        {
-            id: 4,
-            title: 'React 19: What to Expect',
-            author: 'JS WIZARD',
-            time: '4 MIN READ',
-            category: 'DEVELOPMENT',
-            date: 'Jan 18, 2026',
-            content: `React 19 is bringing some massive changes to how we handle state and side effects. With the introduction of the React Compiler (React Forget), many of the manual useMemo and useCallback optimizations will become a thing of the past.\n\nServer Components are also receiving significant updates to improve how we build full-stack applications with React.`,
-            image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&q=80'
-        }
-    ];
+    const blogs = blogPosts;
+
 
     if (selectedBlog) {
         return (
-            <div className="fixed inset-0 bg-brand-bg/90 backdrop-blur-xl z-[150] flex items-start justify-center p-0 sm:p-4 pt-2 sm:pt-4 pb-6 overflow-y-auto animate-in fade-in duration-300" onClick={() => setSelectedBlog(null)}>
-                <div className="bg-brand-surface w-full max-w-2xl min-h-screen sm:min-h-0 sm:h-[90vh] rounded-none sm:rounded-[40px] border-0 sm:border border-brand-border/30 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 font-sans" onClick={(e) => e.stopPropagation()}>
+            <div className="fixed inset-0 bg-brand-bg/90 backdrop-blur-xl z-[150] flex items-center justify-center p-4 sm:p-8 overflow-y-auto animate-in fade-in duration-300" onClick={() => setSelectedBlog(null)}>
+                <div className="bg-brand-surface w-full max-w-2xl h-[90vh] rounded-[40px] border border-brand-border/30 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 font-sans" onClick={(e) => e.stopPropagation()}>
                     {/* Blog Detail Header */}
                     <div className="px-8 py-6 border-b border-brand-border/50 flex items-center justify-between bg-brand-surface/50 backdrop-blur-xl shrink-0">
                         <button
@@ -130,8 +91,8 @@ function BlogsModal({ onClose }) {
     }
 
     return (
-        <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl flex items-start justify-center p-0 sm:p-4 pt-2 sm:pt-4 pb-10 overflow-y-auto z-[150] animate-in fade-in duration-300" onClick={onClose}>
-            <div className="bg-brand-surface w-full max-w-3xl min-h-screen sm:min-h-0 sm:h-[85vh] rounded-none sm:rounded-[40px] border-0 sm:border border-brand-border/30 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 font-sans" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl flex items-center justify-center p-4 sm:p-8 overflow-y-auto z-[150] animate-in fade-in duration-300" onClick={onClose}>
+            <div className="bg-brand-surface w-full max-w-3xl h-[85vh] rounded-[40px] border border-brand-border/30 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 font-sans" onClick={(e) => e.stopPropagation()}>
 
                 {/* Header */}
                 <div className="px-8 py-6 flex items-center justify-between border-b border-brand-border/30 bg-brand-surface/50 backdrop-blur-xl shrink-0">

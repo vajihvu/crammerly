@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import Session from '../models/Session.js';
 import config from '../config/index.js';
 import { notifyTokenReuse, notifySuspiciousIpChange } from './securityNotifier.js';
+import { logger } from './logger.js';
 
 export const generateAccessToken = (user, sessionId) => {
     if (!sessionId) {
@@ -60,7 +61,7 @@ export const rotateRefreshToken = async (req, oldToken, userAgent, ipAddress) =>
 
     // Reuse detection: If the token is in previousTokenHashes, it was already rotated.
     if (session.previousTokenHashes.includes(oldHash)) {
-        console.error(`🚨 CRITICAL: Refresh token reuse detected for user ${userId}. Revoking session family.`);
+        logger.error(`🚨 CRITICAL: Refresh token reuse detected for user ${userId}. Revoking session family.`);
         session.isValid = false;
         session.isSuspicious = true;
 
@@ -84,7 +85,7 @@ export const rotateRefreshToken = async (req, oldToken, userAgent, ipAddress) =>
     const lastIp = normalizeIp(session.ipAddress);
 
     if (lastIp && currentIp && lastIp !== currentIp) {
-        console.warn(`SECURITY ALERT: Session IP mismatch for user ${userId}. Revoking session.`);
+        logger.warn(`SECURITY ALERT: Session IP mismatch for user ${userId}. Revoking session.`);
         session.isValid = false;
         session.isSuspicious = true;
         session.revokedAt = new Date();
@@ -103,7 +104,7 @@ export const rotateRefreshToken = async (req, oldToken, userAgent, ipAddress) =>
     // 2. Detection: Excessive refresh attempts
     session.refreshCount += 1;
     if (session.refreshCount > 50) { // Slightly stricter for production
-        console.warn(`SECURITY ALERT: Excessive refresh attempts for user ${userId}. Revoking session.`);
+        logger.warn(`SECURITY ALERT: Excessive refresh attempts for user ${userId}. Revoking session.`);
         session.isValid = false;
         session.revokedAt = new Date();
         await session.save();

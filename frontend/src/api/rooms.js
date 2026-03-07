@@ -52,16 +52,4 @@ export const roomsApi = {
         return data.data;
     },
 
-    /**
-     * REAL-TIME BUSY-WAIT/POLLING (Failsafe)
-     * Real-time sync replaced with polling or manual refresh until Socket.io is added.
-     */
-    subscribeToAll: () => {
-        console.warn('Real-time subscriptions disabled (Supabase removed). Using manual refresh.');
-        return { unsubscribe: () => { } };
-    },
-
-    subscribeToMembers: () => {
-        return { unsubscribe: () => { } };
-    }
 };

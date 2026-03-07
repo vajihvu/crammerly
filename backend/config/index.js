@@ -30,6 +30,7 @@ const config = {
     },
     aiApiKey: env.DEEPSEEK_API_KEY,
     turnstileSecretKey: env.TURNSTILE_SECRET_KEY,
+    googleClientId: env.GOOGLE_CLIENT_ID,
     redisUrl: env.REDIS_URL,
     clientUrls: env.CLIENT_URL,
     isProduction: env.NODE_ENV === 'production' || env.NODE_ENV === 'staging',

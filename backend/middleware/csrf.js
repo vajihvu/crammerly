@@ -28,7 +28,7 @@ export const csrfGuard = (req, res, next) => {
             method: req.method
         });
 
-        const error = new Error('Security Violation: CSFR Protection header missing (X-CSRF-Token)');
+        const error = new Error('Security Violation: CSRF Protection header missing (X-CSRF-Token)');
         error.statusCode = 403;
         error.code = 'SEC_CSRF_MISSING';
         return next(error);

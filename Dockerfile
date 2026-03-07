@@ -35,7 +35,7 @@ USER app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-    CMD node -e "fetch('http://localhost:5000/health').then(r => r.ok ? process.exit(0) : process.exit(1))"
+    CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1
 
 # Backend listens on 5000
 EXPOSE 5000

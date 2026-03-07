@@ -7,10 +7,10 @@ import env from '../config/env';
  */
 const client = axios.create({
     baseURL: env.apiUrl,
+    timeout: 15000, // 15 second timeout — fail fast on hung requests
     headers: {
         'Content-Type': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest', // Traditional CSRF protection
-        'X-CSRF-Token': 'XMLHttpRequest',    // Custom CSRF protection
+        'X-Requested-With': 'XMLHttpRequest', // Double-submit CSRF bypass — checked by csrf.js middleware
     },
     withCredentials: true, // Handle cookies for refresh tokens
 });
@@ -62,19 +62,32 @@ client.interceptors.response.use(
             originalRequest._retry = true;
 
             try {
-                const { data } = await axios.post(`${env.apiUrl}/auth/refresh`, {}, {
-                    withCredentials: true,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-Token': 'XMLHttpRequest'
-                    }
-                });
+                // Queue concurrent 401s behind a single refresh request
+                if (!client._refreshPromise) {
+                    client._refreshPromise = axios.post(`${env.apiUrl}/auth/refresh`, {}, {
+                        withCredentials: true,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-Token': 'XMLHttpRequest'
+                        }
+                    }).finally(() => {
+                        client._refreshPromise = null;
+                    });
+                }
+
+                const { data } = await client._refreshPromise;
 
                 if (data?.success && data.data?.token) {
                     const newToken = data.data.token;
-                    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-                    userInfo.token = newToken;
-                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                    try {
+                        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+                        if (userInfo) {
+                            userInfo.token = newToken;
+                            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+                        }
+                    } catch {
+                        // localStorage parse failed — token still usable for this request
+                    }
 
                     client.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
                     originalRequest.headers['Authorization'] = `Bearer ${newToken}`;

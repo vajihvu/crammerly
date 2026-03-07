@@ -55,10 +55,11 @@ function MenuSidebar({
   setShowCalendarModal,
   setShowBlogsModal,
   setShowSettingsModal,
-  setShowActivityModal,
   setShowHelpModal,
   setShowBugModal,
   setShowAboutModal,
+  setShowFriendsModal,
+  setShowSearchModal,
   currentUser,
   theme,
   setTheme,
@@ -86,7 +87,7 @@ function MenuSidebar({
 
       {/* Sidebar */}
       <div
-        className="fixed left-0 top-0 h-full w-[235px] sm:w-[280px] bg-brand-surface border-r border-brand-border shadow-2xl z-[100001] overflow-y-auto custom-scrollbar animate-in slide-in-from-left duration-300 flex flex-col"
+        className="fixed left-0 top-0 h-full w-[200px] sm:w-[240px] bg-brand-surface border-r border-brand-border shadow-2xl z-[100001] overflow-y-auto custom-scrollbar animate-in slide-in-from-left duration-300 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
 
@@ -196,12 +197,13 @@ function MenuSidebar({
           <div className="space-y-1 mb-2">
             <div className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Platform</div>
             <div className="sm:hidden space-y-1">
-              <MenuButton icon={<CalendarIcon size={20} />} label="Study Calendar" onClick={() => { setShowMenu(false); setShowCalendarModal(true); }} />
-              <MenuButton icon={<BookOpen size={20} />} label="Discovery Blogs" onClick={() => { setShowMenu(false); setShowBlogsModal(true); }} />
+              <MenuButton icon={<CalendarIcon size={20} />} label="Study Calendar" onClick={() => { setShowMenu(false); setShowCalendarModal(); }} />
+              <MenuButton icon={<BookOpen size={20} />} label="Discovery Blogs" onClick={() => { setShowMenu(false); setShowBlogsModal(); }} />
               <div className="h-px bg-white/5 mx-3 my-2"></div>
             </div>
-            <MenuButton icon={<Settings size={20} />} label="Settings" onClick={() => { setShowMenu(false); setShowSettingsModal('general'); }} />
-            <MenuButton icon={<BarChart3 size={20} />} label="Activity" onClick={() => { setShowMenu(false); setShowActivityModal(true); }} />
+            <MenuButton icon={<Search size={20} />} label="Find Rooms" onClick={() => { setShowMenu(false); setShowSearchModal(); }} />
+            <MenuButton icon={<Users size={20} />} label="Friends" onClick={() => { setShowMenu(false); setShowFriendsModal(); }} />
+            <MenuButton icon={<Settings size={20} />} label="Settings" onClick={() => { setShowMenu(false); setShowSettingsModal(); }} />
             <div className="space-y-1">
               <MenuButton
                 icon={<Paintbrush size={20} />}
