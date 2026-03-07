@@ -82,7 +82,7 @@ export default function Crammerly() {
     journalEntries, addJournalEntry, deleteJournalEntry,
     studyNotes, addStudyNote, deleteStudyNote,
     friends, setFriends,
-    studyStats, refreshStats
+    refreshStats
   } = useStudyData({ authUser, currentUser, addToast, openConfirm });
 
   const { focusSession, startFocusSession, endFocusSession } = useFocusSession({ addToast, onStatsRefresh: refreshStats });
@@ -97,6 +97,7 @@ export default function Crammerly() {
   // ── Auth sync ──
   useEffect(() => {
     if (authUser) {
+      // eslint-disable-next-line
       setCurrentUser(prev => ({
         ...prev,
         ...authUser,

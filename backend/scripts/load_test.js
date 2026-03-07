@@ -13,6 +13,7 @@ import { Rate, Trend } from 'k6/metrics';
 const errorRate = new Rate('error_rate');
 const loginDuration = new Trend('login_duration_ms');
 
+/* global __ENV */
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:5000';
 const HEADERS = {
     'Content-Type': 'application/json',

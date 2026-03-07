@@ -7,7 +7,7 @@ import VideoTab from './tabs/VideoTab';
 import AITutorTab from './tabs/AITutorTab';
 import ProgressTab from './tabs/ProgressTab';
 
-function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoom, activeTab, setActiveTab, addToast, focusSession, onStartFocus, onEndFocus }) {
+function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoom, activeTab, setActiveTab, addToast }) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedRoom, setEditedRoom] = React.useState(room || {});
   const [showRoomInfo, setShowRoomInfo] = React.useState(false);
@@ -23,7 +23,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
   };
 
   /* ─── Room Info Panel (shared between mobile toggle and desktop sidebar) ─── */
-  const RoomInfoPanel = () => (
+  const renderRoomInfoPanel = () => (
     <>
       <div className="bg-brand-card rounded-2xl p-4 border border-brand-border shadow-xl relative overflow-hidden shrink-0">
         <div className="absolute top-0 right-0 w-24 h-24 bg-brand-primary/5 blur-3xl rounded-full"></div>
@@ -156,7 +156,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
         {/* Collapsible room info on mobile */}
         <div className={`overflow-hidden transition-all duration-300 ${showRoomInfo ? 'max-h-[600px] opacity-100 mt-2' : 'max-h-0 opacity-0'}`}>
           <div className="space-y-3">
-            <RoomInfoPanel />
+            {renderRoomInfoPanel()}
           </div>
         </div>
       </div>
@@ -165,7 +165,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 flex-1 min-h-0">
         {/* Desktop sidebar */}
         <div className="hidden lg:flex lg:col-span-1 flex-col gap-3 min-h-0 overflow-y-auto custom-scrollbar">
-          <RoomInfoPanel />
+          {renderRoomInfoPanel()}
         </div>
 
         {/* Tab content */}

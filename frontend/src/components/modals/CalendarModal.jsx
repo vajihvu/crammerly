@@ -97,7 +97,6 @@ function CalendarModal({ onClose, openConfirm }) {
 
     const renderCalendar = () => {
         const days = [];
-        const prevMonthDays = daysInMonth(currentYear, currentMonth - 1);
         const currentMonthDays = daysInMonth(currentYear, currentMonth);
         const startDay = firstDayOfMonth(currentYear, currentMonth);
 

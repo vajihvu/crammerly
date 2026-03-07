@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Users, Plus, Trash2, EyeOff, Search } from 'lucide-react';
 import { RoomGridSkeleton, NetworkError } from './ui/Skeletons';
 
-function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, onCreateRoom, onRoomClick, onDeleteRoom, onJoinByCode, onSearchClick, recentActivity = [], addToast }) {
+function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, onCreateRoom, onRoomClick, onDeleteRoom, onJoinByCode, onSearchClick, recentActivity = [] }) {
   const [activeGenre, setActiveGenre] = useState('All');
   const [activeStatus, setActiveStatus] = useState('Active Now');
 

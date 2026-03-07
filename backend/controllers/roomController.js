@@ -1,6 +1,6 @@
 import Room from '../models/Room.js';
 import asyncHandler from '../utils/asyncHandler.js';
-import { cacheGet, cacheSet, cacheInvalidate } from '../utils/cache.js';
+import { cacheGet, cacheSet } from '../utils/cache.js';
 
 /**
  * @desc    Get all rooms
