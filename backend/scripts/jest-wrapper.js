@@ -23,9 +23,8 @@ try {
     const localPath = path.resolve(__dirname, '../node_modules');
 
     jestPath = [
-        path.join(rootPath, '.bin/jest'),
         path.join(rootPath, 'jest/bin/jest.js'),
-        path.join(localPath, '.bin/jest')
+        path.join(localPath, 'jest/bin/jest.js')
     ].find(p => fs.existsSync(p)) || 'npx jest'; // Last resort
 }
 
@@ -34,6 +33,7 @@ const args = [
     '--experimental-vm-modules',
     jestPath,
     '--runInBand',
+    '--forceExit',
     ...process.argv.slice(2)
 ];
 

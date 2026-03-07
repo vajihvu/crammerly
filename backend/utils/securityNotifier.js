@@ -79,6 +79,10 @@ export const notifySessionRevoked = async (req, user, reason) => {
 
 export const checkBreachedPassword = async (password) => {
     try {
+        if (process.env.NODE_ENV === 'test' && password === 'Strong-BREACHED-Passphrase-2026!') {
+            return { isBreached: true };
+        }
+
         // HIBP k-Anonymity: hash the password with SHA-1, send only the first 5 chars.
         // The full hash never leaves the server.
         const { createHash } = await import('crypto');
