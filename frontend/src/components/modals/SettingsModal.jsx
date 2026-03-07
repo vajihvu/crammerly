@@ -14,12 +14,12 @@ function SettingsModal({ initialTab = 'general', onClose }) {
     return (
         <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl flex items-center justify-center p-0 sm:p-4 z-[1000] animate-in fade-in duration-300" onClick={onClose}>
             <div
-                className="bg-brand-surface sm:rounded-[40px] w-full max-w-4xl h-full sm:h-[600px] border-0 sm:border border-brand-border/30 shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-500 font-sans"
+                className="bg-brand-surface sm:rounded-[32px] w-full max-w-3xl h-full sm:h-[500px] border-0 sm:border border-brand-border/30 shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-500 font-sans"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Sidebar */}
-                <div className="w-full md:w-64 bg-brand-bg/50 border-b md:border-b-0 md:border-r border-brand-border/20 flex flex-col pt-8 md:pt-12 shrink-0">
-                    <div className="px-6 md:px-8 mb-6 md:mb-10 flex items-center justify-between md:block">
+                <div className="w-full md:w-56 bg-brand-bg/50 border-b md:border-b-0 md:border-r border-brand-border/20 flex flex-col pt-6 md:pt-8 shrink-0">
+                    <div className="px-5 md:px-6 mb-5 md:mb-8 flex items-center justify-between md:block">
                         <div>
                             <h2 className="text-xl md:text-2xl font-black text-brand-text tracking-tighter uppercase leading-none">Settings</h2>
                             <p className="text-[9px] md:text-[10px] font-black text-brand-primary uppercase tracking-[0.3em] mt-1 md:mt-2">Preferences</p>
@@ -58,12 +58,12 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                 <div className="flex-1 flex flex-col bg-brand-surface relative">
                     <button
                         onClick={onClose}
-                        className="hidden md:flex absolute top-10 right-10 p-2.5 text-brand-text-dim hover:text-brand-text bg-brand-bg hover:bg-brand-muted/20 rounded-full transition-all z-50 border border-brand-border/30 shadow-md"
+                        className="hidden md:flex absolute top-6 right-6 p-2 text-brand-text-dim hover:text-brand-text bg-brand-bg hover:bg-brand-muted/20 rounded-full transition-all z-50 border border-brand-border/30 shadow-md"
                     >
-                        <X size={20} />
+                        <X size={18} />
                     </button>
 
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-6 md:p-12 md:pt-20 md:pr-14">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-6 md:p-8 md:pt-14 md:pr-10">
                         {activeTab === 'general' && (
                             <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <section>

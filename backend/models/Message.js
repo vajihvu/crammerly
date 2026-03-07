@@ -14,7 +14,8 @@ const messageSchema = new mongoose.Schema({
     },
     content: {
         type: String,
-        required: true
+        required: true,
+        maxlength: [5000, 'Message content cannot exceed 5000 characters']
     },
     type: {
         type: String,

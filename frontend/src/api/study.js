@@ -10,7 +10,7 @@ export const studyApi = {
             const res = await client.get('/records?tags=journal');
             return res.data.data.records;
         },
-        create: async (userId, content) => {
+        create: async (content) => {
             const res = await client.post('/records', {
                 title: `Journal Entry - ${new Date().toLocaleDateString()}`,
                 content,
@@ -29,7 +29,7 @@ export const studyApi = {
             const res = await client.get('/records?tags=note');
             return (res.data.data.records || []).map(n => ({ ...n, date: n.createdAt }));
         },
-        create: async (userId, title, content) => {
+        create: async (title, content) => {
             const res = await client.post('/records', {
                 title,
                 content,

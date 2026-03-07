@@ -1,0 +1,188 @@
+# 🚀 Pre-Deployment Review — Crammerly
+
+Comprehensive audit across security, infrastructure, performance, and code quality.
+
+---
+
+## 🔴 CRITICAL — Fix Before Deploy
+
+> [!CAUTION]
+> These issues could cause security breaches or data exposure in production.
+
+### 1. [server_log.txt](file:///c:/Users/Bushra/shabucks/backend/server_log.txt) is tracked in Git (503 KB)
+[backend/server_log.txt](file:///c:/Users/Bushra/shabucks/backend/server_log.txt) is committed to the repository. It may contain sensitive request data, IP addresses, and stack traces.
+
+**Fix:** Remove from git tracking and add to [.gitignore](file:///c:/Users/Bushra/shabucks/.gitignore):
+```bash
+git rm --cached backend/server_log.txt
+echo "backend/server_log.txt" >> .gitignore
+```
+
+---
+
+### 2. Supabase key exposed in [frontend/.env](file:///c:/Users/Bushra/shabucks/frontend/.env)
+The file contains a Supabase anon key (`VITE_SUPABASE_ANON_KEY=eyJ...`). While anon keys are designed to be public, **this file is [.gitignore](file:///c:/Users/Bushra/shabucks/.gitignore)d but still in your working directory**. Verify:
+- Is Supabase actively used? It's not referenced anywhere in the current frontend code.
+- If not used, **remove these lines** to avoid confusion.
+- If used, ensure Row Level Security (RLS) is enabled on all Supabase tables.
+
+---
+
+### 3. Backend [.env.production](file:///c:/Users/Bushra/shabucks/backend/.env.production) has placeholder credentials
+The file contains `MONGO_URI=mongodb+srv://admin:change-me@cluster0.example...` and `JWT_SECRET=production_secret_at_least_64_characters...`. These are clearly placeholders, but verify:
+- **Before deploying**, replace with real secrets via your deployment platform's secret management (Render, Railway, etc.)
+- **Never** put real secrets in this file — use environment variables from your hosting platform
+
+---
+
+### 4. CSP allows `'unsafe-inline'` for scripts
+In [app.js](file:///c:/Users/Bushra/shabucks/backend/app.js) (line 102):
+```js
+scriptSrc: ["'self'", "'unsafe-inline'"]
+```
+This weakens XSS protection significantly. If you need inline scripts (e.g., Google OAuth), use nonces instead:
+```js
+scriptSrc: ["'self'", `'nonce-${req.nonce}'`]
+```
+If no inline scripts are needed, remove `'unsafe-inline'` entirely.
+
+---
+
+### 5. MongoDB & Redis ports exposed in Docker
+In [docker-compose.yml](file:///c:/Users/Bushra/shabucks/docker-compose.yml), MongoDB (27017) and Redis (6379) are exposed to the host. In production, these should only be accessible internally:
+```diff
+  mongodb:
+-   ports:
+-     - "27017:27017"
++   # No ports exposed — only accessible via internal Docker network
+    
+  redis:
+-   ports:
+-     - "6379:6379"
++   # No ports exposed — only accessible via internal Docker network
+```
+
+---
+
+### 6. Nginx has no HTTPS configuration
+[nginx/default.conf](file:///c:/Users/Bushra/shabucks/nginx/default.conf) only listens on port 80. For production:
+- Add SSL certificate configuration (Let's Encrypt via certbot)
+- Redirect HTTP → HTTPS
+- The docker-compose exposes port 443 but nginx doesn't handle it
+
+---
+
+## 🟡 IMPORTANT — Should Fix
+
+### 7. No `X-Frame-Options` conflict check
+Both Helmet (`frameguard: "deny"`) and nginx (`X-Frame-Options: SAMEORIGIN`) set `X-Frame-Options` to different values. The browser will see **two conflicting headers**. Remove the nginx one since Helmet handles it consistently.
+
+---
+
+### 8. CSP `imgSrc` is restrictive
+Current CSP only allows images from `'self'`, `data:`, and `sentry.io`. But the app loads images from:
+- `images.unsplash.com` (blog posts)
+- User avatars (potentially external URLs)
+
+**Fix:** Add allowed image origins:
+```js
+imgSrc: ["'self'", "data:", "https://*.sentry.io", "https://images.unsplash.com", "https://*.googleusercontent.com"]
+```
+
+---
+
+### 9. Missing `PATCH` in CORS methods
+CORS allows `['GET', 'POST', 'PUT', 'DELETE']` but **not `PATCH`**. If any future endpoint uses PATCH, it will be silently blocked.
+
+---
+
+### 10. No production build test
+The frontend [vite.config.js](file:///c:/Users/Bushra/shabucks/frontend/vite.config.js) disables sourcemaps in production (`sourcemap: false`) which is correct, but you should run `npm run build` and verify the production bundle before deploying to catch any build-time errors.
+
+---
+
+### 11. Stale test files in backend
+[backend/test_api.js](file:///c:/Users/Bushra/shabucks/backend/test_api.js) and [backend/test_api_2.js](file:///c:/Users/Bushra/shabucks/backend/test_api_2.js) appear to be ad-hoc test scripts. These should either:
+- Be moved to `backend/tests/`
+- Or deleted before deployment
+
+---
+
+### 12. `server_name localhost` in nginx
+The nginx config uses `server_name localhost` instead of your actual domain. For production, change to your real domain:
+```diff
+-server_name localhost;
++server_name crammerly.io www.crammerly.io;
+```
+
+---
+
+## 🟢 NICE-TO-HAVE
+
+### 13. Missing favicon/meta for production
+Verify `frontend/index.html` has:
+- Proper `<title>` and `<meta description>`
+- Open Graph tags for social sharing
+- A proper favicon (not the default Vite icon)
+
+---
+
+### 14. No request timeout on Axios client
+The frontend API client has no explicit timeout. Add a default:
+```js
+const client = axios.create({
+    baseURL: env.apiUrl,
+    timeout: 15000, // 15 second timeout
+    // ...
+});
+```
+
+---
+
+### 15. Healthcheck endpoint returns data before `responseEnhancer`
+The `/health` route uses `res.sendSuccess()` which comes from the `responseEnhancer` middleware. This works, but the `${API_PREFIX}/health` detailed endpoint could leak diagnostic info (memory, uptime) if not protected. Consider adding `protect` middleware or restricting to internal IPs.
+
+---
+
+### 16. Docker healthcheck uses `fetch` instead of `curl`
+The Dockerfile healthcheck uses `node -e "fetch(...)..."` which loads the full Node runtime for each check. Use `wget` or `curl` instead:
+```dockerfile
+HEALTHCHECK CMD wget --no-verbose --tries=1 --spider http://localhost:5000/health || exit 1
+```
+Note: `curl` isn't available in Alpine by default, but `wget` is.
+
+---
+
+## ✅ What's Already Great
+
+| Area | Status |
+|------|--------|
+| JWT 15m access + 7d refresh tokens | ✅ Tight |
+| Session binding with tokenVersion | ✅ Secure |
+| Zod env validation with strict requirements | ✅ Solid |
+| DB retry with exponential backoff | ✅ Resilient |
+| Graceful shutdown (SIGTERM/SIGINT) | ✅ Production-ready |
+| Sentry with data scrubbing | ✅ Privacy-aware |
+| Multi-stage Dockerfile, non-root user | ✅ Best practice |
+| Rate limiting (login/refresh/api/AI tiers) | ✅ Comprehensive |
+| Audit logging with immutability guard | ✅ Compliant |
+| Password history (5 deep) + bcrypt 12 | ✅ Strong |
+| Frontend code-split with React.lazy | ✅ Optimized |
+
+---
+
+## 📋 Deployment Checklist
+
+```
+[ ] Remove backend/server_log.txt from git
+[ ] Clean up or remove Supabase keys from frontend/.env
+[ ] Set real secrets via deployment platform (not in .env files)
+[ ] Remove 'unsafe-inline' from CSP or use nonces
+[ ] Remove MongoDB/Redis port exposure in docker-compose
+[ ] Configure nginx with HTTPS + real domain
+[ ] Fix X-Frame-Options conflict (Helmet vs nginx)
+[ ] Add Unsplash/Google to CSP imgSrc
+[ ] Run `npm run build` to verify production bundle
+[ ] Delete or move stale test scripts
+[ ] Add Axios request timeout
+```

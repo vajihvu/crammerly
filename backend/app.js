@@ -18,7 +18,7 @@ import { requestIdMiddleware, observabilityMiddleware, auditMutationMiddleware }
 // Redis connections managed within the middleware layer
 
 
-import { protect } from './middleware/auth.js';
+import { protect, authorize } from './middleware/auth.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -99,9 +99,9 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            imgSrc: ["'self'", "data:", "https://*.sentry.io"],
+            imgSrc: ["'self'", "data:", "https://*.sentry.io", "https://images.unsplash.com", "https://*.googleusercontent.com"],
             connectSrc: ["'self'", ...config.clientUrls, "https://*.sentry.io"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             objectSrc: ["'none'"],
@@ -121,7 +121,7 @@ app.use(helmet({
 // 2. CORS (Explicit origins)
 const corsOptions = {
     origin: config.clientUrls,
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
     credentials: true,
     maxAge: 86400 // Cache preflight for 24 hours
@@ -173,6 +173,53 @@ app.use(API_PREFIX, v1Routes);
 // Basic health check (Simple version for monitoring/LBs)
 app.get('/health', (req, res) => {
     return res.sendSuccess({ status: 'ok' });
+});
+
+// Prometheus-compatible metrics endpoint (#22)
+// Scrapeable by Prometheus, Render metrics, Grafana Agent, etc.
+// Restricted to admin users to prevent server internals exposure
+app.get('/metrics', protect, authorize('admin'), (req, res) => {
+    const mem = process.memoryUsage();
+    const dbState = mongoose.connection.readyState; // 0=disc, 1=conn, 2=connecting, 3=disconnecting
+
+    // Measure event-loop lag
+    const start = process.hrtime.bigint();
+    setImmediate(() => {
+        const lagMs = Number(process.hrtime.bigint() - start) / 1e6;
+
+        const lines = [
+            '# HELP nodejs_uptime_seconds Process uptime in seconds',
+            '# TYPE nodejs_uptime_seconds gauge',
+            `nodejs_uptime_seconds ${process.uptime().toFixed(2)}`,
+            '',
+            '# HELP nodejs_heap_used_bytes Heap memory used in bytes',
+            '# TYPE nodejs_heap_used_bytes gauge',
+            `nodejs_heap_used_bytes ${mem.heapUsed}`,
+            '',
+            '# HELP nodejs_heap_total_bytes Total heap size in bytes',
+            '# TYPE nodejs_heap_total_bytes gauge',
+            `nodejs_heap_total_bytes ${mem.heapTotal}`,
+            '',
+            '# HELP nodejs_rss_bytes Resident set size in bytes',
+            '# TYPE nodejs_rss_bytes gauge',
+            `nodejs_rss_bytes ${mem.rss}`,
+            '',
+            '# HELP nodejs_external_bytes External memory in bytes',
+            '# TYPE nodejs_external_bytes gauge',
+            `nodejs_external_bytes ${mem.external}`,
+            '',
+            '# HELP nodejs_eventloop_lag_ms Event loop lag in milliseconds',
+            '# TYPE nodejs_eventloop_lag_ms gauge',
+            `nodejs_eventloop_lag_ms ${lagMs.toFixed(3)}`,
+            '',
+            '# HELP mongodb_connection_state MongoDB readyState (1=connected)',
+            '# TYPE mongodb_connection_state gauge',
+            `mongodb_connection_state ${dbState}`,
+        ];
+
+        res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8');
+        res.send(lines.join('\n') + '\n');
+    });
 });
 
 

@@ -61,33 +61,37 @@ html.dark {
 
 /* Custom Scrollbar Styles - Global */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--bg-main);
+    background: transparent;
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
     background: var(--border-bright);
-    border-radius: 100px;
-    border: 2px solid var(--bg-main);
+    border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--accent-secondary);
 }
 
-/* For Firefox */
-* {
-    scrollbar-width: thin;
-    scrollbar-color: var(--border-bright) var(--bg-main);
-}
-
 /* Remove default scrollbar arrows */
 ::-webkit-scrollbar-button {
-    display: none;
+    display: none !important;
+    width: 0px !important;
+    height: 0px !important;
+}
+
+/* For Firefox */
+@supports (-moz-appearance:none) {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-bright) transparent;
+    }
 }
 
 /* Custom Scrollbar Utility */
@@ -95,31 +99,47 @@ html.dark {
     scrollbar-gutter: stable;
 }
 
+/* Hide scrollbar completely but allow scrolling */
+@layer utilities {
+    .no-scrollbar::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none !important;
+        /* IE and Edge */
+        scrollbar-width: none !important;
+        /* Firefox */
+    }
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 4px;
+    height: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
-    margin: 4px;
+    margin: 2px 0;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: var(--border-bright);
+    background-color: var(--border-bright);
     border-radius: 10px;
-    border: 2px solid transparent;
-    background-clip: content-box;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-primary);
-    background-clip: content-box;
+    background-color: var(--accent-secondary);
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #4A4642;
-    background-clip: content-box;
+    background-color: #4A4642;
+}
+
+.custom-scrollbar::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0px !important;
+    height: 0px !important;
 }
 
 /* Theme Date/Time Pickers Globally */

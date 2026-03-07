@@ -19,6 +19,7 @@ const config = {
     isProduction: import.meta.env.PROD,
     isDevelopment: import.meta.env.DEV,
     nodeEnv: import.meta.env.MODE,
+    googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
 };
 
 export default config;

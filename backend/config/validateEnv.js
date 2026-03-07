@@ -41,6 +41,7 @@ const envSchema = z.object({
     SMTP_FROM: z.string().email("SMTP_FROM must be a valid email"),
 
     DEEPSEEK_API_KEY: z.string().optional().describe('API Key for deepseek AI service'),
+    GOOGLE_CLIENT_ID: z.string().optional().describe('Google OAuth Client ID'),
     FEATURE_AI_RECOMMENDATIONS: z.string().transform(v => v === 'true').default('true'),
     FEATURE_MAINTENANCE_MODE: z.string().transform(v => v === 'true').default('false'),
     TURNSTILE_SECRET_KEY: z.string().optional().describe('Cloudflare Turnstile secret key for CAPTCHA verification'),

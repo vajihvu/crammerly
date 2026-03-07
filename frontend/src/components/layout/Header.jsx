@@ -55,7 +55,7 @@ const Header = ({
                 {/* Center Brand */}
                 <div className="flex-[2] flex flex-col items-center justify-center text-center">
                     <h1 className="text-lg xs:text-xl sm:text-2xl md:text-3xl font-[1000] text-brand-text tracking-tighter uppercase leading-none">CRAMMER<span className="text-brand-primary">LY</span></h1>
-                    <p className="hidden md:block text-[9px] font-black text-brand-primary uppercase tracking-[0.4em] mt-1.5 bg-brand-primary/5 px-3 py-1 rounded-full whitespace-nowrap">Collaborative Learning</p>
+
                 </div>
 
                 {/* Right Actions */}
@@ -84,7 +84,7 @@ const Header = ({
                                         ].map((blog, i) => (
                                             <div key={i} onClick={() => openModal('blogsModal')} className="group cursor-pointer bg-brand-bg hover:bg-brand-muted/10 p-4 rounded-2xl border border-brand-border hover:border-brand-primary transition-all relative overflow-hidden text-left">
                                                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-primary opacity-0 group-hover:opacity-100 transition-all"></div>
-                                                <h4 className="text-sm font-medium text-brand-text mb-2 leading-tight group-hover:text-brand-primary transition-colors uppercase font-sans">{blog.title}</h4>
+                                                <h4 className="text-sm font-bold text-brand-text mb-2 leading-tight group-hover:text-brand-primary transition-colors font-sans">{blog.title}</h4>
                                                 <div className="flex justify-between items-center">
                                                     <span className="text-[10px] font-medium text-brand-text-dim uppercase tracking-widest font-sans">{blog.author}</span>
                                                     <span className="text-[10px] font-medium text-brand-primary uppercase tracking-widest font-sans">{blog.time}</span>

@@ -43,3 +43,4 @@ const logger = winston.createLogger({
 
 // Polyfill old logger interface to ensure compatibility
 export { logger };
+export default logger;

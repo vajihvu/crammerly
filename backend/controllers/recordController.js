@@ -86,10 +86,10 @@ export const updateRecord = asyncHandler(async (req, res) => {
     const record = await Record.findOne({ _id: req.params.id, userId: req.user._id });
 
     if (record) {
-        record.title = req.body.title || record.title;
-        record.content = req.body.content || record.content;
-        record.status = req.body.status || record.status;
-        record.tags = req.body.tags || record.tags;
+        record.title = req.body.title !== undefined ? req.body.title : record.title;
+        record.content = req.body.content !== undefined ? req.body.content : record.content;
+        record.status = req.body.status !== undefined ? req.body.status : record.status;
+        record.tags = req.body.tags !== undefined ? req.body.tags : record.tags;
 
         const updatedRecord = await record.save();
         return res.sendSuccess(updatedRecord);

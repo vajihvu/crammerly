@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
-import { X, Users, Search, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Users, Search, ArrowRight, Loader } from 'lucide-react';
+import { roomsApi } from '../../api';
 
-function GlobalSearchModal({ rooms, onClose, onJoinRoom }) {
+function GlobalSearchModal({ onClose, onJoinRoom }) {
     const [searchTerm, setSearchTerm] = useState('');
+    const [allRooms, setAllRooms] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const filteredRooms = (rooms || []).filter(room => {
-        const name = room?.name || room?.title || '';
-        const topic = room?.topic || room?.genre || '';
+    useEffect(() => {
+        const fetchRooms = async () => {
+            try {
+                const data = await roomsApi.getAll();
+                setAllRooms(data || []);
+            } catch (err) {
+                console.error('Failed to load rooms:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchRooms();
+    }, []);
+
+    const filteredRooms = allRooms.filter(room => {
+        if (!searchTerm.trim()) return true;
+        const name = room?.name || '';
+        const topic = room?.topic || '';
         return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             topic.toLowerCase().includes(searchTerm.toLowerCase());
     });
@@ -57,8 +75,13 @@ function GlobalSearchModal({ rooms, onClose, onJoinRoom }) {
                 {/* Results List */}
                 <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar bg-brand-bg/10">
                     <div className="space-y-3">
-                        {filteredRooms.length === 0 ? (
-                            <EmptyState icon={<Users size={48} />} text={`No rooms found for "${searchTerm}"`} />
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center py-20 opacity-40">
+                                <Loader size={32} className="animate-spin text-brand-primary mb-3" />
+                                <p className="text-xs font-black text-brand-text-dim uppercase tracking-widest">Loading rooms...</p>
+                            </div>
+                        ) : filteredRooms.length === 0 ? (
+                            <EmptyState icon={<Users size={48} />} text={searchTerm ? `No rooms found for "${searchTerm}"` : 'No rooms available'} />
                         ) : (
                             filteredRooms.map(room => (
                                 <ResultCard

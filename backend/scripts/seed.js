@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 dotenv.config({ path: '.env.development' });
 process.env.NODE_ENV = process.env.NODE_ENV || 'development';
 
+import crypto from 'crypto';
+
 import mongoose from 'mongoose';
 import User from '../models/User.js';
 import Session from '../models/Session.js';
@@ -69,7 +71,7 @@ const seedData = async () => {
         // Create initial session
         await Session.create({
             user: devUser._id,
-            refreshTokenHash: 'dummy_hash',
+            refreshTokenHash: crypto.createHash('sha256').update('dev-seed-refresh-token').digest('hex'),
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
             deviceName: 'Windows PC',
             ipAddress: '127.0.0.1',

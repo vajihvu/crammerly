@@ -1,12 +1,13 @@
 import Message from '../models/Message.js';
 import Room from '../models/Room.js';
+import asyncHandler from '../utils/asyncHandler.js';
 
 
 /**
  * @desc    Get all messages for a room
  * @route   GET /api/v1/messages/:roomId
  */
-export const getMessagesByRoom = async (req, res) => {
+export const getMessagesByRoom = asyncHandler(async (req, res) => {
     const { roomId } = req.params;
 
     // Authorization: Check if user is a member of the room
@@ -39,14 +40,14 @@ export const getMessagesByRoom = async (req, res) => {
     }));
 
     return res.sendSuccess(formattedMessages);
-};
+});
 
 
 /**
  * @desc    Send a message
  * @route   POST /api/v1/messages/:roomId
  */
-export const sendMessage = async (req, res) => {
+export const sendMessage = asyncHandler(async (req, res) => {
     const { roomId } = req.params;
     const { content, type, fileData } = req.body;
 
@@ -90,5 +91,5 @@ export const sendMessage = async (req, res) => {
     });
 
     return res.sendSuccess(formatted, 201);
-};
+});
 

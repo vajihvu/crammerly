@@ -82,30 +82,33 @@ function VideoTab({ room, onUpdateRoom }) {
   };
 
   return (
-    <div className="bg-brand-card rounded-2xl border border-brand-border p-6 shadow-xl flex-1 flex flex-col min-h-[500px]">
+    <div className="bg-brand-card rounded-2xl border border-brand-border p-4 shadow-xl flex-1 flex flex-col min-h-0 h-full overflow-hidden">
       {!inCall ? (
         <div className="flex-1 flex flex-col">
-          <div className="text-center py-12">
-            <Video size={64} className="mx-auto mb-6 text-brand-primary/50" />
-            <h3 className="text-2xl font-bold mb-2 text-brand-text font-sans">Video Call</h3>
-            <p className="text-brand-text-dim mb-8 font-sans">Start an instant call or schedule one for later</p>
+          <div className="text-center flex-1 flex flex-col items-center justify-center">
+            <Video size={40} className="mx-auto mb-3 text-brand-primary/50" />
+            <h3 className="text-xl font-bold mb-1 text-brand-text font-sans">Video Call</h3>
+            <p className="text-brand-text-dim text-sm mb-4 font-sans">Start an instant call or schedule one for later</p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <button
                 onClick={() => setInCall(true)}
-                className="w-full sm:w-auto px-8 py-4 bg-brand-text hover:bg-brand-text/90 text-brand-bg rounded-xl text-lg font-semibold inline-flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 font-sans"
+                className="w-full sm:w-auto px-6 py-3 bg-brand-text hover:bg-brand-text/90 text-brand-bg rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 font-sans"
               >
-                <Video size={24} /> Start Call
+                <Video size={18} /> Start Call
               </button>
 
               <button
                 onClick={() => setShowScheduler(true)}
-                className="w-full sm:w-auto px-8 py-4 bg-brand-surface border border-brand-border hover:bg-brand-muted/10 text-brand-text rounded-xl text-lg font-semibold inline-flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 font-sans"
+                className="w-full sm:w-auto px-6 py-3 bg-brand-surface border border-brand-border hover:bg-brand-muted/10 text-brand-text rounded-xl text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 font-sans"
               >
-                <Calendar size={24} /> Schedule Meeting
+                <Calendar size={18} /> Schedule Meeting
               </button>
             </div>
-            <p className="text-xs text-brand-text-dim opacity-50 mt-6 font-sans">Demo feature. Full implementation requires WebRTC.</p>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-warning/10 border border-brand-warning/20 rounded-xl mt-4">
+              <span className="w-1.5 h-1.5 bg-brand-warning rounded-full animate-pulse"></span>
+              <span className="text-[10px] text-brand-warning font-bold uppercase tracking-widest">Preview — WebRTC integration coming soon</span>
+            </div>
           </div>
 
           {/* Scheduled Meetings List */}
