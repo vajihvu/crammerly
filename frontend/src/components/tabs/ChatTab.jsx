@@ -129,6 +129,7 @@ function ChatTab({ room, currentUser, addToast }) {
       try {
         await messagesApi.send(room.id, { content: `Shared file: ${file.name}`, type: 'file', fileData });
       } catch (err) {
+        console.error('File send error:', err);
         if (addToast) addToast('Failed to send file', 'danger');
       }
     };
@@ -144,6 +145,7 @@ function ChatTab({ room, currentUser, addToast }) {
     try {
       await messagesApi.send(room.id, { content: gif.name, type: 'gif', fileData: gif });
     } catch (err) {
+      console.error('GIF send error:', err);
       if (addToast) addToast('Failed to send GIF', 'danger');
     }
     setShowGifPicker(false);
@@ -153,6 +155,7 @@ function ChatTab({ room, currentUser, addToast }) {
     try {
       await messagesApi.send(room.id, { content: sticker, type: 'sticker' });
     } catch (err) {
+      console.error('Sticker send error:', err);
       if (addToast) addToast('Failed to send sticker', 'danger');
     }
     setShowStickerPicker(false);
