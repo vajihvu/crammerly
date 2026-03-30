@@ -18,17 +18,20 @@ export const csrfGuard = (req, res, next) => {
     }
 
     // 2. Strict Protection Check
-    // We expect 'X-CSRF-Token' or 'X-Requested-With' as proof of intent
-    const csrfHeader = req.headers['x-csrf-token'] || req.headers['x-requested-with'];
+    // Require 'X-Requested-With: XMLHttpRequest' as proof of same-origin intent.
+    // CORS prevents cross-origin requests from setting custom headers,
+    // so this effectively blocks cross-site form submissions and script-based CSRF.
+    const xRequestedWith = req.headers['x-requested-with'];
 
-    if (!csrfHeader) {
-        logger.warn('CSRF BLOCK: Missing anti-forgery header', {
+    if (xRequestedWith !== 'XMLHttpRequest') {
+        logger.warn('CSRF BLOCK: Missing or invalid anti-forgery header', {
             ip: req.ip,
             path: req.originalUrl,
-            method: req.method
+            method: req.method,
+            receivedHeader: xRequestedWith || '(none)'
         });
 
-        const error = new Error('Security Violation: CSRF Protection header missing (X-CSRF-Token)');
+        const error = new Error('Security Violation: CSRF Protection header missing or invalid (X-Requested-With: XMLHttpRequest required)');
         error.statusCode = 403;
         error.code = 'SEC_CSRF_MISSING';
         return next(error);

@@ -9,6 +9,8 @@ import asyncHandler from '../utils/asyncHandler.js';
  */
 export const getMessagesByRoom = asyncHandler(async (req, res) => {
     const { roomId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+    const cursor = req.query.cursor;
 
     // Authorization: Check if user is a member of the room
     const room = await Room.findById(roomId);
@@ -22,11 +24,22 @@ export const getMessagesByRoom = asyncHandler(async (req, res) => {
         return res.sendError('You must be a member of this room to view messages', 403, 'AUTH_FORBIDDEN');
     }
 
+    const query = { room_id: roomId };
+    if (cursor) {
+        const cursorDate = new Date(cursor);
+        if (isNaN(cursorDate.getTime())) {
+            return res.sendError('Invalid cursor value', 400, 'VAL_INVALID_CURSOR');
+        }
+        query.createdAt = { $lt: cursorDate };
+    }
 
-    const messages = await Message.find({ room_id: roomId })
+    const messages = await Message.find(query)
         .populate('sender_id', 'name tag avatar')
-        .sort({ createdAt: 1 });
+        .sort({ createdAt: -1 })
+        .limit(limit);
 
+    // Reverse to chronological order for display
+    messages.reverse();
 
     const formattedMessages = messages.map(m => ({
         id: m._id,
@@ -39,7 +52,14 @@ export const getMessagesByRoom = asyncHandler(async (req, res) => {
         timestamp: m.createdAt
     }));
 
-    return res.sendSuccess(formattedMessages);
+    const hasMore = messages.length === limit;
+    const nextCursor = hasMore ? messages[0].createdAt : null;
+
+    return res.sendSuccess({
+        messages: formattedMessages,
+        nextCursor,
+        hasMore
+    });
 });
 
 

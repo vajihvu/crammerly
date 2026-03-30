@@ -1,5 +1,8 @@
 name: CI / CD
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [main, staging]
@@ -55,6 +58,7 @@ jobs:
         env:
           NODE_ENV: test
           MONGO_URI: mongodb://localhost:27017/crammerly_test
+          # NOTE: For production pipelines, store these in GitHub Secrets (${{ secrets.CI_JWT_SECRET }})
           JWT_SECRET: test-secret-that-is-at-least-32-chars-long
           JWT_REFRESH_SECRET: test-refresh-secret-32-chars-minimum
 
@@ -129,7 +133,7 @@ jobs:
           artifact-name: sbom-${{ github.sha }}
 
       - name: Scan image for vulnerabilities (Trivy)       # (#13)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@v0.28.0
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}
           format: sarif
@@ -188,13 +192,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to staging                            # Replace with Render hook / SSH / Railway
+      - name: Deploy to staging
         run: |
           echo "🚀 Deploying ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging to staging host"
-          # curl -X POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
+          curl -X POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
 
       - name: Wait for deployment to stabilise
-        run: sleep 20
+        run: |
+          for i in $(seq 1 12); do
+            curl -sf "${{ secrets.STAGING_URL }}/health" && echo "✅ Service healthy" && break
+            echo "⏳ Waiting for service... ($i/12)"
+            sleep 10
+          done
 
       - name: Run smoke tests against staging              # (#19 / #25)
         run: node backend/scripts/production_smoke_test.js
@@ -232,13 +241,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy to production                         # Replace with your deploy mechanism
+      - name: Deploy to production
         run: |
           echo "🚀 Deploying ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main to production host"
-          # curl -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
+          curl -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
 
       - name: Wait for deployment to stabilise
-        run: sleep 30
+        run: |
+          for i in $(seq 1 18); do
+            curl -sf "${{ secrets.PRODUCTION_URL }}/health" && echo "✅ Service healthy" && break
+            echo "⏳ Waiting for service... ($i/18)"
+            sleep 10
+          done
 
       - name: Run post-deploy smoke tests                  # (#19 / #25)
         run: node backend/scripts/production_smoke_test.js

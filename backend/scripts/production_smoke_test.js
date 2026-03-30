@@ -1,7 +1,9 @@
 
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000/api/v1';
+const BASE_URL = process.env.PRODUCTION_URL
+    ? `${process.env.PRODUCTION_URL.replace(/\/+$/, '')}/api/v1`
+    : 'http://localhost:5000/api/v1';
 
 const client = axios.create({
     baseURL: BASE_URL,
@@ -83,6 +85,25 @@ async function runProductionSmokeTest() {
     // 5. App Resilience (Implicitly verified by persistence in DB)
     console.log('\n--- 5. Persistence & Context ---');
     console.log('✅ Session records are persisted in MongoDB for cross-restart recovery.');
+
+    // 6. Cleanup — remove the test user we created
+    console.log('\n--- 6. Cleanup ---');
+    const loginForCleanup = await client.post('/auth/login', {
+        email: TEST_USER.email,
+        password: TEST_USER.password
+    });
+    const cleanupToken = loginForCleanup.data?.data?.token;
+    const cleanupCookie = (loginForCleanup.headers['set-cookie'] || []).find(c => c.startsWith('refreshToken='));
+    if (cleanupToken) {
+        const deleteRes = await client.delete('/auth/account', {
+            headers: {
+                Authorization: `Bearer ${cleanupToken}`,
+                Cookie: cleanupCookie ? cleanupCookie.split(';')[0] : ''
+            },
+            data: { password: TEST_USER.password }
+        });
+        console.log(deleteRes.status === 200 ? '✅ Test user cleaned up' : '⚠️ Cleanup failed — remove manually');
+    }
 
     console.log('\n✨ ALL GATES VERIFIED. READY FOR SHIPMENT.');
 }

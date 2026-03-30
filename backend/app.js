@@ -92,6 +92,8 @@ if (config.sentryDsn) {
 
 
 // Trust proxy (Render/Nginx/LBs) - Required for secure cookies to work over HTTPS proxies
+// SECURITY NOTE: If this app is ever deployed without a reverse proxy (directly exposed),
+// change this to the specific proxy IP(s) instead of 1 to prevent req.ip spoofing.
 app.set('trust proxy', 1);
 
 // 1. Security Headers (Helmet first)
@@ -99,10 +101,10 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
-            scriptSrc: ["'self'"],
+            scriptSrc: ["'self'", "https://plausible.io"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             imgSrc: ["'self'", "data:", "https://*.sentry.io", "https://images.unsplash.com", "https://*.googleusercontent.com"],
-            connectSrc: ["'self'", ...config.clientUrls, "https://*.sentry.io"],
+            connectSrc: ["'self'", ...config.clientUrls, "https://*.sentry.io", "https://plausible.io"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             objectSrc: ["'none'"],
             upgradeInsecureRequests: [],
@@ -233,7 +235,7 @@ app.get('/metrics', protect, authorize('admin'), (req, res) => {
  *       200:
  *         description: System status
  */
-app.get(`${API_PREFIX}/health`, (req, res) => {
+app.get(`${API_PREFIX}/health`, protect, (req, res) => {
     const dbState = mongoose.connection.readyState;
     const dbStatusMap = {
         0: 'disconnected',

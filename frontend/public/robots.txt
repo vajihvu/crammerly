@@ -1,6 +1,8 @@
 User-agent: *
 Allow: /
 Allow: /crammerly
+Allow: /privacy
+Allow: /terms
 
 Disallow: /workspace
 Disallow: /api/

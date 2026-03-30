@@ -28,7 +28,10 @@ services:
       retries: 5
 
   nginx:
-    image: nginx:alpine
+    image: nginx:1.27-alpine
+    # Allow file uploads up to 26MB (matches Message file_data.size cap)
+    environment:
+      - NGINX_CLIENT_MAX_BODY_SIZE=26m
     ports:
       - "80:80"
       - "443:443"
@@ -44,7 +47,7 @@ services:
     restart: always
 
   mongodb:
-    image: mongo:6.0
+    image: mongo:6.0.21
     # No ports exposed — only accessible via internal Docker network
     volumes:
       - mongodb_data:/data/db
@@ -56,7 +59,7 @@ services:
     restart: always
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.2-alpine
     # No ports exposed — only accessible via internal Docker network
     volumes:
       - redis_data:/data
@@ -69,7 +72,7 @@ services:
 
   # Daily MongoDB backup — runs at 02:00 UTC
   backup:
-    image: mongo:6.0
+    image: mongo:6.0.21
     entrypoint: >
       sh -c "while true; do
         sleep $$(( 86400 - $(date +%s) % 86400 ));

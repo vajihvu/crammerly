@@ -25,6 +25,10 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 backend/server_log.txt
+backend/test_output.txt
+backend/test_err.json
+backend/lint.json
+backend/lint_st.txt
 
 # Database
 mongodb_data/

@@ -19,7 +19,7 @@ if (initialNodeEnv) {
 }
 
 const envSchema = z.object({
-    NODE_ENV: z.string().default(nodeEnv),
+    NODE_ENV: z.enum(['development', 'test', 'staging', 'production']).default(nodeEnv),
     PORT: z.string().transform(Number).default('5000'),
     // Support multiple names for the database connection string
     MONGO_URI: z.string().min(1, "MONGO_URI cannot be empty").optional(),
@@ -27,6 +27,7 @@ const envSchema = z.object({
     DB_URL: z.string().min(1, "DB_URL cannot be empty").optional(),
 
     JWT_SECRET: z.string().min(64, "JWT_SECRET must be at least 64 characters long for production security"),
+    JWT_REFRESH_SECRET: z.string().min(32, "JWT_REFRESH_SECRET must be at least 32 characters long").optional(),
     CLIENT_URL: z.string()
         .transform(val => val.split(',').map(url => url.trim()))
         .pipe(z.array(z.string().url("Each CLIENT_URL must be a valid URL"))),
@@ -64,6 +65,7 @@ export const validateEnv = () => {
             return envSchema.parse({
                 MONGO_URI: 'mongodb://localhost:27017/crammerly_test',
                 JWT_SECRET: 'test_secret_placeholder_at_least_64_characters_long_for_validation_safety_',
+                JWT_REFRESH_SECRET: 'test_refresh_secret_placeholder_at_least_32_chars',
                 CLIENT_URL: 'https://crammerly.io',
                 COOKIE_DOMAIN: 'localhost',
                 SMTP_HOST: 'localhost',

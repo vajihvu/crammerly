@@ -2,6 +2,7 @@ import { logAuditEvent } from '../middleware/auditMiddleware.js';
 import { sendMail } from './mailer.js';
 import { logger } from './logger.js';
 import config from '../config/index.js';
+import { emailTemplate } from './emailTemplate.js';
 
 /**
  * Security Notifier Utility
@@ -16,19 +17,18 @@ export const notifyNewDeviceLogin = async (req, user, metadata) => {
     await sendMail({
         to: user.email,
         subject: '⚠️ New Device Login — Crammerly',
-        html: `
-            <h2>New device login detected</h2>
+        html: emailTemplate('New Device Login', `
+            <h2 style="color:#f1f5f9;margin:0 0 16px 0;">New device login detected</h2>
             <p>Hi ${user.name || 'there'},</p>
             <p>A sign-in was detected from a new device or location:</p>
-            <ul>
-                <li><strong>Device:</strong> ${metadata.deviceName || 'Unknown'}</li>
-                <li><strong>IP Address:</strong> ${metadata.ipAddress || 'Unknown'}</li>
-                <li><strong>Time:</strong> ${new Date().toUTCString()}</li>
-            </ul>
+            <table role="presentation" style="width:100%;margin:16px 0;border-collapse:collapse;">
+                <tr><td style="padding:8px 0;color:#94a3b8;">Device</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${metadata.deviceName || 'Unknown'}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">IP Address</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${metadata.ipAddress || 'Unknown'}</td></tr>
+                <tr><td style="padding:8px 0;color:#94a3b8;">Time</td><td style="padding:8px 0;color:#f1f5f9;font-weight:600;">${new Date().toUTCString()}</td></tr>
+            </table>
             <p>If this was you, you can ignore this email. If not, please
-               <a href="${config.clientUrls[0]}/reset-password">reset your password</a> immediately.</p>
-            <p>— Crammerly Security</p>
-        `
+               <a href="${config.clientUrls[0]}/reset-password" style="color:#818cf8;">reset your password</a> immediately.</p>
+        `)
     }).catch(err => logger.error(`Failed to send new device email: ${err.message}`));
 
     await logAuditEvent({
@@ -46,15 +46,14 @@ export const notifyPasswordChange = async (req, user) => {
     await sendMail({
         to: user.email,
         subject: '🔒 Your Crammerly password was changed',
-        html: `
-            <h2>Password changed</h2>
+        html: emailTemplate('Password Changed', `
+            <h2 style="color:#f1f5f9;margin:0 0 16px 0;">Password changed</h2>
             <p>Hi ${user.name || 'there'},</p>
             <p>Your Crammerly account password was just changed.</p>
             <p>If this was you, no action is needed. If you did not make this change,
-               <a href="${config.clientUrls[0]}/forgot-password">reset your password</a> immediately
+               <a href="${config.clientUrls[0]}/forgot-password" style="color:#818cf8;">reset your password</a> immediately
                and contact support.</p>
-            <p>— Crammerly Security</p>
-        `
+        `)
     }).catch(err => logger.error(`Failed to send password change email: ${err.message}`));
 
     await logAuditEvent({
@@ -171,21 +170,20 @@ export const sendVerificationEmail = async (req, user, token) => {
     await sendMail({
         to: user.email,
         subject: '✉️ Verify your Crammerly account',
-        html: `
-            <h2>Welcome to Crammerly, ${user.name}!</h2>
+        html: emailTemplate('Verify Your Email', `
+            <h2 style="color:#f1f5f9;margin:0 0 16px 0;">Welcome to Crammerly, ${user.name}!</h2>
             <p>Please verify your email address by clicking the button below.
-               This link expires in <strong>24 hours</strong>.</p>
+               This link expires in <strong style="color:#f1f5f9;">24 hours</strong>.</p>
             <p style="text-align:center;margin:32px 0;">
                 <a href="${verifyUrl}"
-                   style="background:#6366f1;color:#fff;padding:12px 28px;border-radius:8px;
-                          text-decoration:none;font-weight:bold;font-size:16px;">
+                   style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:14px 32px;border-radius:8px;
+                          text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
                     Verify Email
                 </a>
             </p>
-            <p>Or copy this link into your browser:<br/><a href="${verifyUrl}">${verifyUrl}</a></p>
+            <p style="font-size:13px;color:#94a3b8;">Or copy this link into your browser:<br/><a href="${verifyUrl}" style="color:#818cf8;word-break:break-all;">${verifyUrl}</a></p>
             <p>If you didn't create an account, you can safely ignore this email.</p>
-            <p>— Crammerly Team</p>
-        `
+        `)
     });
 
     await logAuditEvent({
@@ -203,23 +201,22 @@ export const sendPasswordResetEmail = async (req, user, token) => {
     await sendMail({
         to: user.email,
         subject: '🔑 Reset your Crammerly password',
-        html: `
-            <h2>Password Reset Request</h2>
+        html: emailTemplate('Password Reset', `
+            <h2 style="color:#f1f5f9;margin:0 0 16px 0;">Password Reset Request</h2>
             <p>Hi ${user.name || 'there'},</p>
             <p>We received a request to reset your password. Click the button below to set a new one.
-               This link expires in <strong>15 minutes</strong>.</p>
+               This link expires in <strong style="color:#f1f5f9;">15 minutes</strong>.</p>
             <p style="text-align:center;margin:32px 0;">
                 <a href="${resetUrl}"
-                   style="background:#6366f1;color:#fff;padding:12px 28px;border-radius:8px;
-                          text-decoration:none;font-weight:bold;font-size:16px;">
+                   style="background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;padding:14px 32px;border-radius:8px;
+                          text-decoration:none;font-weight:bold;font-size:16px;display:inline-block;">
                     Reset Password
                 </a>
             </p>
-            <p>Or copy this link into your browser:<br/><a href="${resetUrl}">${resetUrl}</a></p>
+            <p style="font-size:13px;color:#94a3b8;">Or copy this link into your browser:<br/><a href="${resetUrl}" style="color:#818cf8;word-break:break-all;">${resetUrl}</a></p>
             <p>If you didn't request a password reset, you can safely ignore this email.
                Your password will not change.</p>
-            <p>— Crammerly Security</p>
-        `
+        `)
     });
 
     await logAuditEvent({

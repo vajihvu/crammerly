@@ -23,6 +23,14 @@ export const getTodos = async (req, res, next) => {
 export const createTodo = async (req, res, next) => {
     const { text } = req.body;
     try {
+        // Enforce per-user limit to prevent resource abuse
+        const count = await Todo.countDocuments({ user_id: req.user._id });
+        if (count >= 500) {
+            const error = new Error('Todo limit reached (500 max). Please remove some existing todos.');
+            error.statusCode = 400;
+            error.code = 'RESOURCE_LIMIT';
+            return next(error);
+        }
         const todo = await Todo.create({
             user_id: req.user._id,
             text,

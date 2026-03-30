@@ -257,9 +257,14 @@ export const googleLogin = async (req, res, next) => {
             });
             await logAuditEvent({ req, user: user._id, event: 'AUTH_REGISTER', status: 'SUCCESS', metadata: { method: 'GOOGLE' } });
         } else if (!user.googleId) {
-            user.googleId = sub;
-            if (picture && !user.avatar) user.avatar = picture;
-            await user.save();
+            // Security: Do NOT auto-link Google to an existing local account.
+            // An attacker could create a Google account with the victim's email
+            // and silently gain access. Require the user to link via profile settings.
+            await logAuditEvent({ req, event: 'AUTH_LOGIN', status: 'FAILURE', metadata: { email, reason: 'GOOGLE_LINK_DENIED' } });
+            const error = new Error('An account with this email already exists. Please log in with your password first, then link Google from your profile settings.');
+            error.statusCode = 409;
+            error.code = 'AUTH_ACCOUNT_CONFLICT';
+            return next(error);
         }
 
         // Create session
@@ -402,7 +407,26 @@ export const updateUserProfile = async (req, res, next) => {
         }
 
         user.name = req.body.name || user.name;
-        user.email = req.body.email || user.email;
+
+        // Email change requires re-verification — don't apply directly
+        if (req.body.email && req.body.email.toLowerCase().trim() !== user.email) {
+            const newEmail = req.body.email.toLowerCase().trim();
+            // Check if new email is already taken
+            const emailExists = await User.findOne({ email: newEmail });
+            if (emailExists) {
+                const error = new Error('This email is already in use by another account.');
+                error.statusCode = 400;
+                error.code = 'RES_DUPLICATE';
+                throw error;
+            }
+            const verificationToken = generateVerificationToken();
+            user.pendingEmail = newEmail;
+            user.pendingEmailToken = hashToken(verificationToken);
+            user.pendingEmailExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+            // Send verification to the NEW email address
+            await sendVerificationEmail(req, { ...user.toObject(), email: newEmail }, verificationToken);
+            // Note: user.email stays unchanged until the new email is verified
+        }
 
         // Profile fields
         if (req.body.bio !== undefined) user.bio = req.body.bio;
@@ -513,11 +537,14 @@ export const deactivateUser = async (req, res, next) => {
             throw error;
         }
 
-        if (!password || !(await user.matchPassword(password))) {
-            const error = new Error('Incorrect password. Account deactivation requires confirmation.');
-            error.statusCode = 401;
-            error.code = 'AUTH_INVALID';
-            throw error;
+        // Skip password check for Google-only accounts (no local password)
+        if (user.password) {
+            if (!password || !(await user.matchPassword(password))) {
+                const error = new Error('Incorrect password. Account deactivation requires confirmation.');
+                error.statusCode = 401;
+                error.code = 'AUTH_INVALID';
+                throw error;
+            }
         }
 
         user.isActive = false;
@@ -902,13 +929,16 @@ export const exportData = async (req, res, next) => {
             import('../models/AuditLog.js').then(m => m.default),
         ]);
 
-        const [user, sessions, todos, studySessions, auditLogs] = await Promise.all([
-            User.findById(userId).select('-password -previousPasswords -emailVerificationToken -resetPasswordToken'),
+        const [user, rawSessions, todos, studySessions, auditLogs] = await Promise.all([
+            User.findById(userId).select('-password -previousPasswords -emailVerificationToken -resetPasswordToken -pendingEmailToken'),
             Session.find({ user: userId }).lean(),
             Todo.find({ userId }).lean(),
             StudySession.find({ userId }).lean(),
             AuditLog.find({ user: userId }).lean(),
         ]);
+
+        // Strip sensitive token hashes from session data before export
+        const sessions = rawSessions.map(({ refreshTokenHash: _rth, previousTokenHashes: _pth, ...safe }) => safe);
 
         await logAuditEvent({
             req,
