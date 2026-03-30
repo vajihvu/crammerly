@@ -98,8 +98,25 @@ export const initSocket = (server) => {
             const room = await Room.findById(roomId);
             if (!room || !room.members.some(m => m.user.toString() === socket.user._id.toString())) return;
 
+            // 4. Persist message to MongoDB for chat history
+            let messageId = crypto.randomUUID();
+            try {
+                const { default: Message } = await import('../models/Message.js');
+                const saved = await Message.create({
+                    room_id: roomId,
+                    sender_id: socket.user._id,
+                    content: sanitized,
+                    type: type || 'text',
+                    file_data: fileData || undefined
+                });
+                messageId = saved._id;
+            } catch (err) {
+                logger.error(`Failed to persist socket message: ${err.message}`);
+                // Continue emitting even if persistence fails — realtime shouldn't block on DB
+            }
+
             socket.to(roomId).emit('new_message', {
-                id: crypto.randomUUID(),
+                id: messageId,
                 sender_id: socket.user._id,
                 senderName: socket.user.name,
                 senderTag: socket.user.tag || '0000',

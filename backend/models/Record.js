@@ -15,7 +15,8 @@ const recordSchema = new mongoose.Schema({
     },
     content: {
         type: String,
-        required: [true, 'Please provide content']
+        required: [true, 'Please provide content'],
+        maxlength: [50000, 'Content cannot exceed 50,000 characters']
     },
     status: {
         type: String,

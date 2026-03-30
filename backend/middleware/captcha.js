@@ -11,11 +11,19 @@ export const verifyCaptcha = async (req, res, next) => {
         return next();
     }
 
-    // Safety: If secret key is missing in production, log critical error but let users through 
-    // to avoid blocking all traffic due to configuration error.
+    // Fail-closed in production: If secret key is missing, block traffic.
+    // In staging: warn but allow through so deploy testing isn't blocked by missing captcha config.
     if (!config.turnstileSecretKey) {
-        logger.error('CRITICAL ERROR: Cloudflare Turnstile secret key is missing in production!');
-        return next();
+        if (config.isStaging) {
+            logger.warn('⚠️ CAPTCHA key missing in staging — allowing request through. Set TURNSTILE_SECRET_KEY for production.');
+            return next();
+        }
+        logger.error('CRITICAL: Cloudflare Turnstile secret key is missing in production! Blocking requests.');
+        return res.sendError(
+            'CAPTCHA service is misconfigured. Please contact support.',
+            503,
+            'SYS_CAPTCHA_MISCONFIGURED'
+        );
     }
 
 

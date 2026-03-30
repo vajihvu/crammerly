@@ -15,9 +15,18 @@ export const getAllRooms = asyncHandler(async (req, res) => {
     const cached = await cacheGet(cacheKey);
     if (cached) return res.sendSuccess(cached);
 
-    const query = {};
+    const query = {
+        $or: [
+            { privacy: 'Public' },
+            { 'members.user': req.user._id }
+        ]
+    };
     if (cursor) {
-        query.createdAt = { $lt: new Date(cursor) };
+        const cursorDate = new Date(cursor);
+        if (isNaN(cursorDate.getTime())) {
+            return res.sendError('Invalid cursor value', 400, 'VAL_INVALID_CURSOR');
+        }
+        query.createdAt = { $lt: cursorDate };
     }
 
     const rooms = await Room.find(query)
@@ -114,6 +123,11 @@ export const joinRoom = asyncHandler(async (req, res) => {
 
     const isMember = room.members.some(m => m.user.toString() === req.user._id.toString());
     if (!isMember) {
+        // Enforce max member limit
+        const maxMembers = room.maxMembers || 50;
+        if (room.members.length >= maxMembers) {
+            return res.sendError(`Room is full (max ${maxMembers} members)`, 400, 'ROOM_FULL');
+        }
         room.members.push({ user: req.user._id, progress: [] });
         await room.save();
 
@@ -170,6 +184,9 @@ export const deleteRoom = asyncHandler(async (req, res) => {
         return res.sendError('Not authorized', 403, 'AUTH_FORBIDDEN');
     }
 
+    // Cascade: delete all messages in this room
+    const { default: Message } = await import('../models/Message.js');
+    await Message.deleteMany({ room_id: room._id });
 
     await room.deleteOne();
     return res.sendSuccess(null, 200, 'Room deleted');
@@ -194,6 +211,11 @@ export const updateProgress = asyncHandler(async (req, res) => {
     }
 
 
+    // Cap progress array to prevent unbounded growth (MongoDB 16MB doc limit risk)
+    const MAX_PROGRESS = 200;
+    if (room.members[memberIndex].progress.length >= MAX_PROGRESS) {
+        room.members[memberIndex].progress.shift(); // drop oldest
+    }
     room.members[memberIndex].progress.push({ task, time: new Date() });
     await room.save();
 

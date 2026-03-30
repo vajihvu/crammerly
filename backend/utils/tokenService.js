@@ -80,25 +80,16 @@ export const rotateRefreshToken = async (req, oldToken, userAgent, ipAddress) =>
 
     }
 
-    // 1. Detection: Same token from different IP
+    // 1. Detection: Same token from different IP — Alert but don't revoke
+    // IP changes are common (VPN, mobile WiFi→LTE). Revoking here causes
+    // constant logouts for legitimate users and is a DoS vector.
     const currentIp = normalizeIp(ipAddress);
     const lastIp = normalizeIp(session.ipAddress);
 
     if (lastIp && currentIp && lastIp !== currentIp) {
-        logger.warn(`SECURITY ALERT: Session IP mismatch for user ${userId}. Revoking session.`);
-        session.isValid = false;
-        session.isSuspicious = true;
-        session.revokedAt = new Date();
-        await session.save();
-
-        // ALERT: Session hijacking or proxy change
+        logger.warn(`SECURITY NOTICE: Session IP changed for user ${userId}. Previous: ${lastIp}, Current: ${currentIp}. Allowing session but logging alert.`);
+        // Alert the user via email — they can revoke via session management if needed
         await notifySuspiciousIpChange(req, { _id: userId }, lastIp, currentIp);
-
-        const error = new Error('Session anomaly: IP address mismatch');
-
-        error.code = 'SEC_SESSION_ANOMALY';
-        error.statusCode = 401;
-        throw error;
     }
 
     // 2. Detection: Excessive refresh attempts

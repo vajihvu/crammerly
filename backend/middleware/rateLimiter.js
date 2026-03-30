@@ -25,7 +25,7 @@ export const loginLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
-    skip: () => config.isTest || config.isDevelopment,
+    skip: () => config.isTest,
     handler: async (req, res, _next, options) => {
         await notifyLoginSpike(req, req.ip);
         res.status(options.statusCode).send(options.message);
@@ -45,7 +45,7 @@ export const refreshLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
-    skip: () => config.isTest || config.isDevelopment,
+    skip: () => config.isTest,
     message: {
         success: false,
         error: {
@@ -61,7 +61,7 @@ export const apiLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
-    skip: () => config.isTest || config.isDevelopment,
+    skip: () => config.isTest,
     message: {
         success: false,
         error: {
@@ -82,7 +82,7 @@ export const aiLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
-    skip: () => config.isTest || config.isDevelopment,
+    skip: () => config.isTest,
     message: {
         success: false,
         error: {

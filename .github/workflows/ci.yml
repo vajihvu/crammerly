@@ -1,5 +1,8 @@
 name: Production CI/CD Pipeline
 
+permissions:
+  contents: read
+
 on:
   push:
     branches: [ main, master ]
@@ -42,6 +45,7 @@ jobs:
         run: npm test
         env:
           NODE_ENV: test
+          # NOTE: For production pipelines, store these in GitHub Secrets (${{ secrets.CI_JWT_SECRET }})
           JWT_SECRET: pipeline-security-secret-64-chars-long-at-least-for-hardened-ci-gate-test
           REDIS_URL: redis://localhost:6379
           PORT: 5000

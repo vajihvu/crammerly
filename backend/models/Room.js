@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 
 const roomMemberSchema = new mongoose.Schema({
     user: {
@@ -49,6 +50,12 @@ const roomSchema = new mongoose.Schema({
     },
     schedule_time: {
         type: String
+    },
+    maxMembers: {
+        type: Number,
+        default: 50,
+        min: 2,
+        max: 200
     }
 }, {
     timestamps: true
@@ -57,7 +64,7 @@ const roomSchema = new mongoose.Schema({
 // Generate code for private rooms
 roomSchema.pre('save', async function () {
     if (this.privacy === 'Private' && !this.code) {
-        this.code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        this.code = crypto.randomBytes(3).toString('hex').toUpperCase();
     }
 });
 

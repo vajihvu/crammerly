@@ -23,12 +23,19 @@ const messageSchema = new mongoose.Schema({
         default: 'text'
     },
     file_data: {
-        type: Object,
-        default: null
+        url: { type: String, maxlength: 2048 },
+        name: { type: String, maxlength: 255 },
+        mimeType: { type: String, maxlength: 100 },
+        size: { type: Number, max: 25 * 1024 * 1024 }  // 25MB cap
     }
 }, {
     timestamps: true
 });
 
+// Auto-delete messages older than 90 days
+messageSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
+
 const Message = mongoose.model('Message', messageSchema);
+
 export default Message;
+

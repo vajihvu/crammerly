@@ -7,7 +7,7 @@ import asyncHandler from '../utils/asyncHandler.js';
  * @access  Private
  */
 export const getRecords = asyncHandler(async (req, res) => {
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
     const query = { userId: req.user._id };
     const { tags, cursor } = req.query;
 
@@ -16,7 +16,11 @@ export const getRecords = asyncHandler(async (req, res) => {
     }
 
     if (cursor) {
-        query.createdAt = { $lt: new Date(cursor) };
+        const cursorDate = new Date(cursor);
+        if (isNaN(cursorDate.getTime())) {
+            return res.sendError('Invalid cursor value', 400, 'VAL_INVALID_CURSOR');
+        }
+        query.createdAt = { $lt: cursorDate };
     }
 
     const records = await Record.find(query)
@@ -89,7 +93,11 @@ export const updateRecord = asyncHandler(async (req, res) => {
         record.title = req.body.title !== undefined ? req.body.title : record.title;
         record.content = req.body.content !== undefined ? req.body.content : record.content;
         record.status = req.body.status !== undefined ? req.body.status : record.status;
-        record.tags = req.body.tags !== undefined ? req.body.tags : record.tags;
+        record.tags = req.body.tags !== undefined
+            ? (Array.isArray(req.body.tags)
+                ? req.body.tags.map(t => t.trim()).filter(t => t !== '' && t.length <= 50)
+                : record.tags)
+            : record.tags;
 
         const updatedRecord = await record.save();
         return res.sendSuccess(updatedRecord);

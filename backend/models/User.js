@@ -105,6 +105,19 @@ const userSchema = new mongoose.Schema({
     resetPasswordExpires: {
         type: Date,
         select: false
+    },
+    pendingEmail: {
+        type: String,
+        select: false
+    },
+    pendingEmailToken: {
+        type: String,
+        select: false,
+        index: true
+    },
+    pendingEmailExpires: {
+        type: Date,
+        select: false
     }
 }, {
 

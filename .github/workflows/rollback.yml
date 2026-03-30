@@ -1,5 +1,9 @@
 name: Rollback Production
 
+permissions:
+  contents: write
+  packages: read
+
 # (#18) Manual rollback strategy — trigger from Actions tab with a specific image tag
 on:
   workflow_dispatch:
@@ -34,24 +38,34 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify rollback image exists
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.image_tag }}"
+          IMAGE="${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
           echo "Checking image: $IMAGE"
           docker manifest inspect "$IMAGE" || {
-            echo "❌ Image tag '${{ inputs.image_tag }}' not found in registry."
+            echo "❌ Image tag '${IMAGE_TAG}' not found in registry."
             exit 1
           }
           echo "✅ Image verified: $IMAGE"
 
       - name: Deploy rollback image to production
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          REASON: ${{ inputs.reason }}
         run: |
-          echo "⏪ Rolling back production to: ${{ inputs.image_tag }}"
-          echo "Reason: ${{ inputs.reason }}"
+          echo "⏪ Rolling back production to: ${IMAGE_TAG}"
+          echo "Reason: ${REASON}"
           # Replace with your actual deploy command pointing to the specific tag:
-          # curl -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}&imageTag=${{ inputs.image_tag }}"
+          # curl -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}&imageTag=${IMAGE_TAG}"
 
       - name: Wait for rollback to stabilise
-        run: sleep 30
+        run: |
+          for i in $(seq 1 18); do
+            curl -sf "${{ secrets.PRODUCTION_URL }}/health" && echo "✅ Service healthy" && break
+            echo "⏳ Waiting for service... ($i/18)"
+            sleep 10
+          done
 
       - name: Verify rollback with smoke tests
         run: node backend/scripts/production_smoke_test.js

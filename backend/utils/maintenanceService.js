@@ -1,7 +1,6 @@
 import Session from '../models/Session.js';
 import Todo from '../models/Todo.js';
 import Record from '../models/Record.js';
-import User from '../models/User.js';
 import { logger } from './logger.js';
 
 /**
@@ -28,17 +27,41 @@ export const runCleanups = async () => {
         }
 
         // 2. Consistency: Orphan Record Detection
-        // Detect records belonging to users that no longer exist (e.g. hard delete failures)
-        const allUsers = await User.find({}, '_id');
-        const userIds = allUsers.map(u => u._id);
+        // Uses aggregation pipeline to find records with no matching user — avoids loading all user IDs into memory
+        const [orphanTodoResult] = await Todo.aggregate([
+            { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'owner' } },
+            { $match: { owner: { $size: 0 } } },
+            { $count: 'count' }
+        ]);
+        const orphanTodoCount = orphanTodoResult?.count || 0;
 
-        const orphanTodos = await Todo.deleteMany({ user_id: { $nin: userIds } });
-        const orphanRecords = await Record.deleteMany({ userId: { $nin: userIds } });
+        const [orphanRecordResult] = await Record.aggregate([
+            { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'owner' } },
+            { $match: { owner: { $size: 0 } } },
+            { $count: 'count' }
+        ]);
+        const orphanRecordCount = orphanRecordResult?.count || 0;
 
-        if (orphanTodos.deletedCount > 0 || orphanRecords.deletedCount > 0) {
+        if (orphanTodoCount > 0 || orphanRecordCount > 0) {
+            // Only delete if orphans exist
+            await Todo.aggregate([
+                { $lookup: { from: 'users', localField: 'user_id', foreignField: '_id', as: 'owner' } },
+                { $match: { owner: { $size: 0 } } },
+                { $project: { _id: 1 } }
+            ]).then(async (docs) => {
+                if (docs.length > 0) await Todo.deleteMany({ _id: { $in: docs.map(d => d._id) } });
+            });
+            await Record.aggregate([
+                { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'owner' } },
+                { $match: { owner: { $size: 0 } } },
+                { $project: { _id: 1 } }
+            ]).then(async (docs) => {
+                if (docs.length > 0) await Record.deleteMany({ _id: { $in: docs.map(d => d._id) } });
+            });
+
             logger.warn('Detected and cleaned orphan records:', {
-                todos: orphanTodos.deletedCount,
-                records: orphanRecords.deletedCount
+                todos: orphanTodoCount,
+                records: orphanRecordCount
             });
         }
 

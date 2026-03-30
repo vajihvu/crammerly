@@ -1,18 +1,21 @@
+import sanitizeHtml from 'sanitize-html';
+
 /**
- * Lightweight XSS Sanitizer Middleware
- * Strips script tags and dangerous HTML attributes from incoming requests.
- * Standardizes inputs before they reach the controller layer.
+ * XSS Sanitizer Middleware (Production-grade)
+ * Uses sanitize-html library instead of fragile regex patterns.
+ * Strips all HTML tags and attributes from incoming request data
+ * to prevent stored/reflected XSS attacks.
  */
 export const xssSanitize = (req, res, next) => {
+    const sanitizeOptions = {
+        allowedTags: [],        // Strip ALL HTML tags
+        allowedAttributes: {},  // Strip ALL attributes
+        disallowedTagsMode: 'recursiveEscape'
+    };
+
     const sanitize = (val) => {
         if (typeof val !== 'string') return val;
-
-        // Remove <script> blocks and dangerous attributes
-        return val
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-            .replace(/on\w+="[^"]*"/gi, "")
-            .replace(/on\w+='[^']*'/gi, "")
-            .replace(/javascript:[^"']*/gi, "");
+        return sanitizeHtml(val, sanitizeOptions);
     };
 
     const processObject = (obj) => {
