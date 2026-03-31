@@ -83,11 +83,8 @@ if (config.sentryDsn) {
             return event;
         },
     });
-    // RequestHandler creates a separate execution context, so that all
-    // transactions/spans/breadcrumbs are isolated per request
-    app.use(Sentry.Handlers.requestHandler());
-    // TracingHandler creates a trace for every incoming request
-    app.use(Sentry.Handlers.tracingHandler());
+    // In Sentry v8+, requestHandler and tracingHandler are no longer needed.
+    // Request context and tracing are handled automatically via integrations in Sentry.init().
 }
 
 
@@ -276,9 +273,9 @@ app.get(`${API_PREFIX}/me`, protect, (req, res) => {
 // Decoupled Deployment: Frontend is served by Netlify/Vercel.
 // Backend only handles API requests and health checks.
 
-// 11. Error Handling (Sentry Error Handler first)
+// 11. Error Handling — Sentry must come before the generic error handler
 if (config.sentryDsn) {
-    app.use(Sentry.Handlers.errorHandler());
+    Sentry.setupExpressErrorHandler(app);
 }
 
 app.use(notFound);
