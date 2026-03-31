@@ -7,7 +7,7 @@ import env from '../config/env';
  */
 const client = axios.create({
     baseURL: env.apiUrl,
-    timeout: 15000, // 15 second timeout — fail fast on hung requests
+    timeout: 60000, // 60s — accounts for Render free tier cold starts (~30-50s)
     headers: {
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest', // Double-submit CSRF bypass — checked by csrf.js middleware
