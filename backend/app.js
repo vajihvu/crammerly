@@ -32,6 +32,22 @@ import { xssSanitize } from './middleware/xss.js';
 
 const app = express();
 
+// 0a. Manual CORS preflight — runs before everything to guarantee cross-origin requests work
+const ALLOWED_ORIGINS = new Set([
+    ...(config.clientUrls || []),
+]);
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && (ALLOWED_ORIGINS.has(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,X-CSRF-Token');
+        res.setHeader('Access-Control-Max-Age', '86400');
+    }
+    if (req.method === 'OPTIONS') return res.sendStatus(204);
+    next();
+});
 
 // 0. Instrumentation (Sentry first)
 if (config.sentryDsn) {
@@ -181,7 +197,7 @@ app.use(API_PREFIX, v1Routes);
 
 // Basic health check (Simple version for monitoring/LBs)
 app.get('/health', (req, res) => {
-    return res.sendSuccess({ status: 'ok' });
+    return res.sendSuccess({ status: 'ok', version: 'v3-cors-fix' });
 });
 
 // Prometheus-compatible metrics endpoint (#22)
