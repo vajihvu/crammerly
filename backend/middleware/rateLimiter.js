@@ -8,9 +8,19 @@ import { notifyLoginSpike } from '../utils/securityNotifier.js';
 let store;
 if (config.redisUrl) {
     const redisClient = createClient({ url: config.redisUrl });
+    // CRITICAL: Without this, Redis errors crash the Node.js process (unhandled EventEmitter error event)
+    redisClient.on('error', err => logger.error(`Redis Rate Limit client error: ${err.message}`));
     redisClient.connect().catch(err => logger.error(`Redis Rate Limit Store connection failed: ${err.message}`));
     store = new RedisStore({
-        sendCommand: (...args) => redisClient.sendCommand(args),
+        sendCommand: async (...args) => {
+            try {
+                return await redisClient.sendCommand(args);
+            } catch (err) {
+                // Degrade gracefully — log but re-throw so rate-limit-redis uses in-memory fallback
+                logger.warn(`Redis sendCommand failed (falling back to memory): ${err.message}`);
+                throw err;
+            }
+        },
     });
 }
 
