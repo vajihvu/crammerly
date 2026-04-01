@@ -4,7 +4,6 @@ import { nodeProfilingIntegration } from "@sentry/profiling-node";
 import path from 'path';
 import { fileURLToPath } from 'url';
 import mongoose from 'mongoose';
-import cors from 'cors';
 import helmet from 'helmet';
 import hpp from 'hpp';
 import morgan from 'morgan';
@@ -133,25 +132,8 @@ app.use(helmet({
     noSniff: true
 }));
 
-// 2. CORS (Explicit origins)
-const allowedOrigins = new Set(config.clientUrls);
-const corsOptions = {
-    origin: (origin, callback) => {
-        // Allow server-to-server requests (no origin, e.g. curl/Postman)
-        if (!origin) return callback(null, true);
-        // Allow any configured CLIENT_URL
-        if (allowedOrigins.has(origin)) return callback(null, true);
-        // Allow any Vercel preview deployment (*.vercel.app)
-        if (origin.endsWith('.vercel.app')) return callback(null, true);
-        // Block everything else
-        callback(new Error(`CORS: Origin ${origin} not allowed`));
-    },
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
-    credentials: true,
-    maxAge: 86400 // Cache preflight for 24 hours
-};
-app.use(cors(corsOptions));
+// 2. CORS — handled by manual middleware above (section 0a)
+// The cors() package has been removed to avoid conflicting with the manual middleware.
 
 // 3. Body Parsing & Cookies (Critical Order)
 app.use(express.json({ limit: '10kb' }));
