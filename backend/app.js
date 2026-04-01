@@ -118,8 +118,18 @@ app.use(helmet({
 }));
 
 // 2. CORS (Explicit origins)
+const allowedOrigins = new Set(config.clientUrls);
 const corsOptions = {
-    origin: config.clientUrls,
+    origin: (origin, callback) => {
+        // Allow server-to-server requests (no origin, e.g. curl/Postman)
+        if (!origin) return callback(null, true);
+        // Allow any configured CLIENT_URL
+        if (allowedOrigins.has(origin)) return callback(null, true);
+        // Allow any Vercel preview deployment (*.vercel.app)
+        if (origin.endsWith('.vercel.app')) return callback(null, true);
+        // Block everything else
+        callback(new Error(`CORS: Origin ${origin} not allowed`));
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
     credentials: true,
