@@ -9,6 +9,16 @@ import { initSocket } from './utils/socket.js';
 import { initBackgroundJobs } from './utils/scheduler.js';
 import './workers/cleanupWorker.js'; // Start worker
 
+// ── Global crash guards ───────────────────────────────────────────────────────
+// Without these, any unhandled promise rejection or exception kills the process
+// and Render returns 502 with no CORS headers, masking the real error.
+process.on('uncaughtException', (err) => {
+    logger.error(`UNCAUGHT EXCEPTION (process kept alive): ${err.message}`, { stack: err.stack });
+});
+process.on('unhandledRejection', (reason) => {
+    logger.error(`UNHANDLED REJECTION (process kept alive): ${reason?.message || reason}`);
+});
+
 
 // Apply global mongoose performance tracking
 mongoose.plugin(performancePlugin);
