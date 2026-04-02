@@ -16,15 +16,18 @@ const createTransporter = () => {
         return null;
     }
 
-    return nodemailer.createTransport({
+    const transport = nodemailer.createTransport({
         host: config.mail.host,
         port: config.mail.port || 587,
-        secure: (config.mail.port || 587) === 465, // true for port 465, false for others (STARTTLS)
+        secure: (config.mail.port || 587) === 465,
         auth: {
             user: config.mail.user,
             pass: config.mail.pass
         }
     });
+    // CRITICAL: Without this listener, SMTP socket errors crash the Node.js process
+    transport.on('error', (err) => logger.error(`Nodemailer transport error: ${err.message}`));
+    return transport;
 };
 
 let transporter;
