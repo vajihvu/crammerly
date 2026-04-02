@@ -23,9 +23,6 @@ jobs:
   test:
     name: Lint & Test
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
 
     services:
       mongodb:
