@@ -3,6 +3,9 @@ FROM node:22-alpine AS deps
 LABEL maintainer="crammerly-dev"
 WORKDIR /app
 
+# Upgrade OS packages to avoid Trivy vulnerabilities
+RUN apk upgrade --no-cache
+
 # Copy package files for workspace
 COPY package*.json ./
 COPY backend/package*.json ./backend/
@@ -14,6 +17,9 @@ RUN npm ci --workspace=backend --omit=dev --ignore-scripts
 # Stage 2: Runtime Environment
 FROM node:22-alpine AS runner
 WORKDIR /app
+
+# Upgrade OS packages to avoid Trivy vulnerabilities
+RUN apk upgrade --no-cache
 
 # Create a system user for the application
 RUN addgroup -S app && adduser -S app -G app

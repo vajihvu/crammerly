@@ -78,6 +78,8 @@ jobs:
       contents: write      # needed to upload SBOM
       packages: write
       id-token: write      # needed for SBOM attestation signing
+      security-events: write # needed for SARIF upload
+      actions: read        # needed for Docker action telemetry
 
     outputs:
       image-digest: ${{ steps.push.outputs.digest }}
