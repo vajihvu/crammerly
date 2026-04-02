@@ -4,7 +4,7 @@ LABEL maintainer="crammerly-dev"
 WORKDIR /app
 
 # Upgrade OS packages to avoid Trivy vulnerabilities
-RUN apk upgrade --no-cache
+RUN apk upgrade --no-cache && npm install -g npm@latest
 
 # Copy package files for workspace
 COPY package*.json ./
@@ -19,7 +19,7 @@ FROM node:22-alpine AS runner
 WORKDIR /app
 
 # Upgrade OS packages to avoid Trivy vulnerabilities
-RUN apk upgrade --no-cache
+RUN apk upgrade --no-cache && npm install -g npm@latest
 
 # Create a system user for the application
 RUN addgroup -S app && adduser -S app -G app
