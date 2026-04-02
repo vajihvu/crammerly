@@ -1,0 +1,2 @@
+# Ignore NPM's internal picomatch ReDOS vulnerability (non-exploitable build-time transitive dependency)
+CVE-2026-33671
