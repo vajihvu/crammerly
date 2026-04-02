@@ -130,7 +130,7 @@ jobs:
           artifact-name: sbom-${{ github.sha }}
 
       - name: Scan image for vulnerabilities (Trivy)       # (#13)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}@${{ steps.push.outputs.digest }}
           format: sarif
