@@ -233,6 +233,8 @@ jobs:
     name: Deploy → Production
     runs-on: ubuntu-latest
     needs: [build, validate-secrets]
+    permissions:
+      contents: write
     if: github.ref == 'refs/heads/main'
     environment: production                               # (#17) requires manual reviewer approval
 
