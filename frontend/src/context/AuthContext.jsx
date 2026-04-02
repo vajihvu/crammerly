@@ -64,7 +64,8 @@ export const AuthProvider = ({ children }) => {
                 err.response?.data?.error?.message ||
                 err.response?.data?.message ||
                 err.message ||
-                'Login failed'
+                'Login failed',
+                { cause: err }
             );
         }
     };
@@ -83,7 +84,8 @@ export const AuthProvider = ({ children }) => {
                 err.response?.data?.error?.message ||
                 err.response?.data?.message ||
                 err.message ||
-                'Google Login failed'
+                'Google Login failed',
+                { cause: err }
             );
         }
     };
@@ -106,7 +108,8 @@ export const AuthProvider = ({ children }) => {
                 err.response?.data?.error?.message ||
                 err.response?.data?.message ||
                 err.message ||
-                'Registration failed'
+                'Registration failed',
+                { cause: err }
             );
         }
     };
