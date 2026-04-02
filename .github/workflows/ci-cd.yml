@@ -63,7 +63,7 @@ jobs:
           JWT_REFRESH_SECRET: test-refresh-secret-32-chars-minimum
 
       - name: Notify Slack on test failure                 # (#20)
-        if: failure() && github.ref == 'refs/heads/main' && secrets.SLACK_WEBHOOK_URL != ''
+        if: failure() && github.ref == 'refs/heads/main' && env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
@@ -211,7 +211,7 @@ jobs:
           PRODUCTION_URL: ${{ secrets.STAGING_URL }}
 
       - name: Notify Slack — staging deployed              # (#20)
-        if: success() && secrets.SLACK_WEBHOOK_URL != ''
+        if: success() && env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
@@ -221,7 +221,7 @@ jobs:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: Notify Slack — staging failed                # (#20)
-        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
+        if: failure() && env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
@@ -271,7 +271,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Notify Slack — production deployed           # (#20)
-        if: success() && secrets.SLACK_WEBHOOK_URL != ''
+        if: success() && env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
@@ -281,7 +281,7 @@ jobs:
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
       - name: Notify Slack — production FAILED             # (#20)
-        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
+        if: failure() && env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
