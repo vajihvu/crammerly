@@ -41,7 +41,9 @@ app.use((req, res, next) => {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Requested-With,X-CSRF-Token');
+        // Dynamically allow whatever headers the client requests (critical for Sentry: sentry-trace, baggage, etc)
+        const requestHeaders = req.headers['access-control-request-headers'];
+        res.setHeader('Access-Control-Allow-Headers', requestHeaders || 'Content-Type,Authorization,X-Requested-With,X-CSRF-Token,sentry-trace,baggage,accept');
         res.setHeader('Access-Control-Max-Age', '86400');
     }
     if (req.method === 'OPTIONS') return res.sendStatus(204);
