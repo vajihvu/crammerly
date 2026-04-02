@@ -185,9 +185,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Deploy to staging
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}
         run: |
           echo "🚀 Deploying ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging to staging host"
-          curl -X POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
+          if [ -n "$DEPLOY_HOOK" ]; then
+            curl -X POST "$DEPLOY_HOOK"
+          else
+            echo "⚠️ RENDER_STAGING_DEPLOY_HOOK not set. Skipping webhook."
+          fi
 
       - name: Wait for deployment to stabilise
         run: |
@@ -234,9 +240,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Deploy to production
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}
         run: |
           echo "🚀 Deploying ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:main to production host"
-          curl -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
+          if [ -n "$DEPLOY_HOOK" ]; then
+            curl -X POST "$DEPLOY_HOOK"
+          else
+            echo "⚠️ RENDER_PRODUCTION_DEPLOY_HOOK not set. Skipping webhook."
+          fi
 
       - name: Wait for deployment to stabilise
         run: |
