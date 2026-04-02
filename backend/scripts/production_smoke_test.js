@@ -1,15 +1,33 @@
-
-import axios from 'axios';
-
 const BASE_URL = process.env.PRODUCTION_URL
     ? `${process.env.PRODUCTION_URL.replace(/\/+$/, '')}/api/v1`
     : 'http://localhost:5000/api/v1';
 
-const client = axios.create({
-    baseURL: BASE_URL,
-    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-    validateStatus: () => true
-});
+const client = {
+    async post(path, body = {}, config = {}) { return this.request('POST', path, body, config); },
+    async get(path, config = {}) { return this.request('GET', path, null, config); },
+    async delete(path, config = {}) { return this.request('DELETE', path, config.data, config); },
+    async request(method, path, body, config) {
+        const headers = { ...config.headers, 'X-Requested-With': 'XMLHttpRequest' };
+        if (body) headers['Content-Type'] = 'application/json';
+        const res = await fetch(`${BASE_URL}${path}`, {
+            method,
+            headers,
+            body: body ? JSON.stringify(body) : undefined
+        });
+        const text = await res.text();
+        let data = text;
+        try { data = JSON.parse(text); } catch { /* ignore non-JSON */ }
+        
+        let setCookie = [];
+        if (res.headers && typeof res.headers.getSetCookie === 'function') {
+            setCookie = res.headers.getSetCookie();
+        } else if (res.headers && res.headers.get('set-cookie')) {
+            setCookie = res.headers.get('set-cookie').split(', ');
+        }
+        
+        return { status: res.status, data, headers: { 'set-cookie': setCookie } };
+    }
+};
 
 const TEST_USER = {
     email: `prod_smoke_${Date.now()}@example.com`,
