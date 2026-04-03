@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { X, Sparkles, Mail, Lock, ArrowRight, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useUI } from '../../context/UIContext';
@@ -14,6 +15,7 @@ function AuthModal({ onClose, closable = true }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   const [success, setSuccess] = useState(false);
 
@@ -24,7 +26,7 @@ function AuthModal({ onClose, closable = true }) {
     setSuccess(false);
     try {
       if (isSignUp) {
-        await register({ name, email, password });
+        await register({ name, email, password, turnstileToken });
         setSuccess(true);
         addToast('Account created successfully!', 'success');
       } else {
@@ -102,6 +104,15 @@ function AuthModal({ onClose, closable = true }) {
               </div>
               {isSignUp && password && (
                 <PasswordStrengthMeter password={password} userInputs={[name, email]} />
+              )}
+              {isSignUp && (
+                <div className="flex justify-center mt-2 w-full overflow-hidden">
+                  <Turnstile
+                    siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    options={{ theme: 'dark', size: 'normal' }}
+                  />
+                </div>
               )}
             </div>
 

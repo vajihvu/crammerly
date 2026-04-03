@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, Mail, Lock, User, Loader2, ArrowRight } from 'lucide-react';
 
@@ -8,6 +9,7 @@ const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState('');
 
     const { register } = useAuth();
     const navigate = useNavigate();
@@ -16,7 +18,7 @@ const Register = () => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await register({ name, email, password });
+            await register({ name, email, password, turnstileToken });
             navigate('/');
         } catch {
             // Global toast handles the message
@@ -86,6 +88,14 @@ const Register = () => {
                                     placeholder="At least 8 characters"
                                 />
                             </div>
+                        </div>
+
+                        <div className="flex justify-center mt-4 mb-2 w-full overflow-hidden">
+                            <Turnstile
+                                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                                onSuccess={(token) => setTurnstileToken(token)}
+                                options={{ theme: 'dark', size: 'normal' }}
+                            />
                         </div>
 
                         <button

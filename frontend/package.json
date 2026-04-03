@@ -10,6 +10,7 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "@marsidev/react-turnstile": "^1.5.0",
         "@react-oauth/google": "^0.13.4",
         "@sentry/browser": "^10.38.0",
         "@sentry/react": "^10.38.0",
