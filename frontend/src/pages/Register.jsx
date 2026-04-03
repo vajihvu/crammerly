@@ -18,7 +18,7 @@ const Register = () => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await register({ name, email, password, turnstileToken });
+            await register({ name, email, password, 'cf-turnstile-response': turnstileToken });
             navigate('/');
         } catch {
             // Global toast handles the message

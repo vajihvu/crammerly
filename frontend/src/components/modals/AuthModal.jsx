@@ -26,7 +26,7 @@ function AuthModal({ onClose, closable = true }) {
     setSuccess(false);
     try {
       if (isSignUp) {
-        await register({ name, email, password, turnstileToken });
+        await register({ name, email, password, 'cf-turnstile-response': turnstileToken });
         setSuccess(true);
         addToast('Account created successfully!', 'success');
       } else {
