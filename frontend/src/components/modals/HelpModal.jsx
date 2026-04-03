@@ -70,10 +70,10 @@ function HelpModal({ onClose }) {
                         <div className="flex gap-4 text-[9px] font-semibold text-brand-text-dim uppercase tracking-widest">
                             <a href="/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-brand-text transition-colors">Privacy</a>
                             <a href="/terms" target="_blank" rel="noopener noreferrer" className="hover:text-brand-text transition-colors">Terms</a>
-                            <a href="https://status.crammerly.io" target="_blank" rel="noopener noreferrer" className="hover:text-brand-text transition-colors">Status</a>
+                            <a href="https://status.crammerly.app" target="_blank" rel="noopener noreferrer" className="hover:text-brand-text transition-colors">Status</a>
                         </div>
                         <a
-                            href="mailto:support@crammerly.io"
+                            href="mailto:support@crammerly.app"
                             className="px-6 py-2.5 bg-brand-text text-brand-bg rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:scale-105 active:scale-95 transition-all"
                         >
                             Email Us

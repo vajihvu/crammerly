@@ -11,7 +11,7 @@ const config = {
 
         expiresIn: '15m', // Tightened from 1h to 15m
         refreshExpiresIn: '7d',
-        issuer: 'crammerly.io',
+        issuer: 'crammerly.app',
         audience: 'crammerly-app',
         cookieDomain: env.COOKIE_DOMAIN
     },

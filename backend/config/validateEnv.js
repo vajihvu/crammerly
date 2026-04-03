@@ -66,12 +66,12 @@ export const validateEnv = () => {
                 MONGO_URI: 'mongodb://localhost:27017/crammerly_test',
                 JWT_SECRET: 'test_secret_placeholder_at_least_64_characters_long_for_validation_safety_',
                 JWT_REFRESH_SECRET: 'test_refresh_secret_placeholder_at_least_32_chars',
-                CLIENT_URL: 'https://crammerly.io',
+                CLIENT_URL: 'https://crammerly.app',
                 COOKIE_DOMAIN: 'localhost',
                 SMTP_HOST: 'localhost',
                 SMTP_USER: 'test',
                 SMTP_PASS: 'test',
-                SMTP_FROM: 'test@crammerly.io'
+                SMTP_FROM: 'test@crammerly.app'
             });
         }
 

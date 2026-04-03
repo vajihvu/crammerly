@@ -34,9 +34,9 @@ export const emailTemplate = (title, bodyHtml) => `
                     <tr>
                         <td style="padding:16px 32px 28px 32px;border-top:1px solid #334155;text-align:center;font-size:12px;color:#64748b;">
                             <p style="margin:0 0 8px 0;">
-                                <a href="${config.clientUrls?.[0] || 'https://crammerly.io'}/privacy" style="color:#818cf8;text-decoration:none;">Privacy Policy</a>
+                                <a href="${config.clientUrls?.[0] || 'https://crammerly.app'}/privacy" style="color:#818cf8;text-decoration:none;">Privacy Policy</a>
                                 &nbsp;·&nbsp;
-                                <a href="${config.clientUrls?.[0] || 'https://crammerly.io'}/terms" style="color:#818cf8;text-decoration:none;">Terms of Service</a>
+                                <a href="${config.clientUrls?.[0] || 'https://crammerly.app'}/terms" style="color:#818cf8;text-decoration:none;">Terms of Service</a>
                             </p>
                             <p style="margin:0;color:#475569;">© ${new Date().getFullYear()} Crammerly. All rights reserved.</p>
                         </td>

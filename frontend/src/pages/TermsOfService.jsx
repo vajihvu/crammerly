@@ -14,7 +14,7 @@ const TermsOfService = () => (
 
         <section>
             <h2 className="text-xl font-bold text-white mb-3">3. Your Account</h2>
-            <p>You are responsible for keeping your account credentials secure. You must notify us immediately at <a href="mailto:support@crammerly.io" className="text-indigo-400 hover:underline">support@crammerly.io</a> if you suspect unauthorized access. You are liable for all activity under your account.</p>
+            <p>You are responsible for keeping your account credentials secure. You must notify us immediately at <a href="mailto:support@crammerly.app" className="text-indigo-400 hover:underline">support@crammerly.app</a> if you suspect unauthorized access. You are liable for all activity under your account.</p>
         </section>
 
         <section>
@@ -57,7 +57,7 @@ const TermsOfService = () => (
 
         <section>
             <h2 className="text-xl font-bold text-white mb-3">10. Governing Law</h2>
-            <p>These terms are governed by applicable laws. Any disputes will be resolved in good faith. Contact us at <a href="mailto:legal@crammerly.io" className="text-indigo-400 hover:underline">legal@crammerly.io</a> before pursuing formal legal action.</p>
+            <p>These terms are governed by applicable laws. Any disputes will be resolved in good faith. Contact us at <a href="mailto:legal@crammerly.app" className="text-indigo-400 hover:underline">legal@crammerly.app</a> before pursuing formal legal action.</p>
         </section>
     </LegalLayout>
 );

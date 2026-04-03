@@ -39,7 +39,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
       # Let's Encrypt certs — provision with certbot before first deploy:
       # docker run --rm -v /etc/letsencrypt:/etc/letsencrypt certbot/certbot certonly \
-      #   --standalone -d crammerly.io -d www.crammerly.io --email your@email.com --agree-tos
+      #   --standalone -d crammerly.app -d www.crammerly.app --email your@email.com --agree-tos
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       app:

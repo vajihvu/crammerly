@@ -24,7 +24,7 @@ const options = {
                         default: 'https'
                     },
                     domain: {
-                        default: 'api.crammerly.io'
+                        default: 'api.crammerly.app'
                     }
                 }
             }

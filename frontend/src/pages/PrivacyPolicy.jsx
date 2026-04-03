@@ -40,7 +40,7 @@ const PrivacyPolicy = () => (
                 <li><strong className="text-slate-300">Right to erasure</strong> — Permanently delete your account and all data from Profile → Settings → Delete Account</li>
                 <li><strong className="text-slate-300">Right to rectification</strong> — Update your name and email from your profile</li>
             </ul>
-            <p className="mt-3">For any other data requests, contact us at <a href="mailto:privacy@crammerly.io" className="text-indigo-400 hover:underline">privacy@crammerly.io</a>.</p>
+            <p className="mt-3">For any other data requests, contact us at <a href="mailto:privacy@crammerly.app" className="text-indigo-400 hover:underline">privacy@crammerly.app</a>.</p>
         </section>
 
         <section>
@@ -56,7 +56,7 @@ const PrivacyPolicy = () => (
 
         <section>
             <h2 className="text-xl font-bold text-white mb-3">7. Contact</h2>
-            <p>Questions about this policy? Email us at <a href="mailto:privacy@crammerly.io" className="text-indigo-400 hover:underline">privacy@crammerly.io</a>.</p>
+            <p>Questions about this policy? Email us at <a href="mailto:privacy@crammerly.app" className="text-indigo-400 hover:underline">privacy@crammerly.app</a>.</p>
         </section>
     </LegalLayout>
 );

@@ -33,7 +33,7 @@ The pipeline in `.github/workflows/ci.yml` is **strictly enforced**. A deploymen
 | `MONGO_URI` | Connection string | Do not leave empty; Fail-fast enabled. |
 | `REDIS_URL` | Distributed rate limiting store | Required for high-traffic scaling. |
 | `JWT_SECRET` | Auth signing key | **MIN 64 CHARS.** High entropy recommended. |
-| `CLIENT_URL` | Frontend origins | Comma-separated (e.g., `https://crammerly.io, https://staging.crammerly.io`). |
+| `CLIENT_URL` | Frontend origins | Comma-separated (e.g., `https://crammerly.app, https://staging.crammerly.app`). |
 | `COOKIE_DOMAIN` | Apex domain for cookies | Required for session persistence. |
 | `SENTRY_DSN` | Error monitoring | Optional but highly recommended. |
 | `DEEPSEEK_API_KEY` | AI Service Key | Protected by internal `aiLimiter` (5 req/hr). |

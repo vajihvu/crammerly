@@ -14,7 +14,7 @@ scenarios:
       - post:
           url: "/auth/login"
           json:
-            email: "abuse_test@crammerly.io"
+            email: "abuse_test@crammerly.app"
             password: "wrong_password_123"
           expect:
             - statusCode: [401, 429]

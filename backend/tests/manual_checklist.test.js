@@ -14,7 +14,7 @@ describe('🚀 PRODUCTION READINESS: Auth Checklist Verification', () => {
 
     const getNewUser = (prefix) => ({
         name: `${prefix} User`,
-        email: `${prefix.toLowerCase()}@crammerly.io`,
+        email: `${prefix.toLowerCase()}@crammerly.app`,
         password: 'Rapidly-Rotating-Nebula-2026!',
     });
 

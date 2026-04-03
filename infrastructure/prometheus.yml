@@ -13,14 +13,14 @@ scrape_configs:
   - job_name: crammerly-backend
     scheme: https
     static_configs:
-      - targets: ['api.crammerly.io']   # Replace with your actual API domain
+      - targets: ['api.crammerly.app']   # Replace with your actual API domain
     metrics_path: /metrics
     # If you add auth to /metrics later, add basic_auth or bearer_token here
 
   - job_name: crammerly-health
     scheme: https
     static_configs:
-      - targets: ['api.crammerly.io']
+      - targets: ['api.crammerly.app']
     metrics_path: /health
     params:
       format: ['prometheus']

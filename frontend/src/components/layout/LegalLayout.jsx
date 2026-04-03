@@ -31,7 +31,7 @@ const LegalLayout = ({ title, lastUpdated, children }) => (
                 <div className="flex gap-6">
                     <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
                     <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
-                    <a href="mailto:support@crammerly.io" className="hover:text-white transition-colors">Support</a>
+                    <a href="mailto:support@crammerly.app" className="hover:text-white transition-colors">Support</a>
                 </div>
             </div>
         </div>

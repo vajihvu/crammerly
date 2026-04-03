@@ -15,7 +15,7 @@ scenarios:
       - post:
           url: "/auth/login"
           json:
-            email: "loadtest@crammerly.io"
+            email: "loadtest@crammerly.app"
             password: "SecurePassword123!"
           # We expect 429 after 10 attempts per IP
           expect:

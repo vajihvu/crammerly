@@ -2,7 +2,7 @@
  * Crammerly Load Test — k6
  *
  * Run against staging BEFORE going live:
- *   npx k6 run --vus 50 --duration 60s -e BASE_URL=https://staging.crammerly.io backend/scripts/load_test.js
+ *   npx k6 run --vus 50 --duration 60s -e BASE_URL=https://staging.crammerly.app backend/scripts/load_test.js
  *
  * Record p50/p95/p99 as your performance baseline.
  */
@@ -43,7 +43,7 @@ export default function () {
         const start = Date.now();
         const res = http.post(
             `${BASE_URL}/api/v1/auth/login`,
-            JSON.stringify({ email: 'loadtest@crammerly.io', password: 'LoadTest123!@#' }),
+            JSON.stringify({ email: 'loadtest@crammerly.app', password: 'LoadTest123!@#' }),
             { headers: HEADERS }
         );
         loginDuration.add(Date.now() - start);
