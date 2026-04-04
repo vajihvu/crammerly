@@ -6,8 +6,42 @@ import { RoomGridSkeleton, NetworkError } from './ui/Skeletons';
 function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, onCreateRoom, onRoomClick, onDeleteRoom, onJoinByCode, onSearchClick, recentActivity = [] }) {
   const [activeGenre, setActiveGenre] = useState('All');
   const [activeStatus, setActiveStatus] = useState('Active Now');
+  const [isGenreDropdownOpen, setIsGenreDropdownOpen] = useState(false);
+  const [genreSearch, setGenreSearch] = useState('');
 
   const genres = ['All', 'IT', 'Law', 'Math', 'Medicine', 'Languages', 'Coding', 'Editing', 'Film Making', 'Design', 'Business', 'Quiet Study', 'Music', 'Game Dev', 'Architecture', 'Marketing', 'Exam Prep', 'Interview Prep', 'Reading', 'Brainstorming', 'Psychology', 'History'];
+
+  const genreIcons = {
+    'All': '✨',
+    'IT': '</>',
+    'Law': '⚖️',
+    'Math': 'π',
+    'Medicine': '⚕️',
+    'Languages': 'A',
+    'Coding': '⌨️',
+    'Editing': '✍️',
+    'Film Making': '🎥',
+    'Design': '🎨',
+    'Business': '📈',
+    'Quiet Study': '🤫',
+    'Music': '🎵',
+    'Game Dev': '🎮',
+    'Architecture': '🏛️',
+    'Marketing': '🎯',
+    'Exam Prep': '📝',
+    'Interview Prep': '🤝',
+    'Reading': '📚',
+    'Brainstorming': '💡',
+    'Psychology': '🧠',
+    'History': '⏳'
+  };
+
+  const filteredGenres = genres.filter(g => g !== 'All' && g.toLowerCase().includes(genreSearch.toLowerCase()));
+  const frequentlyVisited = recentActivity?.map(a => a.genre).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).slice(0, 2);
+  if (frequentlyVisited.length < 2) {
+      if (!frequentlyVisited.includes('Coding')) frequentlyVisited.push('Coding');
+      if (!frequentlyVisited.includes('Math') && frequentlyVisited.length < 2) frequentlyVisited.push('Math');
+  }
 
   const userInterests = currentUser.interests && currentUser.interests.length > 0
     ? currentUser.interests
@@ -108,20 +142,79 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
       {/* Main Content Grid */}
       <div className="w-full">
         <div className="space-y-8 flex flex-col w-full">
-          {/* Genre / Category Filter */}
-          <div className="flex overflow-x-auto gap-3 p-2 -m-2 no-scrollbar pb-4 lg:flex-wrap lg:overflow-visible">
-            {genres.map(genre => (
-              <button
-                key={genre}
-                onClick={() => setActiveGenre(genre)}
-                className={`px-5 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-black border transition-all uppercase tracking-wider font-sans whitespace-nowrap ${activeGenre === genre
-                  ? 'bg-brand-text border-brand-text text-brand-bg shadow-md scale-105'
-                  : 'bg-brand-surface border-brand-border text-brand-text hover:border-brand-primary hover:text-brand-primary shadow-sm'
-                  }`}
-              >
-                {genre}
-              </button>
-            ))}
+          {/* Genre / Category Filter Dropdown */}
+          <div className="relative z-50">
+            <button
+              onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}
+              className="px-6 py-3 rounded-full text-sm font-black border transition-all uppercase tracking-wider font-sans whitespace-nowrap bg-brand-text border-brand-text text-brand-bg shadow-md scale-105 flex items-center gap-2"
+            >
+              {activeGenre === 'All' ? 'ALL GENRES' : activeGenre}
+              <span className="text-[10px] ml-1">▼</span>
+            </button>
+
+            {isGenreDropdownOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsGenreDropdownOpen(false)}></div>
+                <div className="absolute left-0 mt-3 w-[280px] sm:w-[320px] bg-brand-surface rounded-[24px] border border-brand-border/30 shadow-dropdown z-50 p-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="relative mb-5 border-b border-brand-border/30 pb-5">
+                    <Search size={16} className="absolute left-3 top-3 text-brand-text-dim" />
+                    <input 
+                      type="text" 
+                      placeholder="Type to filter genres..." 
+                      className="w-full pl-10 pr-4 py-2.5 bg-brand-bg/50 rounded-xl text-sm font-bold text-brand-text placeholder:text-brand-text-dim focus:outline-none focus:ring-2 focus:ring-brand-primary/20 border border-brand-border/40"
+                      value={genreSearch}
+                      onChange={(e) => setGenreSearch(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
+
+                  {frequentlyVisited.length > 0 && !genreSearch && (
+                    <div className="mb-5 border-b border-brand-border/30 pb-5">
+                      <h4 className="text-[10px] font-black text-brand-text-dim uppercase tracking-widest mb-3">Frequently Visited</h4>
+                      <div className="flex gap-2">
+                        {frequentlyVisited.map(genre => (
+                          <button
+                            key={'freq-' + genre}
+                            onClick={() => { setActiveGenre(genre); setIsGenreDropdownOpen(false); }}
+                            className="flex-1 py-3 px-2 bg-brand-text hover:bg-black text-brand-bg rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-md active:scale-95 text-center"
+                          >
+                            {genre}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div>
+                     <h4 className="text-[10px] font-black text-brand-text-dim uppercase tracking-widest mb-3">{genreSearch ? 'Search Results' : 'All Genres'}</h4>
+                     <div className="max-h-[280px] overflow-y-auto pr-2 custom-scrollbar space-y-1">
+                        {!genreSearch && (
+                          <button
+                            onClick={() => { setActiveGenre('All'); setIsGenreDropdownOpen(false); }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-brand-bg rounded-xl transition-all group"
+                          >
+                            <span className="w-8 text-center text-brand-text-dim font-black font-sans group-hover:text-brand-primary transition-colors">{genreIcons['All']}</span>
+                            <span className="text-sm font-bold text-brand-text uppercase tracking-tight group-hover:text-brand-text transition-colors">ALL</span>
+                          </button>
+                        )}
+                        {filteredGenres.map(genre => (
+                           <button
+                             key={genre}
+                             onClick={() => { setActiveGenre(genre); setIsGenreDropdownOpen(false); }}
+                             className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-brand-bg rounded-xl transition-all group"
+                           >
+                              <span className="w-8 text-center text-brand-text-dim font-black font-sans group-hover:text-brand-primary transition-colors">{genreIcons[genre] || '•'}</span>
+                              <span className="text-sm font-bold text-brand-text uppercase tracking-tight group-hover:text-brand-text transition-colors">{genre}</span>
+                           </button>
+                        ))}
+                        {filteredGenres.length === 0 && (
+                          <div className="py-4 text-center text-xs font-bold text-brand-text-dim">No matching genres found.</div>
+                        )}
+                     </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div className="space-y-6 flex-1 flex flex-col">
