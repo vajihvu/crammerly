@@ -17,7 +17,8 @@ import {
     resetPassword,
     googleLogin,
     deleteAccount,
-    exportData
+    exportData,
+    changePassword
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validator.js';
@@ -290,6 +291,9 @@ router.post('/forgot-password', loginLimiter, forgotPassword);
  *         description: Password reset successful
  */
 router.post('/reset-password/:token', csrfGuard, validate(resetPasswordSchema), resetPassword);
+
+// Change Password
+router.put('/password', protect, csrfGuard, changePassword);
 
 // GDPR — Right to Erasure (Art.17)
 router.delete('/account', protect, csrfGuard, deleteAccount);

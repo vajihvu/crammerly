@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Settings, Volume2, ShieldCheck, Lock, Bell, Eye, EyeOff, Trash2, Smartphone, Globe, Shield, CreditCard, Key, CheckCircle, Monitor } from 'lucide-react';
-import { sessionsApi } from '../../api';
+import { sessionsApi, authApi } from '../../api';
 
 function SettingsModal({ initialTab = 'general', onClose }) {
     const [activeTab, setActiveTab] = useState(initialTab);
@@ -10,8 +10,35 @@ function SettingsModal({ initialTab = 'general', onClose }) {
     // Interactive states
     const [privacy, setPrivacy] = useState({ invites: true, online: true, dms: false });
     const [micLevel, setMicLevel] = useState(0);
-    const [pwdSent, setPwdSent] = useState(false);
     const [twoFactor, setTwoFactor] = useState(false);
+    const [isTestingMic, setIsTestingMic] = useState(false);
+    
+    // Password State
+    const [isChangingPwd, setIsChangingPwd] = useState(false);
+    const [pwdData, setPwdData] = useState({ currentPassword: '', newPassword: '' });
+    const [pwdStatus, setPwdStatus] = useState(''); // '', 'loading', 'success', 'error'
+    const [pwdError, setPwdError] = useState('');
+
+    const handleChangePassword = async () => {
+        if (!pwdData.currentPassword || !pwdData.newPassword) {
+            setPwdError('Please fill all fields');
+            return;
+        }
+        setPwdStatus('loading');
+        setPwdError('');
+        try {
+            await authApi.changePassword(pwdData.currentPassword, pwdData.newPassword);
+            setPwdStatus('success');
+            setTimeout(() => {
+                setIsChangingPwd(false);
+                setPwdStatus('');
+                setPwdData({ currentPassword: '', newPassword: '' });
+            }, 3000);
+        } catch (err) {
+            setPwdStatus('error');
+            setPwdError(err.response?.data?.message || err.message || 'Failed to change password');
+        }
+    };
     const [isTestingMic, setIsTestingMic] = useState(false);
     
     const [sessions, setSessions] = useState([]);
@@ -290,15 +317,61 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                                 <section>
                                     <h3 className="text-[10px] md:text-xs font-black text-brand-primary uppercase tracking-[0.2em] mb-4 md:mb-6">Security</h3>
                                     <div className="space-y-3 md:space-y-4">
-                                        <button onClick={() => { setPwdSent(true); setTimeout(() => setPwdSent(false), 3000) }} className="w-full flex items-center gap-4 p-4 md:p-5 bg-brand-bg hover:bg-white/50 rounded-[20px] md:rounded-3xl border border-brand-border/30 transition-all text-left">
-                                            <div className={`w-10 h-10 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 transition-colors ${pwdSent ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-primary/10 text-brand-primary'}`}>
-                                                {pwdSent ? <CheckCircle size={18} className="md:w-5 md:h-5" /> : <Key size={18} className="md:w-5 md:h-5" />}
+                                        {!isChangingPwd ? (
+                                            <button onClick={() => setIsChangingPwd(true)} className="w-full flex items-center gap-4 p-4 md:p-5 bg-brand-bg hover:bg-white/50 rounded-[20px] md:rounded-3xl border border-brand-border/30 transition-all text-left">
+                                                <div className="w-10 h-10 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 transition-colors bg-brand-primary/10 text-brand-primary">
+                                                    <Key size={18} className="md:w-5 md:h-5" />
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs md:text-sm font-bold text-brand-text uppercase tracking-tight truncate">Change Password</p>
+                                                    <p className="text-[9px] font-medium mt-1 uppercase tracking-widest truncate transition-colors text-brand-text-dim">Update your security key</p>
+                                                </div>
+                                            </button>
+                                        ) : (
+                                            <div className="p-4 md:p-5 bg-brand-bg/50 rounded-[20px] md:rounded-3xl border border-brand-primary/30 space-y-4">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-primary/10 text-brand-primary shrink-0">
+                                                        <Key size={14} />
+                                                    </div>
+                                                    <h4 className="text-xs font-black text-brand-primary uppercase tracking-[0.2em]">Update Password</h4>
+                                                </div>
+                                                <input 
+                                                    type="password" 
+                                                    placeholder="Current Password" 
+                                                    value={pwdData.currentPassword}
+                                                    onChange={e => setPwdData({...pwdData, currentPassword: e.target.value})}
+                                                    disabled={pwdStatus === 'loading' || pwdStatus === 'success'}
+                                                    className="w-full px-4 py-3 bg-brand-surface rounded-xl border border-brand-border/50 text-brand-text text-sm focus:outline-none focus:border-brand-primary transition-colors"
+                                                />
+                                                <input 
+                                                    type="password" 
+                                                    placeholder="New Password" 
+                                                    value={pwdData.newPassword}
+                                                    onChange={e => setPwdData({...pwdData, newPassword: e.target.value})}
+                                                    disabled={pwdStatus === 'loading' || pwdStatus === 'success'}
+                                                    className="w-full px-4 py-3 bg-brand-surface rounded-xl border border-brand-border/50 text-brand-text text-sm focus:outline-none focus:border-brand-primary transition-colors"
+                                                />
+                                                {pwdError && <p className="text-[10px] font-bold text-brand-danger uppercase tracking-widest">{pwdError}</p>}
+                                                {pwdStatus === 'success' && <p className="text-[10px] font-bold text-brand-success uppercase tracking-widest flex items-center gap-2"><CheckCircle size={12}/> Password Updated Successfully</p>}
+                                                
+                                                <div className="flex gap-3 pt-2">
+                                                    <button 
+                                                        onClick={handleChangePassword} 
+                                                        disabled={pwdStatus === 'loading' || pwdStatus === 'success'}
+                                                        className="flex-1 py-3 bg-brand-primary text-brand-bg rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-brand-primary/90 transition-all flex items-center justify-center"
+                                                    >
+                                                        {pwdStatus === 'loading' ? <div className="w-4 h-4 border-2 border-brand-bg/30 border-t-brand-bg rounded-full animate-spin"/> : 'Confirm Change'}
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => { setIsChangingPwd(false); setPwdError(''); setPwdStatus(''); setPwdData({currentPassword:'', newPassword:''}); }}
+                                                        disabled={pwdStatus === 'loading'}
+                                                        className="px-6 py-3 bg-brand-surface border border-brand-border/50 text-brand-text-dim hover:text-brand-text rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs md:text-sm font-bold text-brand-text uppercase tracking-tight truncate">Change Password</p>
-                                                <p className={`text-[9px] font-medium mt-1 uppercase tracking-widest truncate transition-colors ${pwdSent ? 'text-brand-success' : 'text-brand-text-dim'}`}>{pwdSent ? 'Reset link sent to email' : 'Updated 4 months ago'}</p>
-                                            </div>
-                                        </button>
+                                        )}
                                         <button onClick={() => setTwoFactor(!twoFactor)} className="w-full flex items-center gap-4 p-4 md:p-5 bg-brand-bg hover:bg-white/50 rounded-[20px] md:rounded-3xl border border-brand-border/30 transition-all text-left group">
                                             <div className={`w-10 h-10 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 transition-colors ${twoFactor ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-muted/10 text-brand-muted group-hover:text-brand-primary'}`}>
                                                 <Shield size={18} className="md:w-5 md:h-5" />

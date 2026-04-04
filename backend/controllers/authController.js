@@ -970,3 +970,57 @@ export const exportData = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * @desc    Change authenticated user password
+ * @route   PUT /api/v1/auth/password
+ * @access  Private
+ */
+export const changePassword = async (req, res, next) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const user = await User.findById(req.user._id).select('+password +tokenVersion');
+        
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ success: false, message: 'Please provide current and new passwords' });
+        }
+
+        const isMatch = await user.matchPassword(currentPassword);
+        if (!isMatch) {
+            await logAuditEvent({ req, event: 'AUTH_PASSWORD_CHANGE', status: 'FAILURE', metadata: { reason: 'CURRENT_PASSWORD_INVALID' } });
+            return res.status(401).json({ success: false, message: 'Incorrect current password' });
+        }
+
+        const breachStatus = await checkBreachedPassword(newPassword);
+        if (breachStatus.isBreached) {
+            await logAuditEvent({ req, event: 'AUTH_PASSWORD_CHANGE', status: 'FAILURE', metadata: { reason: 'DEFLECT_BREACHED_PASSWORD' } });
+            return res.status(400).json({ success: false, message: 'Security Alert: This password was found in a public data breach. Please choose a more secure password.' });
+        }
+
+        const strength = validatePasswordStrength(newPassword, [user.name, user.email]);
+        if (!strength.isValid) {
+            await logAuditEvent({ req, event: 'AUTH_PASSWORD_CHANGE', status: 'FAILURE', metadata: { reason: 'WEAK_ENTROPY' } });
+            return res.status(400).json({ success: false, message: `Security Policy: ${strength.feedback}. ${strength.suggestion || ''}` });
+        }
+
+        const isPreviouslyUsed = await user.isPasswordPreviouslyUsed(newPassword);
+        if (isPreviouslyUsed) {
+             await logAuditEvent({ req, event: 'AUTH_PASSWORD_CHANGE', status: 'FAILURE', metadata: { reason: 'PASSWORD_REUSED' } });
+             return res.status(400).json({ success: false, message: 'You cannot use a password you have used recently. Please choose a completely new password.' });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        await notifyPasswordChange(req, user);
+        await logAuditEvent({ req, event: 'AUTH_PASSWORD_CHANGE', status: 'SUCCESS' });
+
+        res.sendSuccess({ message: 'Password changed successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
