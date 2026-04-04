@@ -514,38 +514,40 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
           </div>
 
           {/* Right Side: Suggestions */}
-          <div className="w-full md:flex-1 bg-brand-surface/40 backdrop-blur-md flex flex-col shrink-0 md:overflow-hidden border-t md:border-t-0 md:border-l border-brand-border/20">
-            <div className="p-6 border-b border-brand-border/30 bg-gradient-to-br from-brand-primary/10 via-transparent to-transparent shrink-0">
-              <div className="flex items-center gap-2">
-                <Sparkles className="text-brand-primary drop-shadow-[0_0_8px_rgba(201,181,156,0.3)]" size={18} />
-                <h3 className="text-lg font-black text-brand-text tracking-tight uppercase">Suggested For You</h3>
+          {showAddFriend && (
+            <div className="w-full md:flex-1 bg-brand-surface/40 backdrop-blur-md flex flex-col shrink-0 md:overflow-hidden border-t md:border-t-0 md:border-l border-brand-border/20">
+              <div className="p-6 border-b border-brand-border/30 bg-gradient-to-br from-brand-primary/10 via-transparent to-transparent shrink-0">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="text-brand-primary drop-shadow-[0_0_8px_rgba(201,181,156,0.3)]" size={18} />
+                  <h3 className="text-lg font-black text-brand-text tracking-tight uppercase">Suggested For You</h3>
+                </div>
+              </div>
+
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar flex flex-col">
+                {filteredSuggestions.length === 0 ? (
+                  <div className="flex-1 flex flex-col items-center justify-center opacity-70">
+                    <TrendingUp className="mx-auto mb-3 text-brand-muted" size={32} />
+                    <p className="text-[10px] font-black uppercase tracking-widest text-brand-muted">No suggestions</p>
+                  </div>
+                ) : (
+                  filteredSuggestions.map((user) => (
+                    <SuggestionItem
+                      key={user.id}
+                      user={user}
+                      isPending={pendingRequests.has(user.id)}
+                      onAdd={() => handleAddSuggested(user)}
+                      onToggleMessage={() => handleSuggestionMessageClick(user)}
+                      isActiveMessage={activeMessageId === user.id}
+                      currentMessage={currentMessage}
+                      setCurrentMessage={setCurrentMessage}
+                      onSendMessage={() => sendSuggestionMessage(user)}
+                    />
+                  ))
+                )}
               </div>
             </div>
-
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar flex flex-col">
-              {filteredSuggestions.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center opacity-70">
-                  <TrendingUp className="mx-auto mb-3 text-brand-muted" size={32} />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-brand-muted">No suggestions</p>
-                </div>
-              ) : (
-                filteredSuggestions.map((user) => (
-                  <SuggestionItem
-                    key={user.id}
-                    user={user}
-                    isPending={pendingRequests.has(user.id)}
-                    onAdd={() => handleAddSuggested(user)}
-                    onToggleMessage={() => handleSuggestionMessageClick(user)}
-                    isActiveMessage={activeMessageId === user.id}
-                    currentMessage={currentMessage}
-                    setCurrentMessage={setCurrentMessage}
-                    onSendMessage={() => sendSuggestionMessage(user)}
-                  />
-                ))
-              )}
-            </div>
-          </div>
+          )}
         </div>
 
       </div>
