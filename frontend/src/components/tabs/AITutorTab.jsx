@@ -15,8 +15,6 @@ function AITutorTab({ room }) {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  const messagesEndRef = useRef(null);
-
   useEffect(() => {
     if (room?.id) {
       localStorage.setItem(`crammer_ai_chat_${room.id}`, JSON.stringify(messages));
