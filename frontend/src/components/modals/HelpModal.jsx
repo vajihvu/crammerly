@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, HelpCircle, Search, ChevronRight, MessageSquare, Book, PlayCircle, LifeBuoy } from 'lucide-react';
 
 function HelpModal({ onClose }) {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeCategory, setActiveCategory] = useState(null);
+
     const categories = [
         { title: 'Getting Started', icon: <PlayCircle size={20} />, count: 12 },
         { title: 'Study Room Guide', icon: <Book size={20} />, count: 8 },
@@ -35,29 +38,55 @@ function HelpModal({ onClose }) {
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar px-5 md:px-8">
-                    <div className="relative mb-6 md:mb-8 pt-2">
-                        <Search className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-brand-muted" size={16} />
-                        <input
-                            type="text"
-                            placeholder="Search for help..."
-                            className="w-full pl-10 md:pl-12 pr-5 py-3 bg-brand-bg border border-brand-border rounded-xl md:rounded-2xl text-xs md:text-sm font-bold text-brand-text focus:ring-1 focus:ring-brand-primary focus:border-brand-primary placeholder:text-brand-muted transition-all"
-                        />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8">
-                        {categories.map((cat, i) => (
-                            <button key={i} className="flex items-center justify-between p-3 md:p-4 bg-brand-bg/40 hover:bg-brand-bg rounded-[20px] md:rounded-2xl border border-brand-border/20 hover:border-brand-primary group transition-all text-left">
-                                <div className="flex items-center gap-3">
-                                    <div className="text-brand-primary group-hover:scale-110 transition-transform shrink-0">{cat.icon}</div>
-                                    <div className="min-w-0">
-                                        <p className="text-xs md:text-sm font-black text-brand-text uppercase tracking-tight leading-none truncate">{cat.title}</p>
-                                        <p className="text-[9px] font-bold text-brand-text-dim mt-1 uppercase tracking-widest">{cat.count} PAGES</p>
-                                    </div>
-                                </div>
-                                <ChevronRight size={16} className="text-brand-muted group-hover:text-brand-primary transition-colors shrink-0" />
+                    {activeCategory ? (
+                        <div className="animate-in slide-in-from-right-4 duration-300 pb-8 mt-2">
+                            <button onClick={() => setActiveCategory(null)} className="flex items-center gap-2 text-[10px] font-black text-brand-primary uppercase tracking-widest mb-6 hover:text-brand-text transition-colors">
+                                <ChevronRight className="rotate-180" size={14} /> Back to Help Center
                             </button>
-                        ))}
-                    </div>
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="text-brand-primary">{activeCategory.icon}</div>
+                                <h3 className="text-lg md:text-xl font-[1000] text-brand-text tracking-tighter uppercase leading-none">{activeCategory.title}</h3>
+                            </div>
+                            <div className="space-y-4 text-xs md:text-sm font-medium text-brand-text-dim leading-relaxed bg-brand-bg/30 p-6 rounded-[24px] border border-brand-border/20">
+                                <p>We're actively migrating all <span className="font-bold text-brand-text">{activeCategory.title}</span> documentation into this new interface.</p>
+                                <p>In the meantime, if you're stuck or encountering any severe issues, please reach out to us using the <span className="text-brand-text font-bold">Email Us</span> button below for priority support!</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="animate-in fade-in duration-300">
+                            <div className="relative mb-6 md:mb-8 pt-2">
+                                <Search className="absolute left-4 md:left-5 top-1/2 -translate-y-1/2 text-brand-muted" size={16} />
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    placeholder="Search for help..."
+                                    className="w-full pl-10 md:pl-12 pr-5 py-3 bg-brand-bg border border-brand-border rounded-xl md:rounded-2xl text-xs md:text-sm font-bold text-brand-text focus:ring-1 focus:ring-brand-primary focus:border-brand-primary placeholder:text-brand-muted transition-all"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-8">
+                                {categories.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+                                    categories.filter(c => c.title.toLowerCase().includes(searchQuery.toLowerCase())).map((cat, i) => (
+                                        <button key={i} onClick={() => setActiveCategory(cat)} className="flex items-center justify-between p-3 md:p-4 bg-brand-bg/40 hover:bg-brand-bg rounded-[20px] md:rounded-2xl border border-brand-border/20 hover:border-brand-primary group transition-all text-left">
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-brand-primary group-hover:scale-110 transition-transform shrink-0">{cat.icon}</div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs md:text-sm font-black text-brand-text uppercase tracking-tight leading-none truncate">{cat.title}</p>
+                                                    <p className="text-[9px] font-bold text-brand-text-dim mt-1 uppercase tracking-widest">{cat.count} PAGES</p>
+                                                </div>
+                                            </div>
+                                            <ChevronRight size={16} className="text-brand-muted group-hover:text-brand-primary transition-colors shrink-0" />
+                                        </button>
+                                    ))
+                                ) : (
+                                    <div className="col-span-1 md:col-span-2 text-center py-10 bg-brand-bg/20 rounded-[24px] border border-brand-border/10">
+                                        <p className="text-brand-text-dim font-black text-[10px] md:text-xs uppercase tracking-widest">No articles found for "{searchQuery}"</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Fixed Footer */}
