@@ -1,7 +1,16 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Info, Globe, Twitter, Github, Heart, Code2 } from 'lucide-react';
 
 function AboutModal({ onClose }) {
+    const [activeUsers, setActiveUsers] = useState(1402391);
+    
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setActiveUsers(prev => prev + Math.floor(Math.random() * 5) - 1);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, []);
+
     return (
         <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl flex items-center justify-center p-0 sm:p-4 z-[1000] animate-in fade-in duration-300" onClick={onClose}>
             <div
@@ -28,8 +37,8 @@ function AboutModal({ onClose }) {
 
                 <div className="grid grid-cols-2 gap-2 mb-6 md:mb-8 w-full">
                     <div className="p-3 bg-brand-bg/40 rounded-[20px] border border-brand-border/20">
-                        <p className="text-[8px] md:text-[9px] font-black text-brand-primary uppercase tracking-widest mb-0.5">Users Active</p>
-                        <p className="text-md md:text-lg font-[1000] text-brand-text tracking-tighter">1.4M+</p>
+                        <p className="text-[8px] md:text-[9px] font-black text-brand-primary uppercase tracking-widest mb-0.5 flex items-center justify-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-brand-success animate-pulse shadow-[0_0_8px_rgba(201,181,156,0.6)]"></span> Users Active</p>
+                        <p className="text-md md:text-lg font-[1000] text-brand-text tracking-tighter flex items-center justify-center gap-1">{activeUsers.toLocaleString()}</p>
                     </div>
                     <div className="p-3 bg-brand-bg/40 rounded-[20px] border border-brand-border/20">
                         <p className="text-[8px] md:text-[9px] font-black text-brand-primary uppercase tracking-widest mb-0.5">Countries</p>
@@ -50,7 +59,7 @@ function AboutModal({ onClose }) {
                         <Code2 size={8} className="text-brand-primary" />
                         Built with
                         <Heart size={8} className="text-brand-danger" fill="currentColor" />
-                        by Global Edge Team
+                        by Crammerly Team
                     </div>
                     <p className="text-[7px] md:text-[8px] font-medium text-brand-muted mt-2 uppercase tracking-widest">© 2026 Crammerly Systems Inc. All rights reserved.</p>
 
