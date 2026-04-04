@@ -3,6 +3,10 @@ import { X, Settings, Volume2, ShieldCheck, Lock, Bell, Eye, EyeOff, Trash2, Sma
 
 function SettingsModal({ initialTab = 'general', onClose }) {
     const [activeTab, setActiveTab] = useState(initialTab);
+    const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+    const [selectedLanguage, setSelectedLanguage] = useState('ENGLISH (US)');
+    
+    const languages = ['ENGLISH (US)', 'SPANISH', 'FRENCH'];
 
     const tabs = [
         { id: 'general', label: 'Basic', icon: <Settings size={18} /> },
@@ -74,11 +78,39 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                                                 <Globe size={18} className="text-brand-muted shrink-0" />
                                                 <span className="text-sm font-bold text-brand-text">Language</span>
                                             </div>
-                                            <select className="bg-transparent text-xs font-black text-brand-primary border-none focus:ring-0 cursor-pointer uppercase tracking-widest p-0">
-                                                <option>English (US)</option>
-                                                <option>Spanish</option>
-                                                <option>French</option>
-                                            </select>
+                                            <div className="relative">
+                                                <button 
+                                                    onClick={() => setIsLanguageOpen(!isLanguageOpen)}
+                                                    className="flex items-center gap-2 bg-transparent text-xs font-black text-brand-primary/80 hover:text-brand-primary border-none uppercase tracking-widest transition-colors"
+                                                >
+                                                    {selectedLanguage}
+                                                    <span className="text-[10px]">▼</span>
+                                                </button>
+                                                
+                                                {isLanguageOpen && (
+                                                    <>
+                                                        <div className="fixed inset-0 z-40" onClick={() => setIsLanguageOpen(false)}></div>
+                                                        <div className="absolute right-0 top-full mt-2 w-36 bg-brand-surface border border-brand-border/40 shadow-dropdown z-50 font-sans border-t-0 -translate-y-1">
+                                                            {languages.map(lang => (
+                                                                <button
+                                                                    key={lang}
+                                                                    onClick={() => {
+                                                                        setSelectedLanguage(lang);
+                                                                        setIsLanguageOpen(false);
+                                                                    }}
+                                                                    className={`w-full text-left px-4 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors ${
+                                                                        selectedLanguage === lang 
+                                                                        ? 'bg-[#1d4ed8] text-white' 
+                                                                        : 'text-brand-text-dim hover:text-brand-primary hover:bg-brand-bg/50'
+                                                                    }`}
+                                                                >
+                                                                    {lang}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </section>
