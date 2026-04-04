@@ -9,7 +9,7 @@ export const messagesApi = {
      */
     getAll: async (roomId) => {
         const { data } = await client.get(`/messages/${roomId}`);
-        return data.data;
+        return Array.isArray(data.data) ? data.data : (data.data?.messages || []);
     },
 
     /**
