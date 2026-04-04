@@ -7,7 +7,7 @@ import { useUI } from '../../context/UIContext';
 import PasswordStrengthMeter from '../auth/PasswordStrengthMeter';
 
 function AuthModal({ onClose, closable = true }) {
-  const { login, register, googleLogin } = useAuth();
+  const { login, register, googleLogin, verify2FA } = useAuth();
   const { addToast } = useUI();
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState('');
@@ -18,6 +18,10 @@ function AuthModal({ onClose, closable = true }) {
   const [turnstileToken, setTurnstileToken] = useState('');
 
   const [success, setSuccess] = useState(false);
+  
+  const [isTwoFactorMode, setIsTwoFactorMode] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [tempToken, setTempToken] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,9 +34,21 @@ function AuthModal({ onClose, closable = true }) {
         setSuccess(true);
         addToast('Account created successfully!', 'success');
       } else {
-        await login(email, password);
-        addToast('Successfully authenticated!', 'success');
-        onClose();
+        if (!isTwoFactorMode) {
+            const res = await login(email, password);
+            if (res.requiresTwoFactor) {
+                setIsTwoFactorMode(true);
+                setTempToken(res.tempToken);
+                setLoading(false);
+                return;
+            }
+            addToast('Successfully authenticated!', 'success');
+            onClose();
+        } else {
+            await verify2FA(tempToken, twoFactorCode);
+            addToast('Login Confirmed!', 'success');
+            onClose();
+        }
       }
     } catch (err) {
       if (err.status === 429 || err.message?.includes('rate limit')) {
@@ -59,14 +75,28 @@ function AuthModal({ onClose, closable = true }) {
           </div>
 
           <h3 className="text-lg font-bold text-brand-text mb-1">
-            {isSignUp ? 'Create Account' : 'Welcome Back'}
+            {isTwoFactorMode ? 'Authentication Required' : isSignUp ? 'Create Account' : 'Welcome Back'}
           </h3>
-          <p className="text-xs text-brand-text-dim mb-4">
-            {isSignUp ? 'Sign up to get started' : 'Log in to your account'}
+          <p className="text-xs text-brand-text-dim mb-4 text-center">
+            {isTwoFactorMode ? 'Enter the 6-digit code from your authenticator' : isSignUp ? 'Sign up to get started' : 'Log in to your account'}
           </p>
 
           <form onSubmit={handleSubmit} className="w-full space-y-3 mb-4">
             <div className="space-y-3">
+              {isTwoFactorMode ? (
+                  <div className="relative group animate-in slide-in-from-right-4 duration-300">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-text-dim group-focus-within:text-brand-primary transition-colors" size={18} />
+                    <input
+                      type="text"
+                      placeholder="6-Digit OTP Code"
+                      value={twoFactorCode}
+                      onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full pl-11 pr-5 py-2.5 bg-brand-bg border border-brand-border/50 rounded-[14px] text-xs font-bold text-brand-text focus:border-brand-primary focus:outline-none transition-all tracking-widest text-center"
+                      required
+                    />
+                  </div>
+              ) : (
+                <>
               {isSignUp && (
                 <div className="relative group animate-in slide-in-from-top-2 duration-300">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-text-dim group-focus-within:text-brand-primary transition-colors" size={18} />
@@ -114,6 +144,8 @@ function AuthModal({ onClose, closable = true }) {
                   />
                 </div>
               )}
+             </>
+            )}
             </div>
 
             {error && <p className="text-[10px] font-bold text-brand-danger uppercase tracking-wider text-center bg-brand-danger/10 p-3 rounded-xl border border-brand-danger/20">{error}</p>}
@@ -121,10 +153,10 @@ function AuthModal({ onClose, closable = true }) {
 
             <button
               type="submit"
-              disabled={loading || success}
+              disabled={loading || success || (isTwoFactorMode && twoFactorCode.length !== 6)}
               className="w-full flex items-center justify-center gap-2 px-5 py-2.5 mt-3 bg-brand-text text-brand-bg rounded-xl font-bold text-xs shadow-premium hover:bg-black transition-all active:scale-95 disabled:opacity-50"
             >
-              {loading ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Log In')}
+              {loading ? 'Processing...' : isTwoFactorMode ? 'Verify' : (isSignUp ? 'Sign Up' : 'Log In')}
               {!loading && <ArrowRight size={14} />}
             </button>
           </form>

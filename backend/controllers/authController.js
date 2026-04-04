@@ -23,6 +23,9 @@ import {
 } from '../utils/securityNotifier.js';
 import { validatePasswordStrength } from '../utils/passwordPolicy.js';
 import { OAuth2Client } from 'google-auth-library';
+import jwt from 'jsonwebtoken';
+import speakeasy from 'speakeasy';
+import QRCode from 'qrcode';
 
 const client = new OAuth2Client(config.googleClientId);
 
@@ -162,6 +165,15 @@ export const loginUser = async (req, res, next) => {
         const isMatch = await user.matchPassword(password);
 
         if (isMatch) {
+            if (user.isTwoFactorEnabled) {
+                const tempToken = jwt.sign({ tempId: user._id }, process.env.JWT_SECRET || config.jwt.secret, { expiresIn: '5m' });
+                return res.sendSuccess({
+                    requiresTwoFactor: true,
+                    tempToken,
+                    message: "Two-Factor Authentication required to complete login."
+                });
+            }
+
             // Shared device detection
             const userAgent = req.headers['user-agent'] || 'Unknown';
             const deviceName = parseDeviceName(userAgent);
@@ -1023,4 +1035,127 @@ export const changePassword = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
+};
+
+/**
+ * @desc    Generate 2FA Secret and QR Code
+ * @route   POST /api/v1/auth/2fa/generate
+ * @access  Private
+ */
+export const generate2FA = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user._id).select('+twoFactorSecret');
+        const secret = speakeasy.generateSecret({ length: 20, name: `Crammerly (${user.email})` });
+        user.twoFactorSecret = secret.base32;
+        await user.save();
+
+        const dataUrl = await QRCode.toDataURL(secret.otpauth_url);
+        res.sendSuccess({ qrCode: dataUrl, secret: secret.base32 });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * @desc    Enable 2FA processing OTP
+ * @route   POST /api/v1/auth/2fa/enable
+ * @access  Private
+ */
+export const enable2FA = async (req, res, next) => {
+    try {
+        const { code } = req.body;
+        const user = await User.findById(req.user._id).select('+twoFactorSecret');
+        const verified = speakeasy.totp.verify({
+            secret: user.twoFactorSecret,
+            encoding: 'base32',
+            token: code,
+            window: 1
+        });
+
+        if (!verified) return res.status(400).json({ success: false, message: 'Invalid authentication code.' });
+        
+        user.isTwoFactorEnabled = true;
+        await user.save();
+        res.sendSuccess({ message: '2-Factor Authentication successfully enabled!' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * @desc    Disable 2FA returning to standard auth
+ * @route   POST /api/v1/auth/2fa/disable
+ * @access  Private
+ */
+export const disable2FA = async (req, res, next) => {
+    try {
+        const { password } = req.body;
+        const user = await User.findById(req.user._id).select('+twoFactorSecret +password');
+        
+        const isMatch = await user.matchPassword(password);
+        if (!isMatch) return res.status(401).json({ success: false, message: 'Incorrect current password.' });
+
+        user.isTwoFactorEnabled = false;
+        user.twoFactorSecret = undefined;
+        await user.save();
+        res.sendSuccess({ message: '2-Factor Authentication successfully disabled.' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+/**
+ * @desc    Verify 2FA generating full auth JWTs bridging login
+ * @route   POST /api/v1/auth/verify-2fa
+ * @access  Public
+ */
+export const verify2FA = async (req, res, next) => {
+    try {
+        const { tempToken, code } = req.body;
+        if (!tempToken || !code) return res.status(400).json({ success: false, message: 'Invalid 2FA parameters.' });
+        
+        let decoded;
+        try {
+            decoded = jwt.verify(tempToken, process.env.JWT_SECRET || config.jwt.secret);
+        } catch (e) {
+            return res.status(401).json({ success: false, message: 'Login session expired, please log in again.' });
+        }
+        
+        const user = await User.findById(decoded.tempId).select('+twoFactorSecret');
+        if (!user || (!user.isTwoFactorEnabled && user.twoFactorSecret)) return res.status(404).json({ success: false, message: 'MFA User not found.' });
+
+        const verified = speakeasy.totp.verify({
+            secret: user.twoFactorSecret,
+            encoding: 'base32',
+            token: code,
+            window: 1
+        });
+        
+        if (!verified) return res.status(401).json({ success: false, message: 'Invalid 6-digit authentication code.' });
+        
+        const userAgent = req.headers['user-agent'] || 'Unknown';
+        const deviceName = parseDeviceName(userAgent);
+
+        const existingSession = await Session.findOne({
+            user: user._id, isValid: true, userAgent, ipAddress: req.ip
+        });
+        if (!existingSession) await notifyNewDeviceLogin(req, user, { userAgent, ipAddress: req.ip, deviceName });
+
+        const refreshToken = generateRefreshToken();
+        const session = await Session.create({
+            user: user._id,
+            refreshTokenHash: hashToken(refreshToken),
+            userAgent, deviceName, ipAddress: req.ip,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+        });
+
+        await user.resetLoginAttempts();
+        await logAuditEvent({ req, user: user._id, event: 'AUTH_LOGIN_2FA', status: 'SUCCESS' });
+
+        res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
+        return res.sendSuccess({
+            token: generateAccessToken(user, session._id),
+            user: { id: user._id, name: user.name, email: user.email }
+        });
+    } catch(err) { next(err); }
 };

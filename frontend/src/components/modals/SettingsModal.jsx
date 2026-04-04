@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Settings, Volume2, ShieldCheck, Lock, Bell, Eye, EyeOff, Trash2, Smartphone, Globe, Shield, CreditCard, Key, CheckCircle, Monitor } from 'lucide-react';
+import { X, Settings, Volume2, ShieldCheck, Lock, Bell, Eye, EyeOff, Trash2, Smartphone, Globe, Shield, CreditCard, Key, CheckCircle, Monitor, QrCode } from 'lucide-react';
 import { sessionsApi, authApi } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 
 function SettingsModal({ initialTab = 'general', onClose }) {
+    const { user } = useAuth();
     const [activeTab, setActiveTab] = useState(initialTab);
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState('ENGLISH (US)');
@@ -10,7 +12,74 @@ function SettingsModal({ initialTab = 'general', onClose }) {
     // Interactive states
     const [privacy, setPrivacy] = useState({ invites: true, online: true, dms: false });
     const [micLevel, setMicLevel] = useState(0);
-    const [twoFactor, setTwoFactor] = useState(false);
+    const [twoFactor, setTwoFactor] = useState(user?.isTwoFactorEnabled || false);
+    
+    // MFA Setup States
+    const [qrCodeData, setQrCodeData] = useState(null);
+    const [mfaSecret, setMfaSecret] = useState('');
+    const [mfaCodeInput, setMfaCodeInput] = useState('');
+    const [mfaPasswordInput, setMfaPasswordInput] = useState('');
+    const [mfaStep, setMfaStep] = useState(0); // 0=idle, 1=enabling, 2=disabling, 3=success
+    const [mfaError, setMfaError] = useState('');
+    const [isMfaLoading, setIsMfaLoading] = useState(false);
+
+    const handleStartMfa = async () => {
+        if (twoFactor) {
+            setMfaStep(2); // Ask for password to disable
+            return;
+        }
+        setIsMfaLoading(true);
+        setMfaError('');
+        try {
+            const res = await authApi.generate2FA();
+            setQrCodeData(res.qrCode);
+            setMfaSecret(res.secret);
+            setMfaStep(1); // Ready to verify code
+        } catch(err) {
+            setMfaError(err.response?.data?.message || 'Failed to generate 2FA setup');
+        } finally {
+            setIsMfaLoading(false);
+        }
+    };
+
+    const handleConfirmEnableMfa = async () => {
+        if(mfaCodeInput.length !== 6) return setMfaError('Code must be 6 digits');
+        setIsMfaLoading(true);
+        setMfaError('');
+        try {
+            await authApi.enable2FA(mfaCodeInput);
+            setTwoFactor(true);
+            setMfaStep(3);
+            setTimeout(() => { setMfaStep(0); setMfaCodeInput(''); }, 3000);
+        } catch(err) {
+            setMfaError(err.response?.data?.message || 'Invalid code');
+        } finally {
+            setIsMfaLoading(false);
+        }
+    };
+
+    const handleConfirmDisableMfa = async () => {
+        if(!mfaPasswordInput) return setMfaError('Password required');
+        setIsMfaLoading(true);
+        setMfaError('');
+        try {
+            await authApi.disable2FA(mfaPasswordInput);
+            setTwoFactor(false);
+            setMfaStep(3);
+            setTimeout(() => { setMfaStep(0); setMfaPasswordInput(''); }, 3000);
+        } catch(err) {
+            setMfaError(err.response?.data?.message || 'Incorrect password');
+        } finally {
+            setIsMfaLoading(false);
+        }
+    };
+
+    const cancelMfaFlow = () => {
+        setMfaStep(0);
+        setMfaCodeInput('');
+        setMfaPasswordInput('');
+        setMfaError('');
+    };
     const [isTestingMic, setIsTestingMic] = useState(false);
     
     // Password State
@@ -39,7 +108,6 @@ function SettingsModal({ initialTab = 'general', onClose }) {
             setPwdError(err.response?.data?.message || err.message || 'Failed to change password');
         }
     };
-    const [isTestingMic, setIsTestingMic] = useState(false);
     
     const [sessions, setSessions] = useState([]);
     const [loadingSessions, setLoadingSessions] = useState(false);
@@ -372,15 +440,82 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                                                 </div>
                                             </div>
                                         )}
-                                        <button onClick={() => setTwoFactor(!twoFactor)} className="w-full flex items-center gap-4 p-4 md:p-5 bg-brand-bg hover:bg-white/50 rounded-[20px] md:rounded-3xl border border-brand-border/30 transition-all text-left group">
-                                            <div className={`w-10 h-10 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 transition-colors ${twoFactor ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-muted/10 text-brand-muted group-hover:text-brand-primary'}`}>
-                                                <Shield size={18} className="md:w-5 md:h-5" />
+                                        {mfaStep === 0 ? (
+                                            <button onClick={handleStartMfa} disabled={isMfaLoading} className="w-full flex items-center gap-4 p-4 md:p-5 bg-brand-bg hover:bg-white/50 rounded-[20px] md:rounded-3xl border border-brand-border/30 transition-all text-left group">
+                                                <div className={`w-10 h-10 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 transition-colors ${twoFactor ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-muted/10 text-brand-muted group-hover:text-brand-primary'}`}>
+                                                    {isMfaLoading ? <div className="w-4 h-4 border-2 border-brand-primary/30 border-t-brand-primary rounded-full animate-spin"/> : <Shield size={18} className="md:w-5 md:h-5" />}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <p className="text-xs md:text-sm font-bold text-brand-text uppercase tracking-tight truncate">2-Factor Auth (TOTP)</p>
+                                                    <p className={`text-[9px] font-medium mt-1 uppercase tracking-widest truncate transition-colors ${twoFactor ? 'text-brand-success' : 'text-brand-primary'}`}>{twoFactor ? 'Active & Protected - Click to Disable' : 'Recommended - Click to enable'}</p>
+                                                </div>
+                                            </button>
+                                        ) : mfaStep === 1 ? (
+                                            <div className="p-4 md:p-5 bg-brand-bg/50 rounded-[20px] md:rounded-3xl border border-brand-primary/30 space-y-4 animate-in slide-in-from-bottom-2">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-primary/10 text-brand-primary shrink-0">
+                                                        <QrCode size={14} />
+                                                    </div>
+                                                    <h4 className="text-xs font-black text-brand-primary uppercase tracking-[0.2em]">Setup Authenticator</h4>
+                                                </div>
+                                                <p className="text-[10px] uppercase font-bold text-brand-text-dim tracking-widest leading-relaxed">
+                                                    1. Download Google Authenticator or Authy<br />
+                                                    2. Scan the QR code below<br />
+                                                    3. Enter the 6-digit code to verify setup
+                                                </p>
+                                                <div className="flex justify-center my-4 p-4 bg-white rounded-xl">
+                                                    {qrCodeData ? <img src={qrCodeData} alt="2FA QR Code" className="w-32 h-32" /> : <div className="w-32 h-32 bg-gray-200 animate-pulse rounded-xl" />}
+                                                </div>
+                                                <div className="text-center pb-2">
+                                                    <span className="text-[8px] font-bold text-brand-text-dim uppercase tracking-widest">Secret Key: {mfaSecret}</span>
+                                                </div>
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="6-Digit Code" 
+                                                    value={mfaCodeInput}
+                                                    onChange={e => setMfaCodeInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                                    disabled={isMfaLoading}
+                                                    className="w-full px-4 py-3 bg-brand-surface rounded-xl border border-brand-border/50 text-brand-text text-sm focus:outline-none focus:border-brand-primary transition-colors text-center tracking-[0.5em] font-bold"
+                                                />
+                                                {mfaError && <p className="text-[10px] font-bold text-brand-danger uppercase tracking-widest text-center">{mfaError}</p>}
+                                                <div className="flex gap-3 pt-2">
+                                                    <button onClick={handleConfirmEnableMfa} disabled={isMfaLoading || mfaCodeInput.length !== 6} className="flex-1 py-3 bg-brand-primary text-brand-bg rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-brand-primary/90 transition-all flex items-center justify-center">
+                                                        {isMfaLoading ? <div className="w-4 h-4 border-2 border-brand-bg/30 border-t-brand-bg rounded-full animate-spin"/> : 'Verify Code'}
+                                                    </button>
+                                                    <button onClick={cancelMfaFlow} disabled={isMfaLoading} className="px-6 py-3 bg-brand-surface border border-brand-border/50 text-brand-text-dim hover:text-brand-text rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">Cancel</button>
+                                                </div>
                                             </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs md:text-sm font-bold text-brand-text uppercase tracking-tight truncate">2-Factor Auth</p>
-                                                <p className={`text-[9px] font-medium mt-1 uppercase tracking-widest truncate transition-colors ${twoFactor ? 'text-brand-success' : 'text-brand-primary'}`}>{twoFactor ? 'Active & Protected' : 'Recommended - Click to enable'}</p>
+                                        ) : mfaStep === 2 ? (
+                                             <div className="p-4 md:p-5 bg-brand-bg/50 rounded-[20px] md:rounded-3xl border border-brand-danger/30 space-y-4 animate-in slide-in-from-bottom-2">
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-danger/10 text-brand-danger shrink-0">
+                                                        <Shield size={14} />
+                                                    </div>
+                                                    <h4 className="text-xs font-black text-brand-danger uppercase tracking-[0.2em]">Disable Security</h4>
+                                                </div>
+                                                <p className="text-[10px] uppercase font-bold text-brand-text-dim tracking-widest">Enter your account password to verify.</p>
+                                                <input 
+                                                    type="password" 
+                                                    placeholder="Current Password" 
+                                                    value={mfaPasswordInput}
+                                                    onChange={e => setMfaPasswordInput(e.target.value)}
+                                                    disabled={isMfaLoading}
+                                                    className="w-full px-4 py-3 bg-brand-surface rounded-xl border border-brand-danger/20 text-brand-text text-sm focus:outline-none focus:border-brand-danger transition-colors font-bold"
+                                                />
+                                                {mfaError && <p className="text-[10px] font-bold text-brand-danger uppercase tracking-widest">{mfaError}</p>}
+                                                <div className="flex gap-3 pt-2">
+                                                    <button onClick={handleConfirmDisableMfa} disabled={isMfaLoading || !mfaPasswordInput} className="flex-1 py-3 bg-brand-danger text-brand-bg rounded-xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-brand-danger/90 transition-all flex items-center justify-center">
+                                                        {isMfaLoading ? <div className="w-4 h-4 border-2 border-brand-bg/30 border-t-brand-bg rounded-full animate-spin"/> : 'Confirm Disable'}
+                                                    </button>
+                                                    <button onClick={cancelMfaFlow} disabled={isMfaLoading} className="px-6 py-3 bg-brand-surface border border-brand-border/50 text-brand-text-dim hover:text-brand-text rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all">Cancel</button>
+                                                </div>
                                             </div>
-                                        </button>
+                                        ) : (
+                                            <div className="p-4 md:p-5 bg-brand-success/10 rounded-[20px] md:rounded-3xl border border-brand-success/30 flex items-center justify-center gap-3 animate-in zoom-in-95">
+                                                <CheckCircle size={18} className="text-brand-success" />
+                                                <p className="text-xs font-black text-brand-success uppercase tracking-[0.2em]">Security Updated Success</p>
+                                            </div>
+                                        )}
                                     </div>
                                 </section>
 
