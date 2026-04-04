@@ -90,20 +90,27 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
                     <p className="text-brand-text-dim text-xs truncate">{room.privacy || 'Public'}</p>
                   </div>
                 </div>
-                {isOwner && (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="mt-3 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-brand-primary hover:text-brand-primary/80 transition-colors bg-brand-primary/5 px-3 py-1.5 rounded-xl border border-brand-primary/10"
-                  >
-                    <Settings2 size={12} /> Edit Settings
-                  </button>
-                )}
               </>
             )}
           </div>
-          <button onClick={(e) => onDeleteRoom(room, e)} className="p-1.5 hover:bg-brand-muted/20 rounded-lg transition-all">
-            {isOwner ? <Trash2 size={16} className="text-brand-danger" /> : <EyeOff size={16} className="text-brand-muted" />}
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            {isOwner && !isEditing && (
+              <button 
+                onClick={() => setIsEditing(true)} 
+                className="p-1.5 hover:bg-brand-primary/10 rounded-lg transition-all" 
+                title="Edit Room"
+              >
+                <Settings2 size={16} className="text-brand-primary" />
+              </button>
+            )}
+            <button 
+              onClick={(e) => onDeleteRoom(room, e)} 
+              className="p-1.5 hover:bg-brand-danger/10 rounded-lg transition-all group" 
+              title={isOwner ? "Delete Room" : "Leave Room"}
+            >
+              {isOwner ? <Trash2 size={16} className="text-brand-danger" /> : <X size={16} className="text-brand-muted group-hover:text-brand-danger transition-colors" />}
+            </button>
+          </div>
         </div>
         {room.privacy === 'Private' && room.code && (
           <div className="bg-brand-bg rounded-lg p-2 border border-brand-primary/10 shadow-sm">
