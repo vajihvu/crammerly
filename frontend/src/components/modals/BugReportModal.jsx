@@ -1,10 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { X, AlertCircle, Send, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
+import { bugsApi } from '../../api';
 
 function BugReportModal({ onClose }) {
     const [submitted, setSubmitted] = useState(false);
     const [bugData, setBugData] = useState({ title: '', desc: '', type: 'Look/Design' });
     const [imagePreview, setImagePreview] = useState(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
     const fileInputRef = useRef(null);
 
     const handleImageChange = (e) => {
@@ -19,10 +22,37 @@ function BugReportModal({ onClose }) {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const handleSubmit = (e) => {
+    const getBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        setSubmitted(true);
-        setTimeout(() => onClose(), 2000);
+        setIsSubmitting(true);
+        setError('');
+        try {
+            let base64Image = '';
+            if (fileInputRef.current?.files[0]) {
+                base64Image = await getBase64(fileInputRef.current.files[0]);
+            }
+            await bugsApi.submitBug({
+                type: bugData.type,
+                title: bugData.title,
+                description: bugData.desc,
+                image: base64Image
+            });
+            setSubmitted(true);
+            setTimeout(() => onClose(), 2000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to submit bug report. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (submitted) {
@@ -92,8 +122,11 @@ function BugReportModal({ onClose }) {
                             <input
                                 required
                                 type="text"
+                                value={bugData.title}
+                                onChange={e => setBugData({...bugData, title: e.target.value})}
+                                disabled={isSubmitting}
                                 placeholder="What is the problem?"
-                                className="w-full px-4 py-3 bg-brand-bg border border-brand-border rounded-xl md:rounded-2xl text-xs md:text-sm font-bold text-brand-text focus:ring-1 focus:ring-brand-primary focus:border-brand-primary placeholder:text-brand-muted"
+                                className="w-full px-4 py-3 bg-brand-bg border border-brand-border rounded-xl md:rounded-2xl text-xs md:text-sm font-bold text-brand-text focus:ring-1 focus:ring-brand-primary focus:border-brand-primary placeholder:text-brand-muted disabled:opacity-50"
                             />
                         </div>
 
@@ -102,10 +135,15 @@ function BugReportModal({ onClose }) {
                             <textarea
                                 required
                                 rows={3}
+                                value={bugData.desc}
+                                onChange={e => setBugData({...bugData, desc: e.target.value})}
+                                disabled={isSubmitting}
                                 placeholder="How can we find the problem?"
-                                className="w-full px-4 py-3 bg-brand-bg border border-brand-border rounded-xl md:rounded-2xl text-xs md:text-sm font-bold text-brand-text focus:ring-1 focus:ring-brand-primary focus:border-brand-primary placeholder:text-brand-muted resize-none md:max-h-24"
+                                className="w-full px-4 py-3 bg-brand-bg border border-brand-border rounded-xl md:rounded-2xl text-xs md:text-sm font-bold text-brand-text focus:ring-1 focus:ring-brand-primary focus:border-brand-primary placeholder:text-brand-muted resize-none md:max-h-24 disabled:opacity-50"
                             ></textarea>
                         </div>
+                        
+                        {error && <p className="text-[10px] font-bold text-brand-danger uppercase tracking-widest text-center">{error}</p>}
 
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
                             <div className="flex items-center gap-4">
@@ -122,21 +160,22 @@ function BugReportModal({ onClose }) {
                                         <button 
                                             type="button" 
                                             onClick={removeImage} 
-                                            className="bg-brand-danger/10 text-brand-danger hover:bg-brand-danger hover:text-white rounded-md p-1.5 transition-colors absolute -top-1.5 -right-1.5 shadow-md"
+                                            disabled={isSubmitting}
+                                            className="bg-brand-danger/10 text-brand-danger hover:bg-brand-danger hover:text-white rounded-md p-1.5 transition-colors absolute -top-1.5 -right-1.5 shadow-md disabled:opacity-50"
                                         >
                                             <X size={10} strokeWidth={4} />
                                         </button>
                                         <span className="text-[8px] font-bold text-brand-success uppercase tracking-widest leading-tight">Image<br/>Attached</span>
                                     </div>
                                 ) : (
-                                    <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 text-brand-primary hover:text-brand-text transition-colors group">
+                                    <button type="button" disabled={isSubmitting} onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 text-brand-primary hover:text-brand-text transition-colors group disabled:opacity-50">
                                         <ImageIcon size={18} className="group-hover:scale-110 transition-transform" />
                                         <span className="text-[9px] font-black uppercase tracking-widest">Add a picture</span>
                                     </button>
                                 )}
                             </div>
-                            <button type="submit" className="w-full sm:w-auto px-6 py-3 bg-brand-text text-brand-bg rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
-                                Send <Send size={14} />
+                            <button type="submit" disabled={isSubmitting} className="w-full sm:w-auto px-6 py-3 bg-brand-text text-brand-bg rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                                {isSubmitting ? 'Sending...' : 'Send'} <Send size={14} />
                             </button>
                         </div>
                     </form>

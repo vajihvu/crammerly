@@ -6,6 +6,7 @@ import todoRoutes from './todoRoutes.js';
 import studySessionRoutes from './studySessionRoutes.js';
 import roomRoutes from './roomRoutes.js';
 import messageRoutes from './messageRoutes.js';
+import bugRoutes from './bugRoutes.js';
 import { aiLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
@@ -23,5 +24,6 @@ router.use('/todos', todoRoutes);
 router.use('/study-sessions', studySessionRoutes);
 router.use('/rooms', roomRoutes);
 router.use('/messages', messageRoutes);
+router.use('/bugs', bugRoutes);
 
 export default router;

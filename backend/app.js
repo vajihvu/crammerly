@@ -138,7 +138,7 @@ app.use(helmet({
 // The cors() package has been removed to avoid conflicting with the manual middleware.
 
 // 3. Body Parsing & Cookies (Critical Order)
-app.use(express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
 
 // 4. Rate Limiting (Distributed with Redis)

@@ -7,6 +7,7 @@ import { studyApi } from './study';
 import { friendsApi } from './friends';
 import { messagesApi } from './messages';
 import { sessionsApi } from './sessions';
+import { bugsApi } from './bugs';
 import client from './client';
 
 export {
@@ -20,6 +21,7 @@ export {
     friendsApi,
     messagesApi,
     sessionsApi,
+    bugsApi,
 };
 
 // Default export as a unified object if preferred
@@ -33,6 +35,7 @@ export default {
     friends: friendsApi,
     messages: messagesApi,
     sessions: sessionsApi,
+    bugs: bugsApi,
     client,
 };
 
