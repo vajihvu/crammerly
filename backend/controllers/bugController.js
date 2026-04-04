@@ -1,6 +1,5 @@
 import BugReport from '../models/BugReport.js';
 import { logger } from '../utils/logger.js';
-import { logAuditEvent } from '../middleware/auditMiddleware.js';
 
 /**
  * @desc    Submit a new bug report
@@ -21,14 +20,6 @@ export const createBugReport = async (req, res, next) => {
             title,
             description,
             image: image || ''
-        });
-
-        await logAuditEvent({
-            req,
-            user: req.user._id,
-            event: 'BUG_REPORT_CREATED',
-            status: 'SUCCESS',
-            metadata: { bugId: bugReport._id, type }
         });
 
         res.status(201).json({
