@@ -209,7 +209,7 @@ export default function Crammerly() {
 
   // ─────────────── RENDER ───────────────
 
-  if (isAuthLoading) {
+  if (isAuthLoading || (authUser && !currentUser)) {
     return (
       <div className="min-h-screen bg-brand-bg flex flex-col items-center justify-center">
         <Sparkles className="text-brand-primary animate-spin-slow" size={48} />
