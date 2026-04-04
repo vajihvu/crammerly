@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, BookOpen, Calendar as CalendarIcon, ChevronLeft, LogOut, UserPlus } from 'lucide-react';
+import { Bell, Lightbulb, Calendar as CalendarIcon, ChevronLeft, LogOut, UserPlus } from 'lucide-react';
 import NotificationsDropdown from '../NotificationsDropdown';
 
 const Header = ({
@@ -10,7 +10,9 @@ const Header = ({
     openModal,
     closeModal,
     unreadCount,
-    currentUser
+    currentUser,
+    theme,
+    toggleTheme
 }) => {
     return (
         <header className={`sticky top-0 z-[110] w-full bg-brand-surface border-b border-brand-border/20 shadow-sm opacity-100 transition-all ${(modals.profile || modals.friends || modals.calendar) ? 'hidden' : modals.floating ? 'hidden sm:block' : 'block'}`}>
@@ -60,6 +62,16 @@ const Header = ({
 
                 {/* Right Actions */}
                 <div className="flex items-center justify-end gap-1 md:gap-3 flex-1">
+                    <div className="relative hidden md:flex">
+                        <button
+                            onClick={toggleTheme}
+                            className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl sm:rounded-2xl transition-all text-brand-text-dim hover:text-brand-text hover:bg-brand-muted/10"
+                            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                        >
+                            <Lightbulb size={16} className="sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
+                        </button>
+                    </div>
+
                     <div className="relative">
                         <button
                             onClick={() => toggleModal('notifications')}

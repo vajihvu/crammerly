@@ -244,6 +244,8 @@ export default function Crammerly() {
         markNotificationAsRead={markNotificationAsRead}
         clearAllNotifications={clearAllNotifications}
         currentUser={currentUser}
+        theme={theme}
+        toggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       />
 
       <main className={`flex-1 flex flex-col relative ${isInRoom ? 'min-h-0 overflow-hidden' : ''}`}>
