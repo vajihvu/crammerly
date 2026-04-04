@@ -132,7 +132,7 @@ export const loginUser = async (req, res, next) => {
 
 
     try {
-        const user = await User.findOne({ email }).select('+password loginAttempts lockUntil requiresCaptcha isEmailVerified');
+        const user = await User.findOne({ email }).select('+password');
 
         if (!user) {
             await logAuditEvent({ req, event: 'AUTH_LOGIN', status: 'FAILURE', metadata: { email, reason: 'NOT_FOUND' } });
