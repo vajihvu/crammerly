@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, HelpCircle, Search, ChevronRight, MessageSquare, Book, PlayCircle, LifeBuoy } from 'lucide-react';
+import { X, HelpCircle, Search, ChevronRight, MessageSquare, Book, PlayCircle, LifeBuoy, Shield, FileText, Activity } from 'lucide-react';
 
 function HelpModal({ onClose }) {
     const [searchQuery, setSearchQuery] = useState('');
@@ -97,9 +97,9 @@ function HelpModal({ onClose }) {
                     </div>
                     <div className="flex items-center gap-3">
                         <div className="flex gap-4 text-[9px] font-semibold text-brand-text-dim uppercase tracking-widest">
-                            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-brand-text transition-colors">Privacy</a>
-                            <a href="/terms" target="_blank" rel="noopener noreferrer" className="hover:text-brand-text transition-colors">Terms</a>
-                            <a href="https://status.crammerly.app" target="_blank" rel="noopener noreferrer" className="hover:text-brand-text transition-colors">Status</a>
+                            <button onClick={() => setActiveCategory({ title: 'Privacy Policy', icon: <Shield size={20} /> })} className="hover:text-brand-text transition-colors uppercase tracking-widest text-[9px]">Privacy</button>
+                            <button onClick={() => setActiveCategory({ title: 'Terms of Service', icon: <FileText size={20} /> })} className="hover:text-brand-text transition-colors uppercase tracking-widest text-[9px]">Terms</button>
+                            <button onClick={() => setActiveCategory({ title: 'System Status', icon: <Activity size={20} /> })} className="hover:text-brand-text transition-colors uppercase tracking-widest text-[9px]">Status</button>
                         </div>
                         <a
                             href="mailto:support@crammerly.app"
