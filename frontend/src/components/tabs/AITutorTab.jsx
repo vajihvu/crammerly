@@ -25,13 +25,17 @@ function AITutorTab({ room }) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const handleSend = async (overrideInput = null) => {
+    const query = typeof overrideInput === 'string' ? overrideInput : input;
+    if (!query.trim() || isLoading) return;
 
     const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
-    const userMessage = { role: 'user', content: input };
+    const userMessage = { role: 'user', content: query };
     setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    
+    if (typeof overrideInput !== 'string') {
+        setInput('');
+    }
     setIsLoading(true);
 
     try {
@@ -62,7 +66,7 @@ function AITutorTab({ room }) {
           messages: [
             { role: "system", content: `You are an AI tutor helping students with ${room?.topic || 'their subject'}. Be encouraging, clear, and educational. Provide hints rather than full solutions.` },
             ...messages.map(msg => ({ role: msg.role, content: msg.content })),
-            { role: "user", content: input }
+            { role: "user", content: query }
           ],
           stream: false
         })
@@ -91,10 +95,26 @@ function AITutorTab({ room }) {
             <Bot size={40} className="mx-auto mb-3 text-brand-primary/50 opacity-50" />
             <h3 className="text-lg font-bold mb-1 text-brand-text">AI Study Assistant</h3>
             <p className="mb-4">Ask me anything about {room?.topic || 'this subject'}!</p>
-            <div className="text-left max-w-md mx-auto space-y-2">
+            <div className="text-left w-full max-w-md mx-auto space-y-2 px-4">
               <p className="text-sm text-brand-text-dim/70">Example questions:</p>
-              <div className="bg-brand-bg rounded-lg p-3 text-sm border border-brand-border/30 text-brand-text">"Can you explain {room?.topic || 'this course'}?"</div>
-              <div className="bg-brand-bg rounded-lg p-3 text-sm border border-brand-border/30 text-brand-text">"Give me a practice problem"</div>
+              <button 
+                onClick={() => handleSend(`Can you explain ${room?.topic || 'this course'}?`)}
+                className="w-full bg-brand-bg hover:bg-brand-muted/20 rounded-xl p-3 text-sm border border-brand-border/30 text-brand-text transition-all active:scale-95 text-left flex items-center justify-between group shadow-sm"
+              >
+                  <span className="truncate pr-2">"Can you explain {room?.topic || 'this course'}?"</span>
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-brand-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Send size={12} className="text-brand-primary ml-0.5" />
+                  </div>
+              </button>
+              <button 
+                onClick={() => handleSend(`Give me a practice problem about ${room?.topic || 'this course'}`)}
+                className="w-full bg-brand-bg hover:bg-brand-muted/20 rounded-xl p-3 text-sm border border-brand-border/30 text-brand-text transition-all active:scale-95 text-left flex items-center justify-between group shadow-sm"
+              >
+                  <span className="truncate pr-2">"Give me a practice problem about {room?.topic || 'this course'}"</span>
+                  <div className="shrink-0 w-6 h-6 rounded-full bg-brand-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Send size={12} className="text-brand-primary ml-0.5" />
+                  </div>
+              </button>
             </div>
           </div>
         ) : (
