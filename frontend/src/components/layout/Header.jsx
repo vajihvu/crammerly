@@ -78,19 +78,26 @@ const Header = ({
                                         <h3 className="text-lg font-black text-brand-text tracking-tight uppercase font-sans">Explore Blogs</h3>
                                     </div>
                                     <div className="space-y-3">
-                                        {[
-                                            { title: 'Top 10 Data Structures Hacks', author: 'FOCUS MASTER', time: '5 MIN READ' },
-                                            { title: 'Future of Algorithms', author: 'TECH INSIDER', time: '8 MIN READ' }
-                                        ].map((blog, i) => (
-                                            <div key={i} onClick={() => openModal('blogsModal')} className="group cursor-pointer bg-brand-bg hover:bg-brand-muted/10 p-4 rounded-2xl border border-brand-border hover:border-brand-primary transition-all relative overflow-hidden text-left">
-                                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-primary opacity-0 group-hover:opacity-100 transition-all"></div>
-                                                <h4 className="text-sm font-bold text-brand-text mb-2 leading-tight group-hover:text-brand-primary transition-colors font-sans">{blog.title}</h4>
-                                                <div className="flex justify-between items-center">
-                                                    <span className="text-[10px] font-medium text-brand-text-dim uppercase tracking-widest font-sans">{blog.author}</span>
-                                                    <span className="text-[10px] font-medium text-brand-primary uppercase tracking-widest font-sans">{blog.time}</span>
+                                        {(currentUser?.interests?.length > 0 && currentUser?.skills?.length > 0) ? (
+                                            [
+                                                { title: 'Top 10 Data Structures Hacks', author: 'FOCUS MASTER', time: '5 MIN READ' },
+                                                { title: 'Future of Algorithms', author: 'TECH INSIDER', time: '8 MIN READ' }
+                                            ].map((blog, i) => (
+                                                <div key={i} onClick={() => openModal('blogsModal')} className="group cursor-pointer bg-brand-bg hover:bg-brand-muted/10 p-4 rounded-2xl border border-brand-border hover:border-brand-primary transition-all relative overflow-hidden text-left">
+                                                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-primary opacity-0 group-hover:opacity-100 transition-all"></div>
+                                                    <h4 className="text-sm font-bold text-brand-text mb-2 leading-tight group-hover:text-brand-primary transition-colors font-sans">{blog.title}</h4>
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-[10px] font-medium text-brand-text-dim uppercase tracking-widest font-sans">{blog.author}</span>
+                                                        <span className="text-[10px] font-medium text-brand-primary uppercase tracking-widest font-sans">{blog.time}</span>
+                                                    </div>
                                                 </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-6 px-4 bg-brand-bg rounded-2xl border border-brand-border/30">
+                                                <span className="text-[10px] font-black text-brand-text-dim uppercase tracking-widest">Profile Required</span>
+                                                <p className="mt-2 text-xs font-bold text-brand-text-dim/80 leading-relaxed">Update your interests and skills in your Profile to unlock personalized blog recommendations!</p>
                                             </div>
-                                        ))}
+                                        )}
                                     </div>
                                     <button onClick={() => openModal('blogsModal')} className="w-full mt-6 py-3.5 bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl border border-brand-primary/30 transition-all active:scale-95 shadow-lg font-sans">View All Blogs</button>
                                 </div>

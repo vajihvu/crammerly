@@ -1,9 +1,10 @@
-﻿// src/components/modals/BlogsModal.jsx
+// src/components/modals/BlogsModal.jsx
 import React, { useState } from 'react';
 import { X, ArrowLeft, BookOpen, Clock, User, Share2, ThumbsUp, MessageSquare } from 'lucide-react';
 import blogPosts from '../../data/blogPosts';
 
-function BlogsModal({ onClose }) {
+function BlogsModal({ onClose, currentUser }) {
+    const isProfileComplete = (currentUser?.interests?.length > 0) && (currentUser?.skills?.length > 0);
     const [selectedBlog, setSelectedBlog] = useState(null);
 
     const blogs = blogPosts;
@@ -111,37 +112,49 @@ function BlogsModal({ onClose }) {
 
                 {/* Blog Grid */}
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-brand-bg/30 font-sans">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {blogs.map((blog) => (
-                            <div
-                                key={blog.id}
-                                onClick={() => setSelectedBlog(blog)}
-                                className="group cursor-pointer bg-brand-surface rounded-[32px] border border-brand-border/30 hover:border-brand-primary transition-all duration-500 shadow-premium flex flex-col overflow-hidden hover:-translate-y-1"
-                            >
-                                <div className="h-44 w-full relative overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
-                                    <img src={blog.image} alt={blog.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                    <div className="absolute top-4 left-4">
-                                        <span className="px-3 py-1 bg-brand-surface/80 backdrop-blur-md text-brand-primary text-[9px] font-black uppercase tracking-widest rounded-lg border border-brand-primary/20">
-                                            {blog.category}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="p-6 space-y-4">
-                                    <h3 className="text-xl font-black text-brand-text group-hover:text-brand-primary transition-colors leading-tight uppercase tracking-tighter font-sans">{blog.title}</h3>
-                                    <div className="flex justify-between items-center pt-4 border-t border-brand-border/30">
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] font-black text-brand-muted uppercase tracking-widest leading-none mb-1 font-sans">Author</span>
-                                            <span className="text-xs font-bold text-brand-text-dim uppercase tracking-tight font-sans">{blog.author}</span>
-                                        </div>
-                                        <div className="flex flex-col items-end">
-                                            <span className="text-[9px] font-black text-brand-muted uppercase tracking-widest leading-none mb-1 font-sans">Duration</span>
-                                            <span className="text-xs font-bold text-brand-secondary uppercase tracking-tight font-sans">{blog.time}</span>
-                                        </div>
-                                    </div>
-                                </div>
+                    {!isProfileComplete ? (
+                        <div className="h-full flex flex-col items-center justify-center text-center pt-8">
+                            <div className="w-24 h-24 bg-brand-muted/10 rounded-full flex items-center justify-center mb-6">
+                                <User size={48} className="text-brand-text-dim" />
                             </div>
-                        ))}
-                    </div>
+                            <h3 className="text-2xl font-black text-brand-text tracking-tighter uppercase mb-4">Profile Incomplete</h3>
+                            <p className="text-brand-text-dim max-w-md mx-auto font-bold leading-relaxed">
+                                Please update your interests and skills in your Profile to unlock personalized blog recommendations!
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {blogs.map((blog) => (
+                                <div
+                                    key={blog.id}
+                                    onClick={() => setSelectedBlog(blog)}
+                                    className="group cursor-pointer bg-brand-surface rounded-[32px] border border-brand-border/30 hover:border-brand-primary transition-all duration-500 shadow-premium flex flex-col overflow-hidden hover:-translate-y-1"
+                                >
+                                    <div className="h-44 w-full relative overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
+                                        <img src={blog.image} alt={blog.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                        <div className="absolute top-4 left-4">
+                                            <span className="px-3 py-1 bg-brand-surface/80 backdrop-blur-md text-brand-primary text-[9px] font-black uppercase tracking-widest rounded-lg border border-brand-primary/20">
+                                                {blog.category}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="p-6 space-y-4">
+                                        <h3 className="text-xl font-black text-brand-text group-hover:text-brand-primary transition-colors leading-tight uppercase tracking-tighter font-sans">{blog.title}</h3>
+                                        <div className="flex justify-between items-center pt-4 border-t border-brand-border/30">
+                                            <div className="flex flex-col">
+                                                <span className="text-[9px] font-black text-brand-muted uppercase tracking-widest leading-none mb-1 font-sans">Author</span>
+                                                <span className="text-xs font-bold text-brand-text-dim uppercase tracking-tight font-sans">{blog.author}</span>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[9px] font-black text-brand-muted uppercase tracking-widest leading-none mb-1 font-sans">Duration</span>
+                                                <span className="text-xs font-bold text-brand-secondary uppercase tracking-tight font-sans">{blog.time}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

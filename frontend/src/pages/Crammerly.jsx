@@ -330,7 +330,7 @@ export default function Crammerly() {
             />
           )}
           {modals.chatbot && <ChatbotModal onClose={resetToHome} />}
-          {modals.blogsModal && <BlogsModal onClose={resetToHome} />}
+          {modals.blogsModal && <BlogsModal onClose={resetToHome} currentUser={currentUser} />}
           {modals.calendar && <CalendarModal onClose={resetToHome} />}
           {modals.settings && <SettingsModal onClose={resetToHome} />}
           {modals.help && <HelpModal onClose={resetToHome} />}
