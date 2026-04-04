@@ -263,12 +263,16 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                 <div className="w-20 h-20 bg-brand-muted/30 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Users size={40} className="text-brand-text-dim" />
                 </div>
-                <h3 className="text-2xl font-bold text-brand-text-dim mb-4 font-sans">No rooms here yet</h3>
-                <p className="text-brand-muted max-w-sm mx-auto mb-8 font-sans">Why not start a new topic and invite others to join your session?</p>
+                <h3 className="text-2xl font-bold text-brand-text-dim mb-4 font-sans">
+                  {activeStatus === 'Scheduled' ? 'No scheduled sessions' : 'No rooms here yet'}
+                </h3>
+                <p className="text-brand-muted max-w-sm mx-auto mb-8 font-sans">
+                  {activeStatus === 'Scheduled' ? 'Why not plan ahead and schedule a session for others to join later?' : 'Why not start a new topic and invite others to join your session?'}
+                </p>
                 <div className="flex flex-wrap justify-center gap-3">
                   {userInterests.map((interest, idx) => (
                     <button key={idx} onClick={onCreateRoom} className="px-6 py-3 bg-brand-muted/30 hover:bg-brand-muted/45 rounded-xl text-sm font-bold border border-brand-border transition-all text-brand-text">
-                      Start {interest} Discussion
+                      {activeStatus === 'Scheduled' ? 'Schedule' : 'Start'} {interest} Discussion
                     </button>
                   ))}
                 </div>
@@ -282,8 +286,17 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                     <div className="flex justify-between items-start mb-6 relative">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="w-2 h-2 rounded-full bg-brand-success animate-pulse shadow-[0_0_10px_#798777]"></span>
-                          <span className="text-[10px] font-black text-brand-success uppercase tracking-widest font-sans">Active Link</span>
+                          {activeStatus === 'Scheduled' || (room.scheduleDate || room.schedule_date) > today ? (
+                            <>
+                              <span className="w-2 h-2 rounded-full bg-brand-primary"></span>
+                              <span className="text-[10px] font-black text-brand-primary uppercase tracking-widest font-sans">Scheduled: {room.scheduleDate || room.schedule_date}</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="w-2 h-2 rounded-full bg-brand-success animate-pulse shadow-[0_0_10px_#798777]"></span>
+                              <span className="text-[10px] font-black text-brand-success uppercase tracking-widest font-sans">Active Link</span>
+                            </>
+                          )}
                         </div>
                         <h3 className="text-xl font-bold text-brand-text group-hover:text-brand-primary transition-colors font-sans">{room.name}</h3>
                       </div>
