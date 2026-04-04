@@ -1,0 +1,6 @@
+﻿
+> crammerly-backend@1.0.0 test
+> node scripts/jest-wrapper.js
+
+--- Starting Crammerly Test Suite ---
+Command: node --experimental-vm-modules npx jest --runInBand --forceExit
