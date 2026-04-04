@@ -53,7 +53,6 @@ function MenuSidebar({
   userStatus,
   setUserStatus,
   setShowCalendarModal,
-  setShowBlogsModal,
   setShowSettingsModal,
   setShowHelpModal,
   setShowBugModal,
@@ -198,7 +197,6 @@ function MenuSidebar({
             <div className="px-3 py-2 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Platform</div>
             <div className="sm:hidden space-y-1">
               <MenuButton icon={<CalendarIcon size={20} />} label="Study Calendar" onClick={() => { setShowMenu(false); setShowCalendarModal(); }} />
-              <MenuButton icon={<BookOpen size={20} />} label="Discovery Blogs" onClick={() => { setShowMenu(false); setShowBlogsModal(); }} />
               <div className="h-px bg-white/5 mx-3 my-2"></div>
             </div>
             <MenuButton icon={<Search size={20} />} label="Find Rooms" onClick={() => { setShowMenu(false); setShowSearchModal(); }} />

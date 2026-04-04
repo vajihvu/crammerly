@@ -7,8 +7,6 @@ const INITIAL_MODALS = {
     profile: false,
     streak: false,
     auth: false,
-    blogsModal: false,
-    blogsDropdown: false,
     calendar: false,
     menu: false,
     notifications: false,
@@ -36,7 +34,6 @@ export const useModals = () => {
             // Automatically close small overlays if opening a main modal
             menu: name === 'menu' ? true : false,
             notifications: name === 'notifications' ? true : false,
-            blogsDropdown: name === 'blogsDropdown' ? true : false,
             floating: null // Clear floating panel when opening any modal
         }));
     }, []);
@@ -58,7 +55,6 @@ export const useModals = () => {
                 ...(newState ? {
                     menu: name === 'menu' ? true : false,
                     notifications: name === 'notifications' ? true : false,
-                    blogsDropdown: name === 'blogsDropdown' ? true : false,
                     floating: null // Clear floating panel when opening a modal/dropdown
                 } : {})
             };
@@ -72,7 +68,6 @@ export const useModals = () => {
             ...(panel ? {
                 menu: false,
                 notifications: false,
-                blogsDropdown: false,
             } : {})
         }));
     }, []);

@@ -29,7 +29,6 @@ const AuthModal = lazy(() => import('../components/modals/AuthModal'));
 const NotebookModal = lazy(() => import('../components/modals/NotebookModal'));
 const TodoListModal = lazy(() => import('../components/modals/TodoListModal'));
 const ChatbotModal = lazy(() => import('../components/modals/ChatbotModal'));
-const BlogsModal = lazy(() => import('../components/modals/BlogsModal'));
 const CalendarModal = lazy(() => import('../components/modals/CalendarModal'));
 const ConfirmModal = lazy(() => import('../components/modals/ConfirmModal'));
 const SettingsModal = lazy(() => import('../components/modals/SettingsModal'));
@@ -297,7 +296,6 @@ export default function Crammerly() {
               setShowFriendsModal={() => openModal('friends')}
               setShowCalendarModal={() => openModal('calendar')}
               setShowSearchModal={() => openModal('search')}
-              setShowBlogsModal={() => openModal('blogsModal')}
               setShowSettingsModal={() => openModal('settings')}
               setShowHelpModal={() => openModal('help')}
               setShowBugModal={() => openModal('bug')}
@@ -330,7 +328,6 @@ export default function Crammerly() {
             />
           )}
           {modals.chatbot && <ChatbotModal onClose={resetToHome} />}
-          {modals.blogsModal && <BlogsModal onClose={resetToHome} currentUser={currentUser} />}
           {modals.calendar && <CalendarModal onClose={resetToHome} />}
           {modals.settings && <SettingsModal onClose={resetToHome} />}
           {modals.help && <HelpModal onClose={resetToHome} />}
