@@ -8,7 +8,6 @@ const Header = ({
     modals,
     toggleModal,
     openModal,
-    closeModal,
     unreadCount,
     currentUser,
     theme,
