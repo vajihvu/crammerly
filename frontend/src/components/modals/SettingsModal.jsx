@@ -1,11 +1,82 @@
-import React, { useState } from 'react';
-import { X, Settings, Volume2, ShieldCheck, Lock, Bell, Eye, EyeOff, Trash2, Smartphone, Globe, Shield, CreditCard, Key } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Settings, Volume2, ShieldCheck, Lock, Bell, Eye, EyeOff, Trash2, Smartphone, Globe, Shield, CreditCard, Key, CheckCircle } from 'lucide-react';
 
 function SettingsModal({ initialTab = 'general', onClose }) {
     const [activeTab, setActiveTab] = useState(initialTab);
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState('ENGLISH (US)');
     
+    // Interactive states
+    const [privacy, setPrivacy] = useState({ invites: true, online: true, dms: false });
+    const [micLevel, setMicLevel] = useState(0);
+    const [pwdSent, setPwdSent] = useState(false);
+    const [twoFactor, setTwoFactor] = useState(false);
+    const [isTestingMic, setIsTestingMic] = useState(false);
+    
+    const audioContextRef = useRef(null);
+    const analyserRef = useRef(null);
+    const microphoneRef = useRef(null);
+    const animationFrameRef = useRef(null);
+    
+    const togglePrivacy = (key) => setPrivacy(prev => ({ ...prev, [key]: !prev[key] }));
+
+    const startMicTest = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const microphone = audioContext.createMediaStreamSource(stream);
+            
+            analyser.fftSize = 256;
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            
+            microphone.connect(analyser);
+            
+            audioContextRef.current = audioContext;
+            analyserRef.current = analyser;
+            microphoneRef.current = microphone;
+            
+            setIsTestingMic(true);
+
+            const updateMicLevel = () => {
+                if (analyserRef.current) {
+                    analyserRef.current.getByteFrequencyData(dataArray);
+                    let sum = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        sum += dataArray[i];
+                    }
+                    const average = sum / bufferLength;
+                    const percentage = Math.min(100, Math.round((average / 128) * 100));
+                    setMicLevel(percentage);
+                    animationFrameRef.current = requestAnimationFrame(updateMicLevel);
+                }
+            };
+            
+            updateMicLevel();
+        } catch (err) {
+            console.error('Error accessing microphone:', err);
+        }
+    };
+
+    const stopMicTest = () => {
+        if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+        if (microphoneRef.current) {
+            microphoneRef.current.mediaStream.getTracks().forEach(track => track.stop());
+            microphoneRef.current.disconnect();
+        }
+        if (audioContextRef.current) audioContextRef.current.close();
+        setIsTestingMic(false);
+        setMicLevel(0);
+    };
+
+    useEffect(() => {
+        if (activeTab !== 'voice') {
+            stopMicTest();
+        }
+        return () => stopMicTest(); // Cleanup
+    }, [activeTab]);
+
     const languages = ['ENGLISH (US)', 'SPANISH', 'FRENCH'];
 
     const tabs = [
@@ -140,10 +211,17 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                                             <span className="text-sm font-bold text-brand-text">Microphone</span>
                                             <span className="text-[9px] md:text-[10px] font-black text-brand-primary uppercase tracking-widest text-right ml-2">System Default</span>
                                         </button>
-                                        <div className="h-1.5 md:h-2 w-full bg-brand-muted/20 rounded-full overflow-hidden">
-                                            <div className="h-full w-[40%] bg-brand-primary animate-pulse shadow-[0_0_10px_rgba(201,181,156,0.5)]"></div>
+                                        <div className="h-1.5 md:h-2 w-full bg-brand-muted/20 rounded-full overflow-hidden relative">
+                                            <div 
+                                                className="h-full bg-brand-primary transition-all duration-75 shadow-[0_0_10px_rgba(201,181,156,0.5)]" 
+                                                style={{ width: `${isTestingMic ? micLevel : 0}%` }}
+                                            ></div>
                                         </div>
-                                        <p className="text-[9px] font-medium text-brand-text-dim uppercase tracking-[0.2em] text-center px-4">Speak to test your input sensitivity</p>
+                                        {isTestingMic ? (
+                                            <button onClick={stopMicTest} className="w-full text-[9px] font-medium text-brand-danger uppercase tracking-[0.2em] text-center px-4 hover:underline">Stop Mic Test</button>
+                                        ) : (
+                                            <button onClick={startMicTest} className="w-full text-[9px] font-medium text-brand-text-dim uppercase tracking-[0.2em] text-center px-4 hover:text-brand-primary transition-colors">Start Mic Test</button>
+                                        )}
                                     </div>
                                 </section>
                             </div>
@@ -155,17 +233,17 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                                     <h3 className="text-[10px] md:text-xs font-black text-brand-primary uppercase tracking-[0.2em] mb-4 md:mb-6">Privacy</h3>
                                     <div className="space-y-3">
                                         {[
-                                            { label: 'Study Invites', desc: 'Allow direct room requests.' },
-                                            { label: 'Online Status', desc: 'Display your green bubble.' },
-                                            { label: 'Direct Messages', desc: 'Allow messages from non-friends.' }
-                                        ].map((item, i) => (
-                                            <div key={i} className="flex items-center justify-between p-4 md:p-5 bg-brand-bg/30 rounded-[20px] md:rounded-3xl border border-brand-border/20 gap-4">
+                                            { id: 'invites', label: 'Study Invites', desc: 'Allow direct room requests.' },
+                                            { id: 'online', label: 'Online Status', desc: 'Display your green bubble.' },
+                                            { id: 'dms', label: 'Direct Messages', desc: 'Allow messages from non-friends.' }
+                                        ].map((item) => (
+                                            <div key={item.id} onClick={() => togglePrivacy(item.id)} className="flex items-center justify-between p-4 md:p-5 bg-brand-bg/30 rounded-[20px] md:rounded-3xl border border-brand-border/20 gap-4 cursor-pointer hover:border-brand-primary/30 transition-colors">
                                                 <div className="min-w-0 flex-1">
                                                     <p className="text-xs md:text-sm font-bold text-brand-text uppercase tracking-tight">{item.label}</p>
                                                     <p className="text-[9px] font-medium text-brand-text-dim mt-1.5 leading-relaxed uppercase tracking-widest line-clamp-2">{item.desc}</p>
                                                 </div>
-                                                <div className="w-10 h-5 md:w-12 md:h-6 bg-brand-primary rounded-full p-1 cursor-pointer shrink-0">
-                                                    <div className="w-3 h-3 md:w-4 md:h-4 bg-white rounded-full ml-auto shadow-sm"></div>
+                                                <div className={`w-10 h-5 md:w-12 md:h-6 rounded-full p-1 shrink-0 transition-colors duration-300 relative border ${privacy[item.id] ? 'bg-brand-primary border-brand-primary' : 'bg-brand-muted/30 border-brand-border/60'}`}>
+                                                    <div className={`w-3 h-3 md:w-4 md:h-4 bg-white rounded-full shadow-sm absolute top-[1px] md:top-0.5 transition-all duration-300 ${privacy[item.id] ? 'translate-x-[20px] md:translate-x-[22px]' : 'translate-x-0'}`}></div>
                                                 </div>
                                             </div>
                                         ))}
@@ -179,22 +257,22 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                                 <section>
                                     <h3 className="text-[10px] md:text-xs font-black text-brand-primary uppercase tracking-[0.2em] mb-4 md:mb-6">Security</h3>
                                     <div className="space-y-3 md:space-y-4">
-                                        <button className="w-full flex items-center gap-4 p-4 md:p-5 bg-brand-bg hover:bg-white/50 rounded-[20px] md:rounded-3xl border border-brand-border/30 transition-all text-left">
-                                            <div className="w-10 h-10 bg-brand-primary/10 rounded-xl md:rounded-2xl flex items-center justify-center text-brand-primary shrink-0">
-                                                <Key size={18} className="md:w-5 md:h-5" />
+                                        <button onClick={() => { setPwdSent(true); setTimeout(() => setPwdSent(false), 3000) }} className="w-full flex items-center gap-4 p-4 md:p-5 bg-brand-bg hover:bg-white/50 rounded-[20px] md:rounded-3xl border border-brand-border/30 transition-all text-left">
+                                            <div className={`w-10 h-10 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 transition-colors ${pwdSent ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-primary/10 text-brand-primary'}`}>
+                                                {pwdSent ? <CheckCircle size={18} className="md:w-5 md:h-5" /> : <Key size={18} className="md:w-5 md:h-5" />}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-xs md:text-sm font-bold text-brand-text uppercase tracking-tight truncate">Change Password</p>
-                                                <p className="text-[9px] font-medium text-brand-text-dim mt-1 uppercase tracking-widest truncate">Updated 4 months ago</p>
+                                                <p className={`text-[9px] font-medium mt-1 uppercase tracking-widest truncate transition-colors ${pwdSent ? 'text-brand-success' : 'text-brand-text-dim'}`}>{pwdSent ? 'Reset link sent to email' : 'Updated 4 months ago'}</p>
                                             </div>
                                         </button>
-                                        <button className="w-full flex items-center gap-4 p-4 md:p-5 bg-brand-bg hover:bg-white/50 rounded-[20px] md:rounded-3xl border border-brand-border/30 transition-all text-left">
-                                            <div className="w-10 h-10 bg-brand-muted/10 rounded-xl md:rounded-2xl flex items-center justify-center text-brand-muted shrink-0">
+                                        <button onClick={() => setTwoFactor(!twoFactor)} className="w-full flex items-center gap-4 p-4 md:p-5 bg-brand-bg hover:bg-white/50 rounded-[20px] md:rounded-3xl border border-brand-border/30 transition-all text-left group">
+                                            <div className={`w-10 h-10 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 transition-colors ${twoFactor ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-muted/10 text-brand-muted group-hover:text-brand-primary'}`}>
                                                 <Shield size={18} className="md:w-5 md:h-5" />
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-xs md:text-sm font-bold text-brand-text uppercase tracking-tight truncate">2-Factor Auth</p>
-                                                <p className="text-[9px] font-medium text-brand-primary mt-1 uppercase tracking-widest truncate">Recommended</p>
+                                                <p className={`text-[9px] font-medium mt-1 uppercase tracking-widest truncate transition-colors ${twoFactor ? 'text-brand-success' : 'text-brand-primary'}`}>{twoFactor ? 'Active & Protected' : 'Recommended - Click to enable'}</p>
                                             </div>
                                         </button>
                                     </div>
