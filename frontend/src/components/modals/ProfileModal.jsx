@@ -1,4 +1,4 @@
-﻿// src/components/modals/ProfileModal.jsx
+// src/components/modals/ProfileModal.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Plus, CheckCircle, Github, Linkedin, Briefcase, GraduationCap, UserCircle, Camera, Share2, Copy, Check, Shield, Monitor, Globe, Trash2 } from 'lucide-react';
 import { sessionsApi } from '../../api';
@@ -172,28 +172,9 @@ function ProfileModal({ currentUser = {}, onClose, onUpdateProfile, studyActivit
             <>
               {/* Enhanced Identity Section with Banner */}
               <div className="relative rounded-[32px] overflow-hidden border border-brand-border/80 shadow-premium bg-brand-surface">
-                {/* Customizable Banner */}
-                <div
-                  className="h-28 sm:h-32 w-full transition-colors duration-500 relative"
-                  style={{ backgroundColor: formData.bannerColor || '#3b82f6' }}
-                >
-                  {isEditing && (
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center gap-3">
-                      {['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#000000'].map(color => (
-                        <button
-                          key={color}
-                          onClick={() => setFormData({ ...formData, bannerColor: color })}
-                          className={`w-8 h-8 rounded-full border-2 transition-transform hover:scale-110 ${formData.bannerColor === color ? 'border-white scale-125' : 'border-transparent opacity-60'}`}
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="px-6 py-6 flex flex-col sm:flex-row items-center sm:items-end gap-5 relative z-10 text-center sm:text-left">
+                <div className="px-6 py-6 flex flex-col sm:flex-row items-center sm:items-center gap-5 relative z-10 text-center sm:text-left">
                   <div
-                    className={`-mt-12 sm:-mt-16 w-24 h-24 sm:w-28 sm:h-28 rounded-3xl flex items-center justify-center text-xl sm:text-2xl font-bold shadow-2xl border-4 border-brand-surface shrink-0 relative overflow-hidden group/pfp bg-brand-surface ${isEditing ? 'cursor-pointer' : ''}`}
+                    className={`w-24 h-24 sm:w-28 sm:h-28 rounded-3xl flex items-center justify-center text-xl sm:text-2xl font-bold shadow-lg shrink-0 relative overflow-hidden group/pfp bg-brand-surface ${isEditing ? 'cursor-pointer' : ''}`}
                     onClick={() => isEditing && fileInputRef.current.click()}
                   >
                     {formData?.avatarUrl ? (
