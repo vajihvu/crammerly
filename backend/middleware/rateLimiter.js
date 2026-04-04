@@ -31,7 +31,7 @@ if (config.redisUrl) {
 
 export const loginLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 5, // Recommended: 5 logins per minute
+    max: 100, // Temporarily elevated from 5 to prevent lockout friction during deployment turbulence
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
