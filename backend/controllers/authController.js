@@ -1117,7 +1117,7 @@ export const verify2FA = async (req, res, next) => {
         let decoded;
         try {
             decoded = jwt.verify(tempToken, process.env.JWT_SECRET || config.jwt.secret);
-        } catch (e) {
+        } catch (_e) {
             return res.status(401).json({ success: false, message: 'Login session expired, please log in again.' });
         }
         
