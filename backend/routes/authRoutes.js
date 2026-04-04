@@ -92,7 +92,7 @@ router.post('/register', verifyCaptcha, validate(registerSchema), registerUser);
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', loginLimiter, verifyCaptcha, validate(loginSchema), loginUser);
+router.post('/login', loginLimiter, validate(loginSchema), loginUser);
 
 router.post('/google', loginLimiter, verifyCaptcha, googleLogin);
 
