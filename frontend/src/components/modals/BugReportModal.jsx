@@ -1,9 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, AlertCircle, Send, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 
 function BugReportModal({ onClose }) {
     const [submitted, setSubmitted] = useState(false);
-    const [bugData, setBugData] = useState({ title: '', desc: '', type: 'UI/UX' });
+    const [bugData, setBugData] = useState({ title: '', desc: '', type: 'Look/Design' });
+    const [imagePreview, setImagePreview] = useState(null);
+    const fileInputRef = useRef(null);
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+    
+    const removeImage = () => {
+        setImagePreview(null);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -94,10 +108,33 @@ function BugReportModal({ onClose }) {
                         </div>
 
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                            <button type="button" className="flex items-center gap-2 text-brand-primary hover:text-brand-text transition-colors group">
-                                <ImageIcon size={18} className="group-hover:scale-110 transition-transform" />
-                                <span className="text-[9px] font-black uppercase tracking-widest">Add a picture</span>
-                            </button>
+                            <div className="flex items-center gap-4">
+                                <input 
+                                    type="file" 
+                                    accept="image/*" 
+                                    ref={fileInputRef} 
+                                    onChange={handleImageChange} 
+                                    className="hidden" 
+                                />
+                                {imagePreview ? (
+                                    <div className="relative group/preview flex items-center gap-2">
+                                        <img src={imagePreview} alt="Bug preview" className="h-10 w-10 md:h-12 md:w-12 object-cover rounded-lg border border-brand-border/40 shadow-sm" />
+                                        <button 
+                                            type="button" 
+                                            onClick={removeImage} 
+                                            className="bg-brand-danger/10 text-brand-danger hover:bg-brand-danger hover:text-white rounded-md p-1.5 transition-colors absolute -top-1.5 -right-1.5 shadow-md"
+                                        >
+                                            <X size={10} strokeWidth={4} />
+                                        </button>
+                                        <span className="text-[8px] font-bold text-brand-success uppercase tracking-widest leading-tight">Image<br/>Attached</span>
+                                    </div>
+                                ) : (
+                                    <button type="button" onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 text-brand-primary hover:text-brand-text transition-colors group">
+                                        <ImageIcon size={18} className="group-hover:scale-110 transition-transform" />
+                                        <span className="text-[9px] font-black uppercase tracking-widest">Add a picture</span>
+                                    </button>
+                                )}
+                            </div>
                             <button type="submit" className="w-full sm:w-auto px-6 py-3 bg-brand-text text-brand-bg rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2">
                                 Send <Send size={14} />
                             </button>
