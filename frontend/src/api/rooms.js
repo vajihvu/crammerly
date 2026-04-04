@@ -9,7 +9,7 @@ export const roomsApi = {
      */
     getAll: async () => {
         const { data } = await client.get('/rooms');
-        return data.data;
+        return Array.isArray(data.data) ? data.data : (data.data?.rooms || []);
     },
 
     /**
