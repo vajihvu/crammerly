@@ -1,60 +1,44 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 import config from '../config/index.js';
 import { logger } from './logger.js';
 
-/**
- * Creates and returns a Nodemailer transporter using SMTP credentials from config.
- * Throws at startup if SMTP is not configured in production.
- */
-const createTransporter = () => {
-    if (!config.mail.host || !config.mail.user || !config.mail.pass) {
-        if (config.isProduction) {
-            throw new Error('SMTP is not configured. Set SMTP_HOST, SMTP_USER, and SMTP_PASS.');
-        }
-        // In dev, fall back to logging — no crash
-        logger.warn('⚠️  SMTP not configured. Emails will be logged to console only (dev mode).');
-        return null;
-    }
+let resendClient = null;
 
-    const transport = nodemailer.createTransport({
-        host: config.mail.host,
-        port: config.mail.port || 587,
-        secure: (config.mail.port || 587) === 465,
-        auth: {
-            user: config.mail.user,
-            pass: config.mail.pass
-        }
-    });
-    // CRITICAL: Without this listener, SMTP socket errors crash the Node.js process
-    transport.on('error', (err) => logger.error(`Nodemailer transport error: ${err.message}`));
-    return transport;
-};
-
-let transporter;
-try {
-    transporter = createTransporter();
-} catch (err) {
-    logger.error(`Mailer init failed: ${err.message}`);
-    process.exit(1);
+if (!config.mail.pass && config.isProduction) {
+    logger.warn('⚠️  SMTP_PASS (Resend API Key) is not configured.');
+} else if (config.mail.pass) {
+    resendClient = new Resend(config.mail.pass);
+} else {
+    logger.warn('⚠️  Resend not configured. Emails will be logged to console only (dev mode).');
 }
 
 /**
- * Sends an email. Falls back to console.info in development if SMTP is not configured.
+ * Sends an email using the Resend REST API to bypass Render's Port 587 block.
+ * Falls back to console.info in development if not configured.
  * @param {{ to: string, subject: string, html: string }} mailOptions
  */
 export const sendMail = async ({ to, subject, html }) => {
-    if (!transporter || config.isTest || process.env.NODE_ENV === 'test') {
+    if (!resendClient || config.isTest || process.env.NODE_ENV === 'test') {
         // Dev-only fallback
         logger.info(`[DEV EMAIL] To: ${to} | Subject: ${subject}\n${html}`);
         return;
     }
 
-    await transporter.sendMail({
-        from: config.mail.from || `"Crammerly" <${config.mail.user}>`,
-        to,
-        subject,
-        html
-    });
+    try {
+        const { data, error } = await resendClient.emails.send({
+            from: config.mail.from || 'Crammerly <noreply@crammerly.app>',
+            to,
+            subject,
+            html
+        });
 
-    logger.info(`Email sent to ${to}: "${subject}"`);
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        logger.info(`Email sent to ${to}: "${subject}" (ID: ${data?.id})`);
+    } catch (err) {
+        logger.error(`Resend dispatch failed for ${to}: ${err.message}`);
+        throw err;
+    }
 };
