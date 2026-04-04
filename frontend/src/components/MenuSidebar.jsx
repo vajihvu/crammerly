@@ -87,7 +87,7 @@ function MenuSidebar({
 
       {/* Sidebar */}
       <div
-        className="fixed left-0 top-0 h-full w-[200px] sm:w-[240px] bg-brand-surface border-r border-brand-border shadow-2xl z-[100001] overflow-y-auto custom-scrollbar animate-in slide-in-from-left duration-300 flex flex-col"
+        className="fixed left-0 top-0 h-full w-[240px] sm:w-[280px] bg-brand-surface border-r border-brand-border shadow-2xl z-[100001] overflow-y-auto custom-scrollbar animate-in slide-in-from-left duration-300 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
 
