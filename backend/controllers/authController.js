@@ -131,7 +131,7 @@ export const loginUser = async (req, res, next) => {
 
 
     try {
-        const user = await User.findOne({ email }).select('+password');
+        const user = await User.findOne({ email }).select('+password +tokenVersion');
 
         if (!user) {
             await logAuditEvent({ req, event: 'AUTH_LOGIN', status: 'FAILURE', metadata: { email, reason: 'NOT_FOUND' } });
@@ -404,7 +404,7 @@ export const getUserProfile = async (req, res) => {
 
 export const updateUserProfile = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user._id).select('+password +previousPasswords');
+        const user = await User.findById(req.user._id).select('+password +previousPasswords +tokenVersion');
         if (!user) {
             res.status(404);
             throw new Error('User not found');
