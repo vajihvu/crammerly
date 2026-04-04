@@ -111,8 +111,10 @@ export const joinRoom = asyncHandler(async (req, res) => {
     }
 
 
+    const isCreator = room.creator_id && room.creator_id.toString() === req.user._id.toString();
+
     // Authorization: Private rooms require the correct code
-    if (room.privacy === 'Private') {
+    if (room.privacy === 'Private' && !isCreator) {
         const { code } = req.body;
         if (!code || code.toUpperCase() !== room.code) {
             return res.sendError('Invalid or missing code for this private room', 403, 'AUTH_FORBIDDEN');
