@@ -30,7 +30,7 @@ export const todosApi = {
      * Toggle a todo's completed status
      */
     toggle: (id) =>
-        client.put(`/todos/${id}`).then(res => {
+        client.put(`/todos/${id}`, {}).then(res => {
             const data = res.data.data || res.data;
             return { ...data, id: data._id || data.id };
         }),

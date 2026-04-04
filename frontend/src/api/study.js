@@ -47,8 +47,9 @@ export const studyApi = {
     sessions: {
         start: (roomId, task) =>
             client.post('/study-sessions/start', { roomId, task }).then(res => res.data.data),
-        end: (id) =>
-            client.put(`/study-sessions/${id}/end`).then(res => res.data.data),
+        end: async (id) => {
+            return client.put(`/study-sessions/${id}/end`, {}).then(res => res.data.data);
+        },
         getStats: () =>
             client.get('/study-sessions/stats').then(res => res.data.data),
         getAll: () =>

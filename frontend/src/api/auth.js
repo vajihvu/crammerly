@@ -11,10 +11,10 @@ export const authApi = {
         client.post('/auth/register', userData).then(res => res.data),
 
     logout: () =>
-        client.post('/auth/logout').then(res => res.data),
+        client.post('/auth/logout', {}).then(res => res.data),
 
     refresh: () =>
-        client.post('/auth/refresh').then(res => res.data),
+        client.post('/auth/refresh', {}).then(res => res.data),
 
     getSessions: () =>
         client.get('/auth/sessions').then(res => res.data),
