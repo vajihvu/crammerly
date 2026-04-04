@@ -30,8 +30,7 @@ const COOKIE_OPTIONS = {
     path: '/api/v1/auth/refresh',
     httpOnly: true,
     secure: config.isProduction,
-    sameSite: 'strict',
-    domain: config.jwt.cookieDomain,
+    sameSite: config.isProduction ? 'none' : 'strict', // 'none' required for cross-site cookie transmission
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days (Matches config.jwt.refreshExpiresIn logic)
 };
 
