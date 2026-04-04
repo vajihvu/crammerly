@@ -3,10 +3,25 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Send, MessageCircle, Loader } from 'lucide-react';
 
 function AITutorTab({ room }) {
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessages] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`crammer_ai_chat_${room?.id}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (room?.id) {
+      localStorage.setItem(`crammer_ai_chat_${room.id}`, JSON.stringify(messages));
+    }
+  }, [messages, room?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
