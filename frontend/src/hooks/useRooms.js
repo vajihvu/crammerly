@@ -112,7 +112,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
     };
 
     // ── Join room ──
-    const joinRoom = async (room) => {
+    const joinRoom = async (room, code = undefined) => {
         const userId = currentUser.id;
         const isAlreadyMember = room.members?.some(m => m.id === userId);
         const updatedRoom = {
@@ -121,7 +121,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
         };
 
         try {
-            await roomsApi.join(room.id);
+            await roomsApi.join(room.id, code);
         } catch (error) {
             console.error('Failed to join room:', error);
             return false;
@@ -142,7 +142,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                 addToast('Invalid room code or room not found', 'error');
                 return false;
             }
-            return await joinRoom(room);
+            return await joinRoom(room, code);
         } catch (error) {
             addToast('Invalid room code or room not found', 'error');
             console.error('Failed to join room by code:', error);

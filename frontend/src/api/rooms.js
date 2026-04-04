@@ -23,8 +23,9 @@ export const roomsApi = {
     /**
      * Join a room
      */
-    join: async (roomId) => {
-        const { data } = await client.post(`/rooms/${roomId}/join`);
+    join: async (roomId, code = undefined) => {
+        const payload = code ? { code } : {};
+        const { data } = await client.post(`/rooms/${roomId}/join`, payload);
         return data.success;
     },
 
