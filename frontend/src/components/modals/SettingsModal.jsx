@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Settings, Volume2, ShieldCheck, Lock, Bell, Eye, EyeOff, Trash2, Smartphone, Globe, Shield, CreditCard, Key, CheckCircle } from 'lucide-react';
+import { X, Settings, Volume2, ShieldCheck, Lock, Bell, Eye, EyeOff, Trash2, Smartphone, Globe, Shield, CreditCard, Key, CheckCircle, Monitor } from 'lucide-react';
+import { sessionsApi } from '../../api';
 
 function SettingsModal({ initialTab = 'general', onClose }) {
     const [activeTab, setActiveTab] = useState(initialTab);
@@ -13,6 +14,38 @@ function SettingsModal({ initialTab = 'general', onClose }) {
     const [twoFactor, setTwoFactor] = useState(false);
     const [isTestingMic, setIsTestingMic] = useState(false);
     
+    const [sessions, setSessions] = useState([]);
+    const [loadingSessions, setLoadingSessions] = useState(false);
+
+    useEffect(() => {
+        if (activeTab === 'security') {
+            loadSessions();
+        }
+    }, [activeTab]);
+
+    const loadSessions = async () => {
+        setLoadingSessions(true);
+        try {
+            const data = await sessionsApi.getAll();
+            setSessions(data);
+        } catch (err) {
+            console.error('Failed to load sessions:', err);
+        } finally {
+            setLoadingSessions(false);
+        }
+    };
+
+    const handleRevokeSession = async (sessionId) => {
+        try {
+            const success = await sessionsApi.revoke(sessionId);
+            if (success) {
+                setSessions(prev => prev.filter(s => s.id !== sessionId));
+            }
+        } catch (err) {
+            console.error('Failed to revoke session:', err);
+        }
+    };
+
     const audioContextRef = useRef(null);
     const analyserRef = useRef(null);
     const microphoneRef = useRef(null);
@@ -275,6 +308,61 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                                                 <p className={`text-[9px] font-medium mt-1 uppercase tracking-widest truncate transition-colors ${twoFactor ? 'text-brand-success' : 'text-brand-primary'}`}>{twoFactor ? 'Active & Protected' : 'Recommended - Click to enable'}</p>
                                             </div>
                                         </button>
+                                    </div>
+                                </section>
+
+                                <section>
+                                    <h3 className="text-[10px] md:text-xs font-black text-brand-primary uppercase tracking-[0.2em] mb-4 md:mb-6">Device History</h3>
+                                    <div className="space-y-4">
+                                        {loadingSessions ? (
+                                            <div className="flex flex-col items-center justify-center py-8 gap-4">
+                                                <div className="w-8 h-8 border-4 border-brand-primary/20 border-t-brand-primary rounded-full animate-spin" />
+                                            </div>
+                                        ) : (sessions || []).length === 0 ? (
+                                            <div className="text-center py-8">
+                                                <p className="text-[10px] font-bold text-brand-text-dim uppercase tracking-widest">No active sessions.</p>
+                                            </div>
+                                        ) : (
+                                            (sessions || []).map((session) => (
+                                                <div key={session.id} className="p-4 rounded-[20px] md:rounded-3xl border border-brand-border/40 bg-brand-bg/50 flex flex-col xs:flex-row items-start xs:items-center gap-4 transition-all hover:border-brand-primary/30 group">
+                                                    <div className="w-10 h-10 bg-brand-surface rounded-xl flex items-center justify-center border border-brand-border/60 shrink-0">
+                                                        {session.userAgent?.toLowerCase().includes('windows') || session.userAgent?.toLowerCase().includes('mac') ? (
+                                                            <Monitor size={18} className="text-brand-text-dim group-hover:text-brand-primary transition-colors" />
+                                                        ) : (
+                                                            <Globe size={18} className="text-brand-text-dim group-hover:text-brand-primary transition-colors" />
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-0.5">
+                                                            <h5 className="text-xs font-black text-brand-text uppercase truncate">
+                                                                {session.deviceName || 'Unknown Browser'}
+                                                            </h5>
+                                                            {session.isCurrent && (
+                                                                <span className="px-1.5 py-0.5 bg-brand-primary/10 text-brand-primary text-[8px] font-black uppercase tracking-widest rounded border border-brand-primary/20">
+                                                                    This Device
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex items-center gap-2 text-[9px] font-bold text-brand-text-dim uppercase tracking-widest opacity-60">
+                                                            <span>{session.ipAddress || 'IP Hidden'}</span>
+                                                            <span className="w-1 h-1 bg-brand-border rounded-full" />
+                                                            <span>Last used {new Date(session.lastUsedAt).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    {!session.isCurrent && (
+                                                        <button
+                                                            onClick={() => handleRevokeSession(session.id)}
+                                                            className="p-2 text-brand-text-dim hover:text-brand-danger hover:bg-brand-danger/10 rounded-lg transition-all active:scale-95"
+                                                            title="Revoke session"
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))
+                                        )}
                                     </div>
                                 </section>
                             </div>

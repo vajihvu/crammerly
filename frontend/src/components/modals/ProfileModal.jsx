@@ -1,13 +1,11 @@
 // src/components/modals/ProfileModal.jsx
-import React, { useState, useEffect } from 'react';
-import { X, Plus, CheckCircle, Github, Linkedin, Briefcase, GraduationCap, UserCircle, Camera, Share2, Copy, Check, Shield, Monitor, Globe, Trash2 } from 'lucide-react';
-import { sessionsApi } from '../../api';
+import React, { useState } from 'react';
+import { X, Plus, CheckCircle, Github, Linkedin, Briefcase, GraduationCap, UserCircle, Camera, Share2, Copy, Check, Shield, Globe } from 'lucide-react';
 
 import StudyHeatmap from '../ui/StudyHeatmap';
 
 
 function ProfileModal({ currentUser = {}, onClose, onUpdateProfile, studyActivity = {} }) {
-  const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'security'
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: 'User',
@@ -23,38 +21,7 @@ function ProfileModal({ currentUser = {}, onClose, onUpdateProfile, studyActivit
   const [newInterest, setNewInterest] = useState('');
   const [newSkill, setNewSkill] = useState('');
   const [copied, setCopied] = useState(false);
-  const [sessions, setSessions] = useState([]);
-  const [loadingSessions, setLoadingSessions] = useState(false);
   const fileInputRef = React.useRef(null);
-
-  useEffect(() => {
-    if (activeTab === 'security') {
-      loadSessions();
-    }
-  }, [activeTab]);
-
-  const loadSessions = async () => {
-    setLoadingSessions(true);
-    try {
-      const data = await sessionsApi.getAll();
-      setSessions(data);
-    } catch (err) {
-      console.error('Failed to load sessions:', err);
-    } finally {
-      setLoadingSessions(false);
-    }
-  };
-
-  const handleRevokeSession = async (sessionId) => {
-    try {
-      const success = await sessionsApi.revoke(sessionId);
-      if (success) {
-        setSessions(prev => prev.filter(s => s.id !== sessionId));
-      }
-    } catch (err) {
-      console.error('Failed to revoke session:', err);
-    }
-  };
 
   const copyId = () => {
     navigator.clipboard.writeText(`@${formData.username}#${formData.tag}`);
@@ -131,46 +98,25 @@ function ProfileModal({ currentUser = {}, onClose, onUpdateProfile, studyActivit
               <h3 className="text-[11px] sm:text-sm font-black text-brand-text uppercase tracking-wider sm:tracking-[0.2em] mt-0.5 truncate">Account</h3>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-              {activeTab === 'profile' && (
-                <button
-                  onClick={() => isEditing ? handleSave() : setIsEditing(true)}
-                  className={`px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-premium shrink-0 ${isEditing
-                    ? 'bg-brand-primary text-brand-bg'
-                    : 'bg-brand-text text-brand-bg hover:bg-brand-text/90'
-                    }`}
-                >
-                  {isEditing ? 'Save' : 'Edit'}
-                </button>
-              )}
+              <button
+                onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+                className={`px-3 sm:px-6 py-2 sm:py-2.5 rounded-xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-premium shrink-0 ${isEditing
+                  ? 'bg-brand-primary text-brand-bg'
+                  : 'bg-brand-text text-brand-bg hover:bg-brand-text/90'
+                  }`}
+              >
+                {isEditing ? 'Save' : 'Edit'}
+              </button>
               <button onClick={onClose} className="p-1.5 sm:p-2 text-brand-text-dim hover:text-brand-danger hover:bg-brand-bg rounded-full transition-all shrink-0">
                 <X size={18} className="sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>
 
-          {/* Sub-tabs */}
-          <div className="flex px-3.5 sm:px-8 bg-brand-bg/30">
-            <button
-              onClick={() => { setActiveTab('profile'); setIsEditing(false); }}
-              className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'profile' ? 'text-brand-primary' : 'text-brand-text-dim hover:text-brand-text'}`}
-            >
-              Profile
-              {activeTab === 'profile' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-brand-primary rounded-t-full" />}
-            </button>
-            <button
-              onClick={() => { setActiveTab('security'); setIsEditing(false); }}
-              className={`px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'security' ? 'text-brand-primary' : 'text-brand-text-dim hover:text-brand-text'}`}
-            >
-              Security
-              {activeTab === 'security' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-brand-primary rounded-t-full" />}
-            </button>
-          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6 custom-scrollbar">
-          {activeTab === 'profile' ? (
-            <>
-              {/* Enhanced Identity Section with Banner */}
+          {/* Enhanced Identity Section with Banner */}
               <div className="relative rounded-[32px] overflow-hidden border border-brand-border/80 shadow-premium bg-brand-surface">
                 <div className="px-6 py-6 flex flex-col sm:flex-row items-center sm:items-center gap-5 relative z-10 text-center sm:text-left">
                   <div
@@ -432,80 +378,6 @@ function ProfileModal({ currentUser = {}, onClose, onUpdateProfile, studyActivit
                   <StudyHeatmap activity={studyActivity} />
                 )}
               </div>
-            </>
-          ) : (
-            /* Security & Devices Content */
-            <div className="space-y-6">
-              <div className="bg-brand-surface rounded-[32px] p-6 border border-brand-border/80 shadow-premium">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-8 h-8 bg-brand-primary/10 rounded-xl flex items-center justify-center border border-brand-primary/20">
-                    <Shield size={14} className="text-brand-primary" />
-                  </div>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-text-dim">Device History</h4>
-                </div>
-
-                <div className="space-y-4">
-                  {loadingSessions ? (
-                    <div className="flex flex-col items-center justify-center py-12 gap-4">
-                      <div className="w-8 h-8 border-4 border-brand-primary/20 border-t-brand-primary rounded-full animate-spin" />
-                      <p className="text-[10px] font-black text-brand-text-dim uppercase tracking-widest">Securing your account...</p>
-                    </div>
-                  ) : (sessions || []).length === 0 ? (
-                    <div className="text-center py-12">
-                      <p className="text-sm font-bold text-brand-text-dim">No active sessions found.</p>
-                    </div>
-                  ) : (
-                    (sessions || []).map((session) => (
-                      <div key={session.id} className="p-4 rounded-2xl border border-brand-border/40 bg-brand-bg/50 flex items-center gap-4 transition-all hover:border-brand-primary/30 group/session">
-                        <div className="w-10 h-10 bg-brand-surface rounded-xl flex items-center justify-center border border-brand-border/60 shrink-0">
-                          {session.userAgent?.toLowerCase().includes('windows') || session.userAgent?.toLowerCase().includes('mac') ? (
-                            <Monitor size={18} className="text-brand-text-dim group-hover/session:text-brand-primary transition-colors" />
-                          ) : (
-                            <Globe size={18} className="text-brand-text-dim group-hover/session:text-brand-primary transition-colors" />
-                          )}
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <h5 className="text-xs font-black text-brand-text uppercase truncate">
-                              {session.deviceName || 'Unknown Browser'}
-                            </h5>
-                            {session.isCurrent && (
-                              <span className="px-1.5 py-0.5 bg-brand-primary/10 text-brand-primary text-[8px] font-black uppercase tracking-widest rounded border border-brand-primary/20">
-                                This Device
-                              </span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-3 text-[9px] font-bold text-brand-text-dim uppercase tracking-widest opacity-60">
-                            <span>{session.ipAddress || 'IP Hidden'}</span>
-                            <span className="w-1 h-1 bg-brand-border rounded-full" />
-                            <span>Last used {new Date(session.lastUsedAt).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-
-                        {!session.isCurrent && (
-                          <button
-                            onClick={() => handleRevokeSession(session.id)}
-                            className="p-2 text-brand-text-dim hover:text-brand-danger hover:bg-brand-danger/10 rounded-lg transition-all active:scale-95"
-                            title="Revoke session"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="p-6 bg-brand-danger/5 rounded-[28px] border border-brand-danger/20">
-                <h5 className="text-[10px] font-black text-brand-danger uppercase tracking-[0.2em] mb-2">Safety Tip</h5>
-                <p className="text-[10px] font-bold text-brand-danger/60 leading-relaxed">
-                  Log out of any unrecognized devices immediately. If you suspect your account is compromised, change your password to revoke all sessions.
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
