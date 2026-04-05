@@ -454,6 +454,21 @@ export const updateUserProfile = async (req, res, next) => {
         if (req.body.socialLinks !== undefined) user.socialLinks = req.body.socialLinks;
         if (req.body.avatarUrl !== undefined) user.avatar = req.body.avatarUrl;
 
+        // Settings persistence
+        if (req.body.settings !== undefined) {
+            if (!user.settings) user.settings = {};
+            if (req.body.settings.language !== undefined) {
+                user.settings.language = req.body.settings.language;
+            }
+            if (req.body.settings.privacy !== undefined) {
+                if (!user.settings.privacy) user.settings.privacy = {};
+                if (req.body.settings.privacy.allowInvites !== undefined) user.settings.privacy.allowInvites = req.body.settings.privacy.allowInvites;
+                if (req.body.settings.privacy.showOnlineStatus !== undefined) user.settings.privacy.showOnlineStatus = req.body.settings.privacy.showOnlineStatus;
+                if (req.body.settings.privacy.allowDMs !== undefined) user.settings.privacy.allowDMs = req.body.settings.privacy.allowDMs;
+            }
+            user.markModified('settings');
+        }
+
         const passwordChanged = !!req.body.password;
         if (passwordChanged) {
             const newPassword = req.body.password;

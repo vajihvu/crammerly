@@ -28,6 +28,14 @@ export const updateProfileSchema = z.object({
         .regex(/[^A-Za-z0-9]/, "Password must contain a special character")
         .optional(),
     avatar: z.string().url("Invalid avatar URL").optional(),
+    settings: z.object({
+        language: z.string().optional(),
+        privacy: z.object({
+            allowInvites: z.boolean().optional(),
+            showOnlineStatus: z.boolean().optional(),
+            allowDMs: z.boolean().optional()
+        }).optional()
+    }).optional()
 });
 
 export const resetPasswordSchema = z.object({

@@ -1,19 +1,64 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Settings, Volume2, ShieldCheck, Lock, Bell, Eye, EyeOff, Trash2, Smartphone, Globe, Shield, CreditCard, Key, CheckCircle, Monitor, QrCode } from 'lucide-react';
 import { sessionsApi, authApi } from '../../api';
+import { usersApi } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 
 function SettingsModal({ initialTab = 'general', onClose }) {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState(initialTab);
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-    const [selectedLanguage, setSelectedLanguage] = useState('ENGLISH (US)');
+    const [selectedLanguage, setSelectedLanguage] = useState(user?.settings?.language || 'ENGLISH (US)');
     
-    // Interactive states
-    const [privacy, setPrivacy] = useState({ invites: true, online: true, dms: false });
+    // Interactive states — initialize from persisted user settings
+    const [privacy, setPrivacy] = useState({
+        invites: user?.settings?.privacy?.allowInvites ?? true,
+        online: user?.settings?.privacy?.showOnlineStatus ?? true,
+        dms: user?.settings?.privacy?.allowDMs ?? false
+    });
     const [micLevel, setMicLevel] = useState(0);
     const [twoFactor, setTwoFactor] = useState(user?.isTwoFactorEnabled || false);
     
+    // Track if initial load is done to avoid saving on mount
+    const isInitialMount = useRef(true);
+
+    // Auto-save privacy settings when toggled
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+        const saveSettings = async () => {
+            try {
+                await usersApi.updateProfile({
+                    settings: {
+                        privacy: {
+                            allowInvites: privacy.invites,
+                            showOnlineStatus: privacy.online,
+                            allowDMs: privacy.dms
+                        }
+                    }
+                });
+            } catch (err) {
+                console.error('Failed to save privacy settings:', err);
+            }
+        };
+        saveSettings();
+    }, [privacy]);
+
+    // Auto-save language when changed
+    const handleLanguageChange = useCallback(async (lang) => {
+        setSelectedLanguage(lang);
+        setIsLanguageOpen(false);
+        try {
+            await usersApi.updateProfile({
+                settings: { language: lang }
+            });
+        } catch (err) {
+            console.error('Failed to save language setting:', err);
+        }
+    }, []);
+
     // MFA Setup States
     const [qrCodeData, setQrCodeData] = useState(null);
     const [mfaSecret, setMfaSecret] = useState('');
@@ -293,10 +338,7 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                                                             {languages.map(lang => (
                                                                 <button
                                                                     key={lang}
-                                                                    onClick={() => {
-                                                                        setSelectedLanguage(lang);
-                                                                        setIsLanguageOpen(false);
-                                                                    }}
+                                                                    onClick={() => handleLanguageChange(lang)}
                                                                     className={`w-full text-left px-4 py-2.5 text-xs font-bold uppercase tracking-widest transition-colors ${
                                                                         selectedLanguage === lang 
                                                                         ? 'bg-[#1d4ed8] text-white' 
