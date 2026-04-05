@@ -1,6 +1,6 @@
 // src/components/RoomView.jsx
 import React from 'react';
-import { Users, Trash2, EyeOff, MessageCircle, Video, Bot, TrendingUp, ChevronLeft, Settings2, Check, X, Clock, ChevronDown, Link2, Shield } from 'lucide-react';
+import { Users, Trash2, EyeOff, MessageCircle, Video, Bot, TrendingUp, ChevronLeft, Settings2, Check, X, Clock, ChevronDown, Link2, Shield, LogOut } from 'lucide-react';
 import { roomsApi } from '../api/rooms';
 
 import ChatTab from './tabs/ChatTab';
@@ -8,7 +8,7 @@ import VideoTab from './tabs/VideoTab';
 import AITutorTab from './tabs/AITutorTab';
 import ProgressTab from './tabs/ProgressTab';
 
-function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoom, activeTab, setActiveTab, addToast }) {
+function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoom, onLeaveRoom, activeTab, setActiveTab, addToast }) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedRoom, setEditedRoom] = React.useState(room || {});
   const [showRoomInfo, setShowRoomInfo] = React.useState(false);
@@ -149,7 +149,24 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
                 <Trash2 size={16} className="text-brand-danger" />
               </button>
             )}
+            {!isOwner && (
+              <button 
+                onClick={(e) => onDeleteRoom(room, e)} 
+                className="p-1.5 hover:bg-brand-danger/10 rounded-lg transition-all group" 
+                title="Leave Room Permanently"
+              >
+                <LogOut size={16} className="text-brand-danger" />
+              </button>
+            )}
+            <button 
+              onClick={(e) => onLeaveRoom(room, e)} 
+              className="p-1.5 hover:bg-brand-muted/10 rounded-lg transition-all group" 
+              title="Close Panel"
+            >
+              <X size={16} className="text-brand-text-dim group-hover:text-brand-text transition-colors" />
+            </button>
           </div>
+
         </div>
         {room.privacy === 'Private' && room.code && (
           <div className="bg-brand-bg rounded-lg p-2 border border-brand-primary/10 shadow-sm">
