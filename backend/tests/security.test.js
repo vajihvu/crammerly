@@ -39,8 +39,8 @@ describe('Security Middleware Integration Tests', () => {
     });
 
     describe('Payload Size Limit', () => {
-        it('should block payloads over 10kb', async () => {
-            const largeString = 'a'.repeat(11 * 1024); // 11kb
+        it('should block payloads over 5mb', async () => {
+            const largeString = 'a'.repeat(6 * 1024 * 1024); // 6mb
             const res = await request(app)
                 .post(`${API_V1}/auth/login`)
                 .send({ data: largeString });
