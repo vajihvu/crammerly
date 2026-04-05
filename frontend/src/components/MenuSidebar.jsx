@@ -64,8 +64,9 @@ function MenuSidebar({
   setTheme,
   handleSignOut
 }) {
+  const [showAppearanceModal, setShowAppearanceModal] = useState(false);
+  const [pendingTheme, setPendingTheme] = useState(theme);
   const [isStatusExpanded, setIsStatusExpanded] = useState(false);
-  const [isAppearanceExpanded, setIsAppearanceExpanded] = useState(false);
   const [showDndTimePicker, setShowDndTimePicker] = useState(false);
 
   const statusOptions = [
@@ -75,6 +76,11 @@ function MenuSidebar({
   ];
 
   const activeStatus = statusOptions.find(opt => opt.status === userStatus) || statusOptions[0];
+
+  const modeOptions = [
+    { id: 'light', label: 'Standard Mode', desc: 'Classic light interface', icon: <Sun size={20} /> },
+    { id: 'dark', label: 'Dark Mode', desc: 'Easy on the eyes', icon: <Moon size={20} /> }
+  ];
 
   return (
     <>
@@ -202,34 +208,12 @@ function MenuSidebar({
             <MenuButton icon={<Search size={20} />} label="Find Rooms" onClick={() => { setShowMenu(false); setShowSearchModal(); }} />
             <MenuButton icon={<Users size={20} />} label="Friends" onClick={() => { setShowMenu(false); setShowFriendsModal(); }} />
             <MenuButton icon={<Settings size={20} />} label="Settings" onClick={() => { setShowMenu(false); setShowSettingsModal(); }} />
-            <div className="space-y-1 md:hidden">
+            <div className="md:hidden">
               <MenuButton
                 icon={<Paintbrush size={20} />}
                 label="Appearance"
-                onClick={() => setIsAppearanceExpanded(!isAppearanceExpanded)}
-                expanded={isAppearanceExpanded}
-                hasSubmenu={true}
+                onClick={() => { setPendingTheme(theme); setShowAppearanceModal(true); }}
               />
-              <div className={`overflow-hidden transition-all duration-300 ${isAppearanceExpanded ? 'max-h-[120px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="mx-2 p-1.5 space-y-1 bg-brand-bg/70 rounded-xl border border-brand-border/30">
-                  <button
-                    onClick={() => setTheme('light')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${theme === 'light' ? 'bg-brand-primary text-white' : 'text-brand-text-dim hover:bg-brand-muted/10'}`}
-                  >
-                    <Sun size={14} />
-                    <span className="text-xs font-bold uppercase tracking-wider">Standard Mode</span>
-                    {theme === 'light' && <CheckCircle size={14} className="ml-auto" />}
-                  </button>
-                  <button
-                    onClick={() => setTheme('dark')}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${theme === 'dark' ? 'bg-brand-primary text-white' : 'text-brand-text-dim hover:bg-brand-muted/10'}`}
-                  >
-                    <Moon size={14} />
-                    <span className="text-xs font-bold uppercase tracking-wider">Dark Mode</span>
-                    {theme === 'dark' && <CheckCircle size={14} className="ml-auto" />}
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -254,6 +238,78 @@ function MenuSidebar({
           />
         </div>
       </div>
+
+      {/* Switch Modes Modal */}
+      {showAppearanceModal && (
+        <div className="fixed inset-0 z-[100002] flex items-center justify-center p-4" onClick={() => setShowAppearanceModal(false)}>
+          <div className="bg-brand-surface rounded-2xl border border-brand-border shadow-2xl w-full max-w-[320px] overflow-hidden animate-in zoom-in-95 fade-in duration-300" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="px-5 pt-5 pb-3">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-9 h-9 bg-brand-primary/10 rounded-xl flex items-center justify-center">
+                  <Paintbrush size={18} className="text-brand-primary" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-brand-text uppercase tracking-tight">Switch Modes</h3>
+                  <p className="text-[10px] text-brand-text-dim font-medium">Choose your preferred interface</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Mode Options */}
+            <div className="px-5 space-y-2">
+              {modeOptions.map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => setPendingTheme(mode.id)}
+                  className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 transition-all duration-200 text-left ${
+                    pendingTheme === mode.id
+                      ? 'border-brand-primary bg-brand-primary/10'
+                      : 'border-brand-border/30 bg-brand-bg/50 hover:border-brand-primary/40'
+                  }`}
+                >
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
+                    pendingTheme === mode.id ? 'bg-brand-primary text-white' : 'bg-brand-muted/20 text-brand-muted'
+                  }`}>
+                    {mode.icon}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-brand-text">{mode.label}</p>
+                    <p className="text-[10px] text-brand-text-dim font-medium">{mode.desc}</p>
+                  </div>
+                  {pendingTheme === mode.id && (
+                    <CheckCircle size={18} className="text-brand-primary shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Actions */}
+            <div className="px-5 pt-4 pb-5 flex gap-3">
+              <button
+                onClick={() => setShowAppearanceModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-brand-border/50 text-brand-text-dim hover:text-brand-text text-[11px] font-black uppercase tracking-widest transition-all hover:bg-brand-muted/10"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setTheme(pendingTheme);
+                  setShowAppearanceModal(false);
+                }}
+                disabled={pendingTheme === theme}
+                className={`flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+                  pendingTheme === theme
+                    ? 'bg-brand-muted/20 text-brand-text-dim cursor-not-allowed'
+                    : 'bg-brand-primary text-white hover:bg-brand-primary/90 shadow-lg'
+                }`}
+              >
+                Switch Mode
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
