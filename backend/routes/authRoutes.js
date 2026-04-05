@@ -99,7 +99,7 @@ router.post('/register', verifyCaptcha, validate(registerSchema), registerUser);
  */
 router.post('/login', loginLimiter, validate(loginSchema), loginUser);
 
-router.post('/google', loginLimiter, verifyCaptcha, googleLogin);
+router.post('/google', loginLimiter, googleLogin);
 
 /**
  * @openapi
