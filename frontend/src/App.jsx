@@ -12,6 +12,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import AdminDashboard from './pages/AdminDashboard';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import config from './config/env';
 
@@ -40,6 +41,16 @@ function App() {
                                     element={
                                         <ProtectedRoute>
                                             <Home />
+                                        </ProtectedRoute>
+                                    }
+                                />
+                                
+                                {/* Admin Protected Routes */}
+                                <Route
+                                    path="/admin"
+                                    element={
+                                        <ProtectedRoute adminOnly={true}>
+                                            <AdminDashboard />
                                         </ProtectedRoute>
                                     }
                                 />
