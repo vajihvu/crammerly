@@ -42,6 +42,7 @@ const userSchema = new mongoose.Schema({
     institution: { type: String, trim: true },
     course: { type: String, trim: true },
     skills: { type: [String], default: [] },
+    interests: { type: [String], default: [] },
     isActive: {
         type: Boolean,
         default: true

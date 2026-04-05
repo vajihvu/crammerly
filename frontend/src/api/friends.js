@@ -1,7 +1,9 @@
 /**
- * Friends API Service (Stub)
- * Handles friendships and social searching.
+ * Friends API Service
+ * Handles friendships and social searching natively attached to the database.
  */
+import client from './client';
+
 export const friendsApi = {
     /**
      * Fetch all friends/requests for a user
@@ -36,10 +38,11 @@ export const friendsApi = {
     },
 
     /**
-     * Search for users to add
+     * Search for users to add or fetch algorithmic suggestions (if query is empty)
      */
-    search: async (query) => {
-        console.log('Searching for users with query:', query);
-        return [];
+    search: async (query = '') => {
+        const { data } = await client.get(`/friends/search?q=${encodeURIComponent(query)}`);
+        // The backend `sendSuccess` usually puts payload on `data.data`
+        return data.data || [];
     }
 };
