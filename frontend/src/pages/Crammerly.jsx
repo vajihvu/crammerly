@@ -1,5 +1,6 @@
 // src/Crammer.jsx
 import React, { useState, useEffect, lazy, Suspense } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useModals } from '../hooks/useModals';
 import { useRooms } from '../hooks/useRooms';
 import { useStudyData } from '../hooks/useStudyData';
@@ -228,6 +229,11 @@ export default function Crammerly() {
         </ModalPortal>
       </div>
     );
+  }
+
+  // Auto-redirect unboarded users to complete their profile
+  if (authUser && currentUser && !currentUser.isOnboarded) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return (

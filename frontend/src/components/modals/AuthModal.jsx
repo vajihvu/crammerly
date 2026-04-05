@@ -74,6 +74,31 @@ function AuthModal({ onClose, closable = true }) {
             <Sparkles size={20} className="text-white" />
           </div>
 
+          {/* ── Post-Registration: Check Your Email ── */}
+          {success ? (
+            <div className="w-full text-center animate-in zoom-in-95 duration-500 space-y-4">
+              <div className="w-14 h-14 mx-auto bg-brand-success/10 rounded-2xl flex items-center justify-center border border-brand-success/20">
+                <Mail size={28} className="text-brand-success" />
+              </div>
+              <h3 className="text-lg font-bold text-brand-text">Check Your Email</h3>
+              <p className="text-xs text-brand-text-dim leading-relaxed">
+                We've sent a verification link to<br />
+                <span className="font-bold text-brand-text">{email}</span>
+              </p>
+              <p className="text-[10px] text-brand-text-dim opacity-70 leading-relaxed">
+                Open the link in your email to activate your account. Once verified, you'll be able to log in and set up your profile.
+              </p>
+              <div className="pt-2">
+                <button
+                  onClick={() => { setSuccess(false); setIsSignUp(false); }}
+                  className="w-full flex items-center justify-center gap-2 px-5 py-2.5 bg-brand-text text-brand-bg rounded-xl font-bold text-xs shadow-premium hover:bg-black transition-all active:scale-95"
+                >
+                  Back to Log In <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+          ) : (
+          <>
           <h3 className="text-lg font-bold text-brand-text mb-1">
             {isTwoFactorMode ? 'Authentication Required' : isSignUp ? 'Create Account' : 'Welcome Back'}
           </h3>
@@ -149,11 +174,10 @@ function AuthModal({ onClose, closable = true }) {
             </div>
 
             {error && <p className="text-[10px] font-bold text-brand-danger uppercase tracking-wider text-center bg-brand-danger/10 p-3 rounded-xl border border-brand-danger/20">{error}</p>}
-            {success && <p className="text-[10px] font-bold text-brand-success uppercase tracking-wider text-center bg-brand-success/10 p-3 rounded-xl border border-brand-success/20">Registration successful! Please check your email inbox to confirm your account.</p>}
 
             <button
               type="submit"
-              disabled={loading || success || (isTwoFactorMode && twoFactorCode.length !== 6)}
+              disabled={loading || (isTwoFactorMode && twoFactorCode.length !== 6)}
               className="w-full flex items-center justify-center gap-2 px-5 py-2.5 mt-3 bg-brand-text text-brand-bg rounded-xl font-bold text-xs shadow-premium hover:bg-black transition-all active:scale-95 disabled:opacity-50"
             >
               {loading ? 'Processing...' : isTwoFactorMode ? 'Verify' : (isSignUp ? 'Sign Up' : 'Log In')}
@@ -205,6 +229,8 @@ function AuthModal({ onClose, closable = true }) {
             >
               Forgot Password?
             </button>
+          )}
+          </>
           )}
         </div>
 

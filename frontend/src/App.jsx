@@ -12,6 +12,7 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import AdminDashboard from './pages/AdminDashboard';
 import JoinByInvite from './pages/JoinByInvite';
+import Onboarding from './pages/Onboarding';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import config from './config/env';
 
@@ -54,9 +55,9 @@ function App() {
                                     }
                                 />
 
-                                {/* Crammerly Main Interface — handles its own auth via AuthModal */}
                                 <Route path="/" element={<Crammerly />} />
                                 <Route path="/crammerly" element={<Crammerly />} />
+                                <Route path="/onboarding" element={<Onboarding />} />
 
                                 {/* Invite Link Route */}
                                 <Route path="/invite/:roomId" element={
