@@ -118,6 +118,13 @@ export default function Crammerly() {
     }
   }, [authUser]);
 
+  // ── Sync view with room status ──
+  useEffect(() => {
+    if (!isInRoom && view !== 'home') {
+      setView('home');
+    }
+  }, [isInRoom, view]);
+
   // ── Theme ──
   useEffect(() => {
     if (theme === 'dark') {
