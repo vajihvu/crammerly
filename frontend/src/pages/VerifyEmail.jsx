@@ -58,10 +58,10 @@ const VerifyEmail = () => {
                                 <p className="text-sm font-medium text-brand-text-dim leading-relaxed">{message}</p>
                             </div>
                             <button
-                                onClick={() => navigate('/onboarding')}
+                                onClick={() => navigate('/')}
                                 className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-brand-text text-brand-bg rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-premium hover:bg-black transition-all active:scale-95"
                             >
-                                Complete Your Profile <ArrowRight size={16} />
+                                Log In to Continue <ArrowRight size={16} />
                             </button>
                         </div>
                     )}

@@ -57,7 +57,11 @@ function App() {
 
                                 <Route path="/" element={<Crammerly />} />
                                 <Route path="/crammerly" element={<Crammerly />} />
-                                <Route path="/onboarding" element={<Onboarding />} />
+                                <Route path="/onboarding" element={
+                                    <ProtectedRoute>
+                                        <Onboarding />
+                                    </ProtectedRoute>
+                                } />
 
                                 {/* Invite Link Route */}
                                 <Route path="/invite/:roomId" element={
