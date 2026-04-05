@@ -738,7 +738,7 @@ export const verifyEmail = async (req, res, next) => {
         if (!user) {
             // Check if this is a re-click of an already-verified link
             // (token was consumed on first successful verification)
-            const alreadyVerified = await User.findOne({
+            await User.findOne({
                 isEmailVerified: true,
                 emailVerificationToken: { $exists: false }
             }).select('email isEmailVerified');

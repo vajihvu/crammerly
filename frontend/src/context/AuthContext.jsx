@@ -32,15 +32,6 @@ export const AuthProvider = ({ children }) => {
         }
     }, []);
 
-    const updateUser = useCallback((partialData) => {
-        setUser(prev => {
-            if (!prev) return prev;
-            const updated = { ...prev, ...partialData };
-            localStorage.setItem('userInfo', JSON.stringify(updated));
-            return updated;
-        });
-    }, []);
-
     useEffect(() => {
         // Listen for global unauthorized events
         const handleUnauthorized = () => {

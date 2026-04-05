@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { usersApi } from '../api/users';
 import { useUI } from '../context/UIContext';
 import { Sparkles, User, GraduationCap, BookOpen, Heart, Zap, ArrowRight, X, Loader2 } from 'lucide-react';
 
 const Onboarding = () => {
-    const navigate = useNavigate();
     const { addToast } = useUI();
     const [loading, setLoading] = useState(false);
 
