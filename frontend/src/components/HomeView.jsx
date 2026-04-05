@@ -60,7 +60,8 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
     const roomScheduleDate = room.scheduleDate || room.schedule_date || null;
 
     if (activeStatus === 'Active Now') {
-      return !roomScheduleDate || roomScheduleDate === today;
+      // Show rooms with no schedule, or whose scheduled date has arrived (today or past)
+      return !roomScheduleDate || roomScheduleDate <= today;
     }
     if (activeStatus === 'My Rooms') {
       const isCreator = room.creator_id === currentUser.id;
@@ -68,7 +69,8 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
       return isCreator || isMember;
     }
     if (activeStatus === 'Scheduled') {
-      return roomScheduleDate && roomScheduleDate >= today;
+      // Only show rooms that are scheduled for a future date (not today)
+      return roomScheduleDate && roomScheduleDate > today;
     }
     return true;
   });
