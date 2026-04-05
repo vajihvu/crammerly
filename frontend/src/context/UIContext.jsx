@@ -8,6 +8,7 @@ export const UIProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
     const [globalLoading, setGlobalLoading] = useState(false);
 
+    // eslint-disable-next-line no-unused-vars
     const addToast = useCallback((message, type = 'info', duration = 5000) => {
         // Notifications disabled globally across entire ecosystem per user request
         return 'disabled';
