@@ -205,8 +205,10 @@ function MenuSidebar({
               <MenuButton icon={<CalendarIcon size={20} />} label="Study Calendar" onClick={() => { setShowMenu(false); setShowCalendarModal(); }} />
               <div className="h-px bg-white/5 mx-3 my-2"></div>
             </div>
-            <MenuButton icon={<Search size={20} />} label="Find Rooms" onClick={() => { setShowMenu(false); setShowSearchModal(); }} />
-            <MenuButton icon={<Users size={20} />} label="Friends" onClick={() => { setShowMenu(false); setShowFriendsModal(); }} />
+            <div className="md:hidden space-y-1">
+              <MenuButton icon={<Search size={20} />} label="Find Rooms" onClick={() => { setShowMenu(false); setShowSearchModal(); }} />
+              <MenuButton icon={<Users size={20} />} label="Friends" onClick={() => { setShowMenu(false); setShowFriendsModal(); }} />
+            </div>
             <MenuButton icon={<Settings size={20} />} label="Settings" onClick={() => { setShowMenu(false); setShowSettingsModal(); }} />
             <div className="md:hidden">
               <MenuButton
