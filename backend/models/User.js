@@ -144,14 +144,7 @@ const userSchema = new mongoose.Schema({
         type: Date,
         select: false
     },
-    settings: {
-        language: { type: String, default: 'ENGLISH (US)' },
-        privacy: {
-            allowInvites: { type: Boolean, default: true },
-            showOnlineStatus: { type: Boolean, default: true },
-            allowDMs: { type: Boolean, default: false }
-        }
-    }
+
 }, {
 
 
