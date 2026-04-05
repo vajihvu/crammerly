@@ -12,11 +12,15 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Please provide a password'],
+        required: [
+            function() { return !this.googleId; },
+            'Please provide a password'
+        ],
         minlength: 10,
 
         validate: {
             validator: function (v) {
+                if (!v && this.googleId) return true;
                 // Minimum requirements: 1 upper, 1 lower, 1 number, 1 special
                 // This is a basic regex check; controllers use zxcvbn for deeper entropy analysis
                 return /[A-Z]/.test(v) && /[a-z]/.test(v) && /[0-9]/.test(v) && /[^A-Za-z0-9]/.test(v);
@@ -93,6 +97,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         unique: true,
         index: true
+    },
+    googleId: {
+        type: String,
+        sparse: true,
+        unique: true
     },
     settings: {
         language: { type: String, default: 'ENGLISH (US)' },
