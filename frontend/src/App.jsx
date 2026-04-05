@@ -13,6 +13,7 @@ import ResetPassword from './pages/ResetPassword';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import AdminDashboard from './pages/AdminDashboard';
+import JoinByInvite from './pages/JoinByInvite';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import config from './config/env';
 
@@ -64,6 +65,13 @@ function App() {
                                 <Route path="/crammerly" element={
                                     <ProtectedRoute>
                                         <Crammerly />
+                                    </ProtectedRoute>
+                                } />
+
+                                {/* Invite Link Route */}
+                                <Route path="/invite/:roomId" element={
+                                    <ProtectedRoute>
+                                        <JoinByInvite />
                                     </ProtectedRoute>
                                 } />
 

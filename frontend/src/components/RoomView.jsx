@@ -1,6 +1,6 @@
 // src/components/RoomView.jsx
 import React from 'react';
-import { Users, Trash2, EyeOff, MessageCircle, Video, Bot, TrendingUp, ChevronLeft, Settings2, Check, X, Clock, ChevronDown } from 'lucide-react';
+import { Users, Trash2, EyeOff, MessageCircle, Video, Bot, TrendingUp, ChevronLeft, Settings2, Check, X, Clock, ChevronDown, Link2 } from 'lucide-react';
 
 import ChatTab from './tabs/ChatTab';
 import VideoTab from './tabs/VideoTab';
@@ -11,6 +11,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedRoom, setEditedRoom] = React.useState(room || {});
   const [showRoomInfo, setShowRoomInfo] = React.useState(false);
+  const [linkCopied, setLinkCopied] = React.useState(false);
 
   if (!room || !room.members) return null;
 
@@ -20,6 +21,17 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
   const handleUpdate = () => {
     onUpdateRoom(editedRoom);
     setIsEditing(false);
+  };
+
+  const copyInviteLink = () => {
+    const link = `${window.location.origin}/invite/${room.id}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setLinkCopied(true);
+      if (addToast) addToast('Invite link copied!', 'success');
+      setTimeout(() => setLinkCopied(false), 2000);
+    }).catch(() => {
+      if (addToast) addToast('Failed to copy link', 'error');
+    });
   };
 
   /* ─── Room Info Panel (shared between mobile toggle and desktop sidebar) ─── */
@@ -103,6 +115,15 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
                 <Settings2 size={16} className="text-brand-primary" />
               </button>
             )}
+            {isOwner && !isEditing && (
+              <button 
+                onClick={copyInviteLink} 
+                className="p-1.5 hover:bg-brand-primary/10 rounded-lg transition-all" 
+                title="Copy Invite Link"
+              >
+                <Link2 size={16} className={linkCopied ? "text-green-500" : "text-brand-primary"} />
+              </button>
+            )}
             <button 
               onClick={(e) => onDeleteRoom(room, e)} 
               className="p-1.5 hover:bg-brand-danger/10 rounded-lg transition-all group" 
@@ -117,6 +138,19 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
             <p className="text-[9px] font-black text-brand-primary uppercase tracking-[0.2em] mb-0.5">Room Code</p>
             <p className="font-mono text-lg font-black text-brand-text tracking-widest">{room.code}</p>
           </div>
+        )}
+        {isOwner && (
+          <button
+            onClick={copyInviteLink}
+            className={`w-full mt-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-2 transition-all border ${
+              linkCopied 
+                ? 'bg-green-500/10 text-green-600 border-green-500/30' 
+                : 'bg-brand-primary/10 text-brand-primary border-brand-primary/20 hover:bg-brand-primary/20'
+            }`}
+          >
+            <Link2 size={14} />
+            {linkCopied ? 'Link Copied!' : 'Copy Invite Link'}
+          </button>
         )}
       </div>
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogIn, Mail, Lock, Loader2 } from 'lucide-react';
 
@@ -10,13 +10,15 @@ const Login = () => {
 
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const redirectTo = location.state?.from || '/';
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
         try {
             await login(email, password);
-            navigate('/');
+            navigate(redirectTo);
         } catch {
             // Global interceptor handles the toast
         } finally {
