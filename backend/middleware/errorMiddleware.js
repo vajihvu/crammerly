@@ -58,9 +58,25 @@ export const errorHandler = (err, req, res, _next) => {
         details = err.errors || err.issues;
         
         if (details && details.length > 0) {
-            // Deduplicate and concatenate to ensure we don't spam repeated strings
-            const messages = [...new Set(details.map(d => d.message))];
-            message = messages.join('. ');
+            // Find all password-related errors
+            const passwordErrors = details.filter(d => 
+                (d.path && d.path.includes('password')) || 
+                (d.message && d.message.toLowerCase().includes('password'))
+            );
+            
+            let otherMessages = details
+                .filter(d => !passwordErrors.includes(d))
+                .map(d => d.message);
+                
+            // Deduplicate to ensure we don't spam repeated strings
+            otherMessages = [...new Set(otherMessages)];
+            
+            if (passwordErrors.length > 0) {
+                const pwdMsg = 'Password must consist of at least 10 characters, an uppercase character, a lowercase character, a number, and a special symbol.';
+                message = [pwdMsg, ...otherMessages].filter(Boolean).join(' ');
+            } else {
+                message = otherMessages.filter(Boolean).join(' ');
+            }
         } else {
             message = 'Ensure all required fields are correctly filled according to the requirements.';
         }
