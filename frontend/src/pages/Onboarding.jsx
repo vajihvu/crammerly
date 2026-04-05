@@ -57,13 +57,17 @@ const Onboarding = () => {
             });
             await usersApi.completeOnboarding();
 
-            // Sync updated profile into cached user so Crammerly doesn't redirect back
-            try {
-                const stored = JSON.parse(localStorage.getItem('userInfo')) || {};
-                const mergedFields = response?.data || {};
-                const merged = { ...stored, ...mergedFields, isOnboarded: true };
-                localStorage.setItem('userInfo', JSON.stringify(merged));
-            } catch { /* ignore parse errors */ }
+        // Sync updated profile into cached user so Crammerly doesn't redirect back
+        try {
+            const stored = JSON.parse(localStorage.getItem('userInfo')) || {};
+            const mergedFields = response?.data || {};
+            if (stored.user) {
+                stored.user = { ...stored.user, ...mergedFields, isOnboarded: true };
+            } else {
+                Object.assign(stored, mergedFields, { isOnboarded: true });
+            }
+            localStorage.setItem('userInfo', JSON.stringify(stored));
+        } catch { /* ignore parse errors */ }
 
             addToast('Profile set up successfully! Welcome to Crammerly.', 'success');
             window.location.href = '/'; // Full reload to pick up updated user state
@@ -84,7 +88,8 @@ const Onboarding = () => {
         try {
             const stored = JSON.parse(localStorage.getItem('userInfo'));
             if (stored) {
-                stored.isOnboarded = true;
+                if (stored.user) stored.user.isOnboarded = true;
+                else stored.isOnboarded = true;
                 localStorage.setItem('userInfo', JSON.stringify(stored));
             }
         } catch { /* ignore */ }

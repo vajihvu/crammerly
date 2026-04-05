@@ -108,11 +108,12 @@ export default function Crammerly() {
   // ── Auth sync ──
   useEffect(() => {
     if (authUser) {
+      const actualUser = authUser.user || authUser;
       // eslint-disable-next-line
       setCurrentUser(prev => ({
         ...prev,
-        ...authUser,
-        id: authUser._id || authUser.id
+        ...actualUser,
+        id: actualUser._id || actualUser.id
       }));
     }
   }, [authUser]);
@@ -155,7 +156,7 @@ export default function Crammerly() {
       const filtered = prev.filter(a => a.id !== activity.id);
       const updated = [{ ...activity, timestamp: new Date().toISOString() }, ...filtered].slice(0, 10);
       if (authUser) {
-        const userId = authUser._id || authUser.id;
+        const userId = authUser.user?._id || authUser.user?.id || authUser._id || authUser.id;
         localStorage.setItem(`crammer_recent_activity_${userId}`, JSON.stringify(updated));
       }
       return updated;
@@ -166,7 +167,7 @@ export default function Crammerly() {
   const clearAllNotifications = () => {
     setNotifications([]);
     if (authUser) {
-      const userId = authUser._id || authUser.id;
+      const userId = authUser.user?._id || authUser.user?.id || authUser._id || authUser.id;
       localStorage.removeItem(`crammer_notifications_${userId}`);
     }
     addToast('All notifications cleared', 'info');
@@ -176,7 +177,7 @@ export default function Crammerly() {
     setNotifications(prev => {
       const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
       if (authUser) {
-        const userId = authUser._id || authUser.id;
+        const userId = authUser.user?._id || authUser.user?.id || authUser._id || authUser.id;
         localStorage.setItem(`crammer_notifications_${userId}`, JSON.stringify(updated));
       }
       return updated;
