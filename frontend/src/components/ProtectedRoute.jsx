@@ -15,7 +15,9 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     }
 
     if (!user) {
-        return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+        // Redirect to root — Crammerly shows AuthModal for unauthenticated users
+        // Preserve return path for invite links etc.
+        return <Navigate to="/" state={{ from: location.pathname }} replace />;
     }
 
     if (adminOnly && user.role !== 'admin') {

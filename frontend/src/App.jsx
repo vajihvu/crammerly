@@ -3,8 +3,6 @@ import { AuthProvider } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Login';
-import Register from './pages/Register';
 import Home from './pages/Home';
 import Crammerly from './pages/Crammerly';
 import VerifyEmail from './pages/VerifyEmail';
@@ -25,14 +23,14 @@ function App() {
                     <UIProvider>
                         <Router>
                             <Routes>
-                                {/* Public Routes */}
-                                <Route path="/login" element={<Login />} />
-                                <Route path="/register" element={<Register />} />
+                                {/* Auth routes → redirect to root where AuthModal handles auth */}
+                                <Route path="/login" element={<Navigate to="/" replace />} />
+                                <Route path="/register" element={<Navigate to="/" replace />} />
                                 <Route path="/verify-email/:token" element={<VerifyEmail />} />
                                 <Route path="/forgot-password" element={<ForgotPassword />} />
                                 <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-                                {/* Legal Pages (#14, #15) */}
+                                {/* Legal Pages */}
                                 <Route path="/privacy" element={<PrivacyPolicy />} />
                                 <Route path="/terms" element={<TermsOfService />} />
 
@@ -56,17 +54,9 @@ function App() {
                                     }
                                 />
 
-                                {/* Crammerly Main Interface */}
-                                <Route path="/" element={
-                                    <ProtectedRoute>
-                                        <Crammerly />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/crammerly" element={
-                                    <ProtectedRoute>
-                                        <Crammerly />
-                                    </ProtectedRoute>
-                                } />
+                                {/* Crammerly Main Interface — handles its own auth via AuthModal */}
+                                <Route path="/" element={<Crammerly />} />
+                                <Route path="/crammerly" element={<Crammerly />} />
 
                                 {/* Invite Link Route */}
                                 <Route path="/invite/:roomId" element={

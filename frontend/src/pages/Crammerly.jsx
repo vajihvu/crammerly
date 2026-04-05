@@ -231,7 +231,7 @@ export default function Crammerly() {
   }
 
   return (
-    <div className={`crammerly-app !bg-brand-bg font-sans selection:bg-brand-primary/30 relative flex flex-col ${isInRoom ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
+    <div className={`!bg-brand-bg font-sans selection:bg-brand-primary/30 relative flex flex-col ${isInRoom ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
       <Header
         isInRoom={isInRoom}
         leaveRoom={leaveRoom}
