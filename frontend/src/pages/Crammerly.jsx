@@ -59,28 +59,26 @@ export default function Crammerly() {
   // Derived from authUser via the sync useEffect below — never read from stale localStorage
   const [currentUser, setCurrentUser] = useState(null);
 
-  const [notifications, setNotifications] = useState([]);
-  const [recentActivity, setRecentActivity] = useState([]);
+  const getUserId = () => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      return userInfo?._id || userInfo?.id;
+    } catch { return null; }
+  };
 
-  // Load user-scoped data when authUser is available
-  useEffect(() => {
-    if (authUser) {
-      const userId = authUser._id || authUser.id;
-      
-      const savedNotifs = localStorage.getItem(`crammer_notifications_${userId}`);
-      if (savedNotifs) {
-        try { setNotifications(JSON.parse(savedNotifs)); } catch (e) { console.error(e); }
-      }
+  const [notifications, setNotifications] = useState(() => {
+    const userId = getUserId();
+    if (!userId) return [];
+    const saved = localStorage.getItem(`crammer_notifications_${userId}`);
+    return saved ? JSON.parse(saved) : [];
+  });
 
-      const savedActivity = localStorage.getItem(`crammer_recent_activity_${userId}`);
-      if (savedActivity) {
-        try { setRecentActivity(JSON.parse(savedActivity)); } catch (e) { console.error(e); }
-      }
-    } else {
-      setNotifications([]);
-      setRecentActivity([]);
-    }
-  }, [authUser]);
+  const [recentActivity, setRecentActivity] = useState(() => {
+    const userId = getUserId();
+    if (!userId) return [];
+    const saved = localStorage.getItem(`crammer_recent_activity_${userId}`);
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // ── Composed hooks ──
   const {
