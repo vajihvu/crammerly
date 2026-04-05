@@ -121,6 +121,7 @@ export default function Crammerly() {
   // ── Sync view with room status ──
   useEffect(() => {
     if (!isInRoom && view !== 'home') {
+      // eslint-disable-next-line
       setView('home');
     }
   }, [isInRoom, view]);
