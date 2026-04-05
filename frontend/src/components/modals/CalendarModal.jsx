@@ -1,8 +1,12 @@
 // src/components/modals/CalendarModal.jsx
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Plus, Trash2, Calendar as CalendarIcon } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 function CalendarModal({ onClose, openConfirm }) {
+    const { user } = useAuth();
+    const storageKey = `Crammerly_calendar_tasks_${user?.id || user?._id || 'guest'}`;
+
     const [currentDate, setCurrentDate] = useState(new Date());
     const [tasks, setTasks] = useState([]);
     const [showTaskForm, setShowTaskForm] = useState(null); // { day, task? }
@@ -10,7 +14,7 @@ function CalendarModal({ onClose, openConfirm }) {
 
     // Load data from localStorage on mount
     useEffect(() => {
-        const savedTasks = localStorage.getItem('Crammerly_calendar_tasks');
+        const savedTasks = localStorage.getItem(storageKey);
         if (savedTasks) {
             try {
                 const parsed = JSON.parse(savedTasks);
@@ -20,12 +24,12 @@ function CalendarModal({ onClose, openConfirm }) {
                 setTasks([]);
             }
         }
-    }, []);
+    }, [storageKey]);
 
     // Save data to localStorage whenever they change
     useEffect(() => {
-        localStorage.setItem('Crammerly_calendar_tasks', JSON.stringify(tasks));
-    }, [tasks]);
+        localStorage.setItem(storageKey, JSON.stringify(tasks));
+    }, [tasks, storageKey]);
 
     const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
     const firstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
