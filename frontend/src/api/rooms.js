@@ -46,6 +46,14 @@ export const roomsApi = {
     },
 
     /**
+     * Leave a room (non-owner)
+     */
+    leave: async (roomId) => {
+        const { data } = await client.post(`/rooms/${roomId}/leave`);
+        return data.success;
+    },
+
+    /**
      * Update progress
      */
     updateProgress: async (roomId, progressData) => {

@@ -186,12 +186,56 @@ export const deleteRoom = asyncHandler(async (req, res) => {
         return res.sendError('Not authorized', 403, 'AUTH_FORBIDDEN');
     }
 
+    // Notify all connected members BEFORE deleting
+    import('../utils/socket.js').then(({ emitToRoom }) => {
+        emitToRoom(req.params.id, 'room_deleted', {
+            roomId: room._id,
+            roomName: room.name,
+            deletedBy: req.user.name
+        });
+    });
+
     // Cascade: delete all messages in this room
     const { default: Message } = await import('../models/Message.js');
     await Message.deleteMany({ room_id: room._id });
 
     await room.deleteOne();
     return res.sendSuccess(null, 200, 'Room deleted');
+});
+
+
+/**
+ * @desc    Leave a room (non-owner)
+ * @route   POST /api/v1/rooms/:id/leave
+ */
+export const leaveRoom = asyncHandler(async (req, res) => {
+    const room = await Room.findById(req.params.id);
+    if (!room) {
+        return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
+    }
+
+    // Owner cannot leave — they must delete instead
+    if (room.creator_id.toString() === req.user._id.toString()) {
+        return res.sendError('Room owner cannot leave. Delete the room instead.', 400, 'ROOM_OWNER_LEAVE');
+    }
+
+    const memberIndex = room.members.findIndex(m => m.user.toString() === req.user._id.toString());
+    if (memberIndex === -1) {
+        return res.sendError('You are not a member of this room', 400, 'NOT_MEMBER');
+    }
+
+    room.members.splice(memberIndex, 1);
+    await room.save();
+
+    // Notify remaining members
+    import('../utils/socket.js').then(({ emitToRoom }) => {
+        emitToRoom(req.params.id, 'member_left', {
+            id: req.user._id,
+            name: req.user.name
+        });
+    });
+
+    return res.sendSuccess(null, 200, 'Left room successfully');
 });
 
 

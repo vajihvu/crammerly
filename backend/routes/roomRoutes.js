@@ -5,6 +5,7 @@ import {
     joinRoom,
     getRoomByCode,
     deleteRoom,
+    leaveRoom,
     updateProgress
 } from '../controllers/roomController.js';
 import { protect } from '../middleware/auth.js';
@@ -27,6 +28,7 @@ router.route('/')
 router.get('/code/:code', getRoomByCode);
 router.post('/:id/join', validateParams(idParamSchema), validate(joinRoomSchema), joinRoom);
 router.delete('/:id', validateParams(idParamSchema), deleteRoom);
+router.post('/:id/leave', validateParams(idParamSchema), leaveRoom);
 router.put('/:id/progress', validateParams(idParamSchema), validate(updateProgressSchema), updateProgress);
 
 

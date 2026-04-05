@@ -73,12 +73,46 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                 }
             };
 
+            const handleRoomDeleted = ({ roomId, roomName, deletedBy }) => {
+                // Remove room from list
+                setRooms(prev => prev.filter(r => r.id !== roomId));
+                // If user is currently in the deleted room, kick them out
+                setCurrentRoom(prev => {
+                    if (prev && prev.id === roomId) {
+                        setIsInRoom(false);
+                        addToast(`"${roomName}" was deleted by ${deletedBy}`, 'info');
+                        return null;
+                    }
+                    return prev;
+                });
+            };
+
+            const handleMemberLeft = ({ id, name }) => {
+                setRooms(prev => prev.map(r => {
+                    if (r.id === currentRoom?.id) {
+                        return { ...r, members: r.members.filter(m => m.id !== id) };
+                    }
+                    return r;
+                }));
+
+                if (currentRoom) {
+                    setCurrentRoom(prev => {
+                        if (!prev) return prev;
+                        return { ...prev, members: prev.members.filter(m => m.id !== id) };
+                    });
+                }
+            };
+
             socket.on('member_joined', handleMemberJoined);
             socket.on('progress_updated', handleProgressUpdated);
+            socket.on('room_deleted', handleRoomDeleted);
+            socket.on('member_left', handleMemberLeft);
 
             return () => {
                 socket.off('member_joined', handleMemberJoined);
                 socket.off('progress_updated', handleProgressUpdated);
+                socket.off('room_deleted', handleRoomDeleted);
+                socket.off('member_left', handleMemberLeft);
             };
         }
     }, [loadRooms, currentRoom, authUser]);
@@ -150,21 +184,21 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
         }
     };
 
-    // ── Leave room ──
+    // ── Leave room (local state only — called after API actions) ──
     const leaveRoom = () => {
         setCurrentRoom(null);
         setIsInRoom(false);
         loadRooms();
     };
 
-    // ── Delete room ──
+    // ── Delete room (owner) or Leave room (member) ──
     const deleteRoom = async (room, e) => {
         if (e) { e.stopPropagation(); e.preventDefault(); }
         const isOwner = room.creator_id === currentUser.id;
         if (isOwner) {
             openConfirm({
                 title: 'Delete Room',
-                message: `Are you sure you want to permanently delete "${room.name}"?`,
+                message: `Are you sure you want to permanently delete "${room.name}"? All members will be removed and notified.`,
                 onConfirm: async () => {
                     try {
                         if (authUser) await roomsApi.delete(room.id);
@@ -173,13 +207,35 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                         addToast('Room deleted successfully', 'success');
                     } catch (error) {
                         console.error('Failed to delete room:', error);
+                        addToast('Failed to delete room', 'error');
                     }
                 },
                 type: 'danger',
                 confirmText: 'Delete Room'
             });
         } else {
-            if (currentRoom?.id === room.id) leaveRoom();
+            openConfirm({
+                title: 'Leave Room',
+                message: `Are you sure you want to leave "${room.name}"?`,
+                onConfirm: async () => {
+                    try {
+                        if (authUser) await roomsApi.leave(room.id);
+                        if (currentRoom?.id === room.id) leaveRoom();
+                        setRooms(prev => prev.map(r => {
+                            if (r.id === room.id) {
+                                return { ...r, members: r.members.filter(m => m.id !== currentUser.id) };
+                            }
+                            return r;
+                        }));
+                        addToast('Left room successfully', 'success');
+                    } catch (error) {
+                        console.error('Failed to leave room:', error);
+                        addToast('Failed to leave room', 'error');
+                    }
+                },
+                type: 'warning',
+                confirmText: 'Leave Room'
+            });
         }
     };
 
