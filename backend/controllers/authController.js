@@ -1007,7 +1007,7 @@ export const exportData = async (req, res, next) => {
 export const changePassword = async (req, res, next) => {
     try {
         const { currentPassword, newPassword } = req.body;
-        const user = await User.findById(req.user._id).select('+password +tokenVersion');
+        const user = await User.findById(req.user._id).select('+password +previousPasswords +tokenVersion');
         
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });

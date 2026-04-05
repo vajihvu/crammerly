@@ -230,6 +230,7 @@ userSchema.pre('save', async function () {
             // We fetch the latest stored document to get the current hash before updating
             const oldUser = await this.constructor.findById(this._id).select('+password');
             if (oldUser && oldUser.password) {
+                if (!this.previousPasswords) this.previousPasswords = [];
                 this.previousPasswords.unshift(oldUser.password);
                 if (this.previousPasswords.length > 5) {
                     this.previousPasswords.pop();
@@ -253,7 +254,8 @@ userSchema.methods.isPasswordPreviouslyUsed = async function (plainPassword) {
     if (isCurrentMatch) return true;
 
     // Check history (limit 5)
-    for (const oldHash of this.previousPasswords) {
+    const history = this.previousPasswords || [];
+    for (const oldHash of history) {
         if (await bcrypt.compare(plainPassword, oldHash)) {
             return true;
         }
