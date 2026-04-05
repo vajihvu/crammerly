@@ -58,8 +58,18 @@ const Onboarding = () => {
                 skills: skills.length > 0 ? skills : undefined,
             });
             await usersApi.completeOnboarding();
+
+            // Sync isOnboarded into cached user so Crammerly doesn't redirect back
+            try {
+                const stored = JSON.parse(localStorage.getItem('userInfo'));
+                if (stored) {
+                    stored.isOnboarded = true;
+                    localStorage.setItem('userInfo', JSON.stringify(stored));
+                }
+            } catch { /* ignore parse errors */ }
+
             addToast('Profile set up successfully! Welcome to Crammerly.', 'success');
-            navigate('/');
+            window.location.href = '/'; // Full reload to pick up updated user state
         } catch (err) {
             addToast(err.response?.data?.message || 'Failed to save profile. Please try again.', 'error');
         } finally {
@@ -73,7 +83,15 @@ const Onboarding = () => {
         } catch {
             // Silent — they can always update profile later
         }
-        navigate('/');
+        // Sync isOnboarded into cached user
+        try {
+            const stored = JSON.parse(localStorage.getItem('userInfo'));
+            if (stored) {
+                stored.isOnboarded = true;
+                localStorage.setItem('userInfo', JSON.stringify(stored));
+            }
+        } catch { /* ignore */ }
+        window.location.href = '/';
     };
 
     return (
