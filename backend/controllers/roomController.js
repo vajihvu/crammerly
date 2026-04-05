@@ -48,6 +48,7 @@ export const getAllRooms = asyncHandler(async (req, res) => {
         members: room.members.map(m => ({
             id: m.user?._id,
             name: m.user?.name || 'Anonymous',
+            isAdmin: m.isAdmin || false,
             progress: m.progress || []
         }))
     }));
@@ -274,5 +275,44 @@ export const updateProgress = asyncHandler(async (req, res) => {
     });
 
     return res.sendSuccess(room.members[memberIndex].progress);
+});
+
+/**
+ * @desc    Toggle admin status for a room member
+ * @route   PUT /api/v1/rooms/:id/members/:memberId/admin
+ */
+export const toggleRoomAdmin = asyncHandler(async (req, res) => {
+    const room = await Room.findById(req.params.id);
+    if (!room) {
+        return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
+    }
+
+    // Only room creator can assign admins
+    if (room.creator_id.toString() !== req.user._id.toString()) {
+        return res.sendError('Only the room owner can assign admins', 403, 'AUTH_FORBIDDEN');
+    }
+
+    const memberIndex = room.members.findIndex(m => m.user.toString() === req.params.memberId);
+    if (memberIndex === -1) {
+        return res.sendError('User is not a member of this room', 404, 'RES_NOT_FOUND');
+    }
+
+    if (room.members[memberIndex].user.toString() === room.creator_id.toString()) {
+        return res.sendError('Room owner always has owner privileges', 400, 'VAL_INVALID_INPUT');
+    }
+
+    // Toggle
+    room.members[memberIndex].isAdmin = !room.members[memberIndex].isAdmin;
+    await room.save();
+
+    // Socket Notification for real-time update
+    import('../utils/socket.js').then(({ emitToRoom }) => {
+        emitToRoom(req.params.id, 'member_updated', {
+            id: room.members[memberIndex].user,
+            isAdmin: room.members[memberIndex].isAdmin
+        });
+    });
+
+    return res.sendSuccess({ memberId: room.members[memberIndex].user, isAdmin: room.members[memberIndex].isAdmin });
 });
 

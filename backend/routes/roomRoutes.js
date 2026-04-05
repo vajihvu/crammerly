@@ -6,7 +6,8 @@ import {
     getRoomByCode,
     deleteRoom,
     leaveRoom,
-    updateProgress
+    updateProgress,
+    toggleRoomAdmin
 } from '../controllers/roomController.js';
 import { protect } from '../middleware/auth.js';
 import { validate, validateParams } from '../middleware/validator.js';
@@ -30,6 +31,7 @@ router.post('/:id/join', validateParams(idParamSchema), validate(joinRoomSchema)
 router.delete('/:id', validateParams(idParamSchema), deleteRoom);
 router.post('/:id/leave', validateParams(idParamSchema), leaveRoom);
 router.put('/:id/progress', validateParams(idParamSchema), validate(updateProgressSchema), updateProgress);
+router.put('/:id/members/:memberId/admin', validateParams(idParamSchema), toggleRoomAdmin);
 
 
 

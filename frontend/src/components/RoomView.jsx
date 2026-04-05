@@ -1,6 +1,7 @@
 // src/components/RoomView.jsx
 import React from 'react';
-import { Users, Trash2, EyeOff, MessageCircle, Video, Bot, TrendingUp, ChevronLeft, Settings2, Check, X, Clock, ChevronDown, Link2 } from 'lucide-react';
+import { Users, Trash2, EyeOff, MessageCircle, Video, Bot, TrendingUp, ChevronLeft, Settings2, Check, X, Clock, ChevronDown, Link2, Shield } from 'lucide-react';
+import { roomsApi } from '../api/rooms';
 
 import ChatTab from './tabs/ChatTab';
 import VideoTab from './tabs/VideoTab';
@@ -12,11 +13,26 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
   const [editedRoom, setEditedRoom] = React.useState(room || {});
   const [showRoomInfo, setShowRoomInfo] = React.useState(false);
   const [linkCopied, setLinkCopied] = React.useState(false);
+  const [addingAdmin, setAddingAdmin] = React.useState(null);
 
   if (!room || !room.members) return null;
 
   const currentMember = (room.members || []).find(m => (m.id || m.profile_id) === currentUser.id);
   const isOwner = room.creator_id === currentUser.id;
+
+  const handleToggleAdmin = async (memberId) => {
+    setAddingAdmin(memberId);
+    try {
+      await roomsApi.toggleAdmin(room.id, memberId);
+      if (addToast) addToast("Admin status updated!", "success");
+      const mem = room.members.find(m => m.id === memberId);
+      if (mem) mem.isAdmin = !mem.isAdmin;
+    } catch (e) {
+      if (addToast) addToast(e.response?.data?.message || "Failed to change admin status.", "error");
+    } finally {
+      setAddingAdmin(null);
+    }
+  };
 
   const handleUpdate = () => {
     onUpdateRoom(editedRoom);
@@ -124,13 +140,15 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
                 <Link2 size={16} className={linkCopied ? "text-green-500" : "text-brand-primary"} />
               </button>
             )}
-            <button 
-              onClick={(e) => onDeleteRoom(room, e)} 
-              className="p-1.5 hover:bg-brand-danger/10 rounded-lg transition-all group" 
-              title={isOwner ? "Delete Room" : "Leave Room"}
-            >
-              {isOwner ? <Trash2 size={16} className="text-brand-danger" /> : <X size={16} className="text-brand-muted group-hover:text-brand-danger transition-colors" />}
-            </button>
+            {isOwner && (
+              <button 
+                onClick={(e) => onDeleteRoom(room, e)} 
+                className="p-1.5 hover:bg-brand-danger/10 rounded-lg transition-all group" 
+                title="Delete Room"
+              >
+                <Trash2 size={16} className="text-brand-danger" />
+              </button>
+            )}
           </div>
         </div>
         {room.privacy === 'Private' && room.code && (
@@ -166,7 +184,15 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
                 <p className="font-medium text-xs text-brand-text truncate">{member.name}</p>
                 <p className="text-[10px] text-brand-text-dim">{member.progress?.length || 0} tasks</p>
               </div>
-              {member.id === currentUser.id && <span className="text-[10px] bg-brand-muted/40 text-brand-text px-1.5 py-0.5 rounded border border-brand-border">You</span>}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {member.isAdmin && <span className="text-[9px] bg-brand-primary text-white px-1.5 py-0.5 rounded font-black tracking-wider uppercase border border-brand-primary">Admin</span>}
+                {member.id === currentUser.id && <span className="text-[10px] bg-brand-muted/40 text-brand-text px-1.5 py-0.5 rounded border border-brand-border">You</span>}
+                {isOwner && member.id !== currentUser.id && (
+                  <button onClick={() => handleToggleAdmin(member.id)} title={member.isAdmin ? "Remove Admin" : "Make Admin"} className={`p-1 rounded transition-all ${member.isAdmin ? 'text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20' : 'text-brand-muted hover:text-brand-primary hover:bg-brand-primary/10'}`}>
+                    <Shield size={14} className={addingAdmin === member.id ? "animate-pulse" : ""} />
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>

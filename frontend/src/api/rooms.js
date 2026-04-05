@@ -61,4 +61,11 @@ export const roomsApi = {
         return data.data;
     },
 
+    /**
+     * Toggle Room Admin
+     */
+    toggleAdmin: async (roomId, memberId) => {
+        const { data } = await client.put(`/rooms/${roomId}/members/${memberId}/admin`);
+        return data.data;
+    }
 };

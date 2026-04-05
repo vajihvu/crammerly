@@ -10,7 +10,8 @@ const roomMemberSchema = new mongoose.Schema({
     progress: [{
         task: String,
         time: { type: Date, default: Date.now }
-    }]
+    }],
+    isAdmin: { type: Boolean, default: false }
 }, { _id: false });
 
 const roomSchema = new mongoose.Schema({
