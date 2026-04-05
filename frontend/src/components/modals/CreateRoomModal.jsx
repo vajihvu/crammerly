@@ -162,8 +162,9 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                                                     </div>
                                                     <div className="grid grid-cols-7 text-center gap-1">
                                                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[9px] font-black text-brand-primary/40 pb-2">{d}</span>)}
-                                                        {Array.from({ length: firstDayOfMonth(calDate.getMonth(), calDate.getFullYear()) }).map((_, i) => <div key={i} />)}
-                                                        {Array.from({ length: daysInMonth(calDate.getMonth(), calDate.getFullYear()) }).map((_, i) => {
+                                                        {[...Array(firstDayOfMonth(calDate.getMonth(), calDate.getFullYear())).keys()].map(i => <div key={`empty-${i}`} />)}
+                                                        {[...Array(daysInMonth(calDate.getMonth(), calDate.getFullYear())).keys()].map(i => {
+                                                            const d = i + 1;
                                                             const padStr = (n) => n.toString().padStart(2, '0');
                                                             const cellDateStr = `${calDate.getFullYear()}-${padStr(calDate.getMonth() + 1)}-${padStr(d)}`;
                                                             const isSelected = scheduleDate === cellDateStr;
