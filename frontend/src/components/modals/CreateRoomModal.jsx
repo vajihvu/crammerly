@@ -153,7 +153,7 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                                         {isDateOpen && (
                                             <>
                                                 <div className="fixed inset-0 z-[60]" onClick={() => setIsDateOpen(false)}></div>
-                                                <div className="absolute bottom-full mb-4 left-0 right-[-40px] md:right-0 bg-brand-surface border border-brand-border shadow-2xl z-[70] rounded-[32px] p-6 animate-in fade-in zoom-in-95 duration-200">
+                                                <div className="absolute bottom-full mb-4 left-0 w-[280px] sm:w-[320px] bg-brand-surface border border-brand-border shadow-2xl z-[70] rounded-[32px] p-5 sm:p-6 animate-in fade-in zoom-in-95 duration-200">
                                                     <div className="flex items-center justify-between mb-4 px-2">
                                                         <h4 className="text-[11px] font-[900] uppercase tracking-[0.2em] text-brand-text">
                                                             {calDate.toLocaleString('default', { month: 'long' })} {calDate.getFullYear()}
@@ -163,7 +163,7 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                                                             <button onClick={() => setCalDate(new Date(calDate.setMonth(calDate.getMonth() + 1)))} className="p-1.5 hover:bg-brand-bg rounded-lg transition-colors"><ChevronRight size={16} /></button>
                                                         </div>
                                                     </div>
-                                                    <div className="grid grid-cols-7 text-center gap-y-3 gap-x-2 mt-2">
+                                                    <div className="grid grid-cols-7 text-center gap-y-3 gap-x-1 sm:gap-x-3 mt-2">
                                                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[9px] font-black text-brand-primary/40 pb-4">{d}</span>)}
                                                         {[...Array(firstDayOfMonth(calDate.getMonth(), calDate.getFullYear())).keys()].map(i => <div key={`empty-${i}`} />)}
                                                         {[...Array(daysInMonth(calDate.getMonth(), calDate.getFullYear())).keys()].map(i => {
