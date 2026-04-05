@@ -158,13 +158,6 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
                 <LogOut size={16} className="text-brand-danger" />
               </button>
             )}
-            <button 
-              onClick={(e) => onLeaveRoom(room, e)} 
-              className="p-1.5 hover:bg-brand-muted/10 rounded-lg transition-all group" 
-              title="Close Panel"
-            >
-              <X size={16} className="text-brand-text-dim group-hover:text-brand-text transition-colors" />
-            </button>
           </div>
 
         </div>
