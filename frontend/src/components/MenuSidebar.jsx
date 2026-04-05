@@ -202,7 +202,7 @@ function MenuSidebar({
             <MenuButton icon={<Search size={20} />} label="Find Rooms" onClick={() => { setShowMenu(false); setShowSearchModal(); }} />
             <MenuButton icon={<Users size={20} />} label="Friends" onClick={() => { setShowMenu(false); setShowFriendsModal(); }} />
             <MenuButton icon={<Settings size={20} />} label="Settings" onClick={() => { setShowMenu(false); setShowSettingsModal(); }} />
-            <div className="space-y-1">
+            <div className="space-y-1 md:hidden">
               <MenuButton
                 icon={<Paintbrush size={20} />}
                 label="Appearance"
