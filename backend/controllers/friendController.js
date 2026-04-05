@@ -1,4 +1,4 @@
-import { asyncHandler } from '../middleware/errorMiddleware.js';
+import asyncHandler from '../utils/asyncHandler.js';
 import User from '../models/User.js';
 
 /**

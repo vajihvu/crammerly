@@ -102,10 +102,7 @@ const userSchema = new mongoose.Schema({
             allowDMs: { type: Boolean, default: false }
         }
     },
-    interests: {
-        type: [String],
-        default: []
-    },
+
     tokenVersion: {
         type: Number,
         default: 0,
