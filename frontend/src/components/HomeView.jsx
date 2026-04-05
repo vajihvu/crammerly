@@ -68,7 +68,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
       return isCreator || isMember;
     }
     if (activeStatus === 'Scheduled') {
-      return roomScheduleDate && roomScheduleDate > today;
+      return roomScheduleDate && roomScheduleDate >= today;
     }
     return true;
   });

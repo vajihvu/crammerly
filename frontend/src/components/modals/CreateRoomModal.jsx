@@ -21,8 +21,9 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
     const firstDayOfMonth = (month, year) => new Date(year, month, 1).getDay();
 
     const handleDateSelect = (day) => {
-        const selected = new Date(calDate.getFullYear(), calDate.getMonth(), day);
-        setScheduleDate(selected.toISOString().split('T')[0]);
+        const pad = (n) => n.toString().padStart(2, '0');
+        const formattedDate = `${calDate.getFullYear()}-${pad(calDate.getMonth() + 1)}-${pad(day)}`;
+        setScheduleDate(formattedDate);
         setIsDateOpen(false);
     };
 
@@ -163,8 +164,9 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                                                         {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[9px] font-black text-brand-primary/40 pb-2">{d}</span>)}
                                                         {Array.from({ length: firstDayOfMonth(calDate.getMonth(), calDate.getFullYear()) }).map((_, i) => <div key={i} />)}
                                                         {Array.from({ length: daysInMonth(calDate.getMonth(), calDate.getFullYear()) }).map((_, i) => {
-                                                            const d = i + 1;
-                                                            const isSelected = scheduleDate === new Date(calDate.getFullYear(), calDate.getMonth(), d).toISOString().split('T')[0];
+                                                            const padStr = (n) => n.toString().padStart(2, '0');
+                                                            const cellDateStr = `${calDate.getFullYear()}-${padStr(calDate.getMonth() + 1)}-${padStr(d)}`;
+                                                            const isSelected = scheduleDate === cellDateStr;
                                                             return (
                                                                 <button
                                                                     key={d}
