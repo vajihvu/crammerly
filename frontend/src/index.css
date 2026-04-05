@@ -46,9 +46,10 @@ html.dark {
         @apply antialiased;
     }
 
-    input,
-    textarea,
-    select {
+    /* Scope to main app — auth pages (Login/Register) use their own dark styling */
+    .crammerly-app input,
+    .crammerly-app textarea,
+    .crammerly-app select {
         background-color: var(--bg-main);
         color: var(--text-primary);
     }
