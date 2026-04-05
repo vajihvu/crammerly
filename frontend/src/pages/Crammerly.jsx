@@ -59,15 +59,28 @@ export default function Crammerly() {
   // Derived from authUser via the sync useEffect below — never read from stale localStorage
   const [currentUser, setCurrentUser] = useState(null);
 
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem('crammer_notifications');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [notifications, setNotifications] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
 
-  const [recentActivity, setRecentActivity] = useState(() => {
-    const saved = localStorage.getItem('crammer_recent_activity');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Load user-scoped data when authUser is available
+  useEffect(() => {
+    if (authUser) {
+      const userId = authUser._id || authUser.id;
+      
+      const savedNotifs = localStorage.getItem(`crammer_notifications_${userId}`);
+      if (savedNotifs) {
+        try { setNotifications(JSON.parse(savedNotifs)); } catch (e) { console.error(e); }
+      }
+
+      const savedActivity = localStorage.getItem(`crammer_recent_activity_${userId}`);
+      if (savedActivity) {
+        try { setRecentActivity(JSON.parse(savedActivity)); } catch (e) { console.error(e); }
+      }
+    } else {
+      setNotifications([]);
+      setRecentActivity([]);
+    }
+  }, [authUser]);
 
   // ── Composed hooks ──
   const {
@@ -143,7 +156,10 @@ export default function Crammerly() {
     setRecentActivity(prev => {
       const filtered = prev.filter(a => a.id !== activity.id);
       const updated = [{ ...activity, timestamp: new Date().toISOString() }, ...filtered].slice(0, 10);
-      localStorage.setItem('crammer_recent_activity', JSON.stringify(updated));
+      if (authUser) {
+        const userId = authUser._id || authUser.id;
+        localStorage.setItem(`crammer_recent_activity_${userId}`, JSON.stringify(updated));
+      }
       return updated;
     });
   };
@@ -151,14 +167,20 @@ export default function Crammerly() {
   // ── Notifications ──
   const clearAllNotifications = () => {
     setNotifications([]);
-    localStorage.removeItem('crammer_notifications');
+    if (authUser) {
+      const userId = authUser._id || authUser.id;
+      localStorage.removeItem(`crammer_notifications_${userId}`);
+    }
     addToast('All notifications cleared', 'info');
   };
 
   const markNotificationAsRead = (id) => {
     setNotifications(prev => {
       const updated = prev.map(n => n.id === id ? { ...n, read: true } : n);
-      localStorage.setItem('crammer_notifications', JSON.stringify(updated));
+      if (authUser) {
+        const userId = authUser._id || authUser.id;
+        localStorage.setItem(`crammer_notifications_${userId}`, JSON.stringify(updated));
+      }
       return updated;
     });
   };

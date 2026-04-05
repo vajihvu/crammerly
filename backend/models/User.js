@@ -31,6 +31,18 @@ const userSchema = new mongoose.Schema({
         trim: true,
         index: true
     },
+    username: {
+        type: String,
+        trim: true,
+        unique: true,
+        sparse: true,
+        minlength: 3,
+        maxlength: 30
+    },
+    institution: { type: String, trim: true },
+    course: { type: String, trim: true },
+    interests: { type: [String], default: [] },
+    skills: { type: [String], default: [] },
     isActive: {
         type: Boolean,
         default: true

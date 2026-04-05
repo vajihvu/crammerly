@@ -35,7 +35,12 @@ export const updateProfileSchema = z.object({
             showOnlineStatus: z.boolean().optional(),
             allowDMs: z.boolean().optional()
         }).optional()
-    }).optional()
+    }).optional(),
+    username: z.string().min(3).max(30).optional(),
+    institution: z.string().optional(),
+    course: z.string().optional(),
+    interests: z.array(z.string()).optional(),
+    skills: z.array(z.string()).optional()
 });
 
 export const resetPasswordSchema = z.object({
