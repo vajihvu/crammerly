@@ -45,8 +45,16 @@ function App() {
                                 />
 
                                 {/* Crammerly Main Interface */}
-                                <Route path="/" element={<Crammerly />} />
-                                <Route path="/crammerly" element={<Crammerly />} />
+                                <Route path="/" element={
+                                    <ProtectedRoute>
+                                        <Crammerly />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/crammerly" element={
+                                    <ProtectedRoute>
+                                        <Crammerly />
+                                    </ProtectedRoute>
+                                } />
 
                                 {/* Catch all */}
                                 <Route path="*" element={<Navigate to="/" replace />} />
