@@ -87,7 +87,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                 });
             };
 
-            const handleMemberLeft = ({ id, name }) => {
+            const handleMemberLeft = ({ id }) => {
                 setRooms(prev => prev.map(r => {
                     if (r.id === currentRoom?.id) {
                         return { ...r, members: r.members.filter(m => m.id !== id) };
@@ -115,7 +115,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                 socket.off('member_left', handleMemberLeft);
             };
         }
-    }, [loadRooms, currentRoom, authUser]);
+    }, [loadRooms, currentRoom, authUser, addToast]);
 
     // ── Create room (requires auth) ──
     const createRoom = async (roomName, task, topic, privacy, scheduleDate, scheduleTime) => {
