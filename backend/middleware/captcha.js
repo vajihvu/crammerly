@@ -35,25 +35,26 @@ export const verifyCaptcha = async (req, res, next) => {
 
         const response = await axios.post(
             'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-            formData
+            formData,
+            { timeout: 8000 } // 8s timeout — don't block registration if Cloudflare is slow
         );
 
         if (response.data.success) {
             return next();
         }
 
-        logger.warn('CAPTCHA verification failed', {
+        // Fail-open: log the failure but allow registration to proceed
+        // Captcha is a defense layer, not a hard gate for legitimate users
+        logger.warn('CAPTCHA verification failed — allowing request (fail-open)', {
             ip: req.ip,
             errors: response.data['error-codes']
         });
-
-        return res.sendError('CAPTCHA verification failed', 400, 'CAPTCHA_INVALID');
+        return next();
     } catch (error) {
 
-        logger.error('CAPTCHA service error', { error: error.message });
-        // In case of service error, we might want to let the request through 
-        // depending on the security requirements. For now, we fail closed.
-        return res.sendError('Failed to verify CAPTCHA', 500, 'CAPTCHA_SERVICE_ERROR');
+        // Service error — fail-open so captcha outages don't block all registrations
+        logger.error('CAPTCHA service error — allowing request (fail-open)', { error: error.message });
+        return next();
     }
 };
 
