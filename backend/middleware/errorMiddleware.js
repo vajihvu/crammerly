@@ -56,6 +56,14 @@ export const errorHandler = (err, req, res, _next) => {
         statusCode = 400;
         code = 'VAL_SCHEMA_FAIL';
         details = err.errors || err.issues;
+        
+        if (details && details.length > 0) {
+            // Deduplicate and concatenate to ensure we don't spam repeated strings
+            const messages = [...new Set(details.map(d => d.message))];
+            message = messages.join('. ');
+        } else {
+            message = 'Ensure all required fields are correctly filled according to the requirements.';
+        }
     }
 
     // Support custom error codes
