@@ -143,7 +143,10 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                                         >
                                             <Calendar size={14} className="text-brand-primary shrink-0" />
                                             <span className={`text-xs font-bold ${scheduleDate ? 'text-brand-text' : 'text-brand-text/40'}`}>
-                                                {scheduleDate ? new Date(scheduleDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Select Date'}
+                                                {scheduleDate ? (() => {
+                                                    const [y, m, d] = scheduleDate.split('-');
+                                                    return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                                })() : 'Select Date'}
                                             </span>
                                         </button>
 
@@ -160,8 +163,8 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                                                             <button onClick={() => setCalDate(new Date(calDate.setMonth(calDate.getMonth() + 1)))} className="p-1.5 hover:bg-brand-bg rounded-lg transition-colors"><ChevronRight size={16} /></button>
                                                         </div>
                                                     </div>
-                                                    <div className="grid grid-cols-7 text-center gap-1">
-                                                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[9px] font-black text-brand-primary/40 pb-2">{d}</span>)}
+                                                    <div className="grid grid-cols-7 text-center gap-y-3 gap-x-2 mt-2">
+                                                        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => <span key={d} className="text-[9px] font-black text-brand-primary/40 pb-4">{d}</span>)}
                                                         {[...Array(firstDayOfMonth(calDate.getMonth(), calDate.getFullYear())).keys()].map(i => <div key={`empty-${i}`} />)}
                                                         {[...Array(daysInMonth(calDate.getMonth(), calDate.getFullYear())).keys()].map(i => {
                                                             const d = i + 1;
