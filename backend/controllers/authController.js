@@ -22,6 +22,26 @@ import {
     sendPasswordResetEmail
 } from '../utils/securityNotifier.js';
 import { validatePasswordStrength } from '../utils/passwordPolicy.js';
+
+export const formatUserPayload = (user) => ({
+    id: user._id,
+    _id: user._id, // Keep both for backward compatibility
+    email: user.email,
+    name: user.name,
+    username: user.username || undefined,
+    tag: user.tag || undefined,
+    avatar: user.avatar || undefined,
+    institution: user.institution || undefined,
+    course: user.course || undefined,
+    interests: user.interests || [],
+    skills: user.skills || [],
+    socialLinks: user.socialLinks || {},
+    bio: user.bio || undefined,
+    settings: user.settings || undefined,
+    isOnboarded: user.isOnboarded || false,
+    isActive: user.isActive,
+    role: user.role
+});
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import speakeasy from 'speakeasy';
@@ -99,11 +119,7 @@ export const registerUser = async (req, res, next) => {
 
         return res.sendSuccess({
             message: 'Registration successful! Please check your email and verify your account to log in.',
-            user: {
-                id: user._id,
-                email: user.email,
-                name: user.name
-            },
+            user: formatUserPayload(user),
             // Only expose token in dev for simulator/testing ease
             ...(config.isProduction ? {} : { verificationToken })
         }, 201);
@@ -206,11 +222,7 @@ export const loginUser = async (req, res, next) => {
             res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
             return res.sendSuccess({
                 token: generateAccessToken(user, session._id),
-                user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email
-                }
+                user: formatUserPayload(user)
             });
         } else {
             // Increment failures on password mismatch
@@ -299,12 +311,7 @@ export const googleLogin = async (req, res, next) => {
         res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
         return res.sendSuccess({
             token: generateAccessToken(user, session._id),
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                avatar: user.avatar
-            }
+            user: formatUserPayload(user)
         });
     } catch (error) {
         next(error);
@@ -408,7 +415,7 @@ export const logoutAllDevices = async (req, res, next) => {
 
 
 export const getUserProfile = async (req, res) => {
-    return res.sendSuccess(req.user);
+    return res.sendSuccess(formatUserPayload(req.user));
 };
 
 export const updateUserProfile = async (req, res, next) => {
@@ -535,19 +542,8 @@ export const updateUserProfile = async (req, res, next) => {
         }
 
         return res.sendSuccess({
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            username: updatedUser.username,
-            tag: updatedUser.tag,
-            bio: updatedUser.bio,
-            institution: updatedUser.institution,
-            course: updatedUser.course,
-            interests: updatedUser.interests,
-            skills: updatedUser.skills,
-            socialLinks: updatedUser.socialLinks,
-            avatar: updatedUser.avatar,
-            token: generateAccessToken(updatedUser, newSessionId)
+            ...formatUserPayload(updatedUser),
+            token: passwordChanged ? generateAccessToken(updatedUser, newSessionId) : undefined
         });
     } catch (error) {
         next(error);

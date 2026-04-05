@@ -48,7 +48,7 @@ const Onboarding = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await usersApi.updateProfile({
+            const response = await usersApi.updateProfile({
                 username: username || undefined,
                 institution: institution || undefined,
                 course: course || undefined,
@@ -57,13 +57,12 @@ const Onboarding = () => {
             });
             await usersApi.completeOnboarding();
 
-            // Sync isOnboarded into cached user so Crammerly doesn't redirect back
+            // Sync updated profile into cached user so Crammerly doesn't redirect back
             try {
-                const stored = JSON.parse(localStorage.getItem('userInfo'));
-                if (stored) {
-                    stored.isOnboarded = true;
-                    localStorage.setItem('userInfo', JSON.stringify(stored));
-                }
+                const stored = JSON.parse(localStorage.getItem('userInfo')) || {};
+                const mergedFields = response?.data || {};
+                const merged = { ...stored, ...mergedFields, isOnboarded: true };
+                localStorage.setItem('userInfo', JSON.stringify(merged));
             } catch { /* ignore parse errors */ }
 
             addToast('Profile set up successfully! Welcome to Crammerly.', 'success');
