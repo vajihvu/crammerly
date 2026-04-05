@@ -143,7 +143,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
       <div className="w-full">
         <div className="space-y-8 flex flex-col w-full">
           {/* Genre / Category Filter Dropdown */}
-          <div className="relative z-50">
+          <div className="relative z-50 w-max">
             <button
               onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}
               className="px-6 py-3 rounded-full text-sm font-black border transition-all uppercase tracking-wider font-sans whitespace-nowrap bg-brand-text border-brand-text text-brand-bg shadow-md scale-105 flex items-center gap-2"
