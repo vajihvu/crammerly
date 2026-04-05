@@ -155,7 +155,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
             {isGenreDropdownOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setIsGenreDropdownOpen(false)}></div>
-                <div className="absolute left-[105%] bottom-0 ml-2 w-[280px] sm:w-[320px] bg-brand-surface rounded-[24px] border border-brand-border/30 shadow-dropdown z-50 p-5 animate-in fade-in slide-in-from-left-2 slide-in-from-bottom-2 duration-200">
+                <div className="absolute top-full left-0 mt-2 w-[280px] sm:w-[320px] bg-brand-surface rounded-[24px] border border-brand-border/30 shadow-dropdown z-50 p-5 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="relative mb-5 border-b border-brand-border/30 pb-5">
                     <Search size={16} className="absolute left-3 top-3 text-brand-text-dim" />
                     <input 
