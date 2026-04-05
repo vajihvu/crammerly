@@ -92,13 +92,10 @@ export const registerUser = async (req, res, next) => {
 
         await logAuditEvent({ req, user: user._id, event: 'AUTH_REGISTER', status: 'SUCCESS', metadata: { method: 'EMAIL' } });
 
-        // 3. Dispatch Verification Email (fail-gracefully: user is registered even if email fails)
-        try {
-            await sendVerificationEmail(req, user, verificationToken);
-        } catch (emailErr) {
-            logger.error(`Failed to send verification email to ${user.email}: ${emailErr.message}`);
-            // Registration still succeeds — user can request resend from login page
-        }
+        // 3. Dispatch Verification Email — fire-and-forget so registration responds immediately
+        // If email fails, user can request a resend from the login page
+        sendVerificationEmail(req, user, verificationToken)
+            .catch(emailErr => logger.error(`Failed to send verification email to ${user.email}: ${emailErr.message}`));
 
         return res.sendSuccess({
             message: 'Registration successful! Please check your email and verify your account to log in.',

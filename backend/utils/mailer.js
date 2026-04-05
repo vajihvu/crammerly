@@ -30,7 +30,8 @@ export const sendMail = async ({ to, subject, html }) => {
                 to,
                 subject,
                 html
-            })
+            }),
+            signal: AbortSignal.timeout(10000) // 10s timeout — fail fast, don't block callers
         });
 
         const data = await response.json();
