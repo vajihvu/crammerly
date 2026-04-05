@@ -736,10 +736,18 @@ export const verifyEmail = async (req, res, next) => {
         }).select('+password +previousPasswords');
 
         if (!user) {
-            const error = new Error('Verification token is invalid or has expired');
-            error.statusCode = 400;
-            error.code = 'AUTH_VERIFY_INVALID';
-            throw error;
+            // Check if this is a re-click of an already-verified link
+            // (token was consumed on first successful verification)
+            const alreadyVerified = await User.findOne({
+                isEmailVerified: true,
+                emailVerificationToken: { $exists: false }
+            }).select('email isEmailVerified');
+
+            // If we can't determine it's a re-verification, show a friendlier error
+            return res.sendSuccess({
+                message: 'This verification link has already been used or has expired. If you already verified, you can log in now.',
+                alreadyVerified: true
+            });
         }
 
         user.isEmailVerified = true;
