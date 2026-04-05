@@ -9,15 +9,8 @@ export const UIProvider = ({ children }) => {
     const [globalLoading, setGlobalLoading] = useState(false);
 
     const addToast = useCallback((message, type = 'info', duration = 5000) => {
-        const id = Math.random().toString(36).substr(2, 9);
-        setToasts(prev => [...prev, { id, message, type, duration }]);
-
-        if (duration !== Infinity) {
-            setTimeout(() => {
-                setToasts(prev => prev.filter(t => t.id !== id));
-            }, duration);
-        }
-        return id;
+        // Notifications disabled globally across entire ecosystem per user request
+        return 'disabled';
     }, []);
 
     const removeToast = useCallback((id) => {
@@ -59,16 +52,7 @@ export const UIProvider = ({ children }) => {
         <UIContext.Provider value={value}>
             {children}
 
-            {/* Toast Container */}
-            <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3 max-w-md w-full pointer-events-none">
-                {toasts.map(toast => (
-                    <Toast
-                        key={toast.id}
-                        {...toast}
-                        onClose={() => removeToast(toast.id)}
-                    />
-                ))}
-            </div>
+
 
             {/* Global Loading Overlay */}
             {globalLoading && (
@@ -83,34 +67,7 @@ export const UIProvider = ({ children }) => {
     );
 };
 
-const Toast = ({ message, type, onClose }) => {
-    const icons = {
-        success: <CheckCircle className="w-5 h-5 text-emerald-500" />,
-        error: <AlertCircle className="w-5 h-5 text-rose-500" />,
-        info: <Info className="w-5 h-5 text-blue-500" />,
-        warning: <AlertCircle className="w-5 h-5 text-amber-500" />,
-    };
 
-    const colors = {
-        success: 'border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/50 dark:bg-emerald-950/20',
-        error: 'border-rose-100 dark:border-rose-900/30 bg-rose-50/50 dark:bg-rose-950/20',
-        info: 'border-blue-100 dark:border-blue-900/30 bg-blue-50/50 dark:bg-blue-950/20',
-        warning: 'border-amber-100 dark:border-amber-900/30 bg-amber-50/50 dark:bg-amber-950/20',
-    };
-
-    return (
-        <div className={`pointer-events-auto flex items-center gap-4 p-4 rounded-2xl border shadow-xl backdrop-blur-md animate-in slide-in-from-right-8 duration-300 font-inter ${colors[type] || colors.info}`}>
-            <div className="shrink-0">{icons[type] || icons.info}</div>
-            <div className="flex-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">{message}</div>
-            <button
-                onClick={onClose}
-                className="shrink-0 p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-lg transition-colors"
-            >
-                <X className="w-4 h-4 text-zinc-400" />
-            </button>
-        </div>
-    );
-};
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useUI = () => {
