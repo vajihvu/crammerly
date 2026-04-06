@@ -148,18 +148,18 @@ function ProfileModal({ currentUser = {}, onClose, onUpdateProfile }) {
                           className="w-full bg-brand-bg border border-brand-border rounded-xl px-4 py-2 text-xl font-black text-brand-text focus:outline-none focus:border-brand-primary shadow-inner"
                           placeholder="Display Name"
                         />
-                        <div className="flex items-center justify-between gap-2 px-3 py-1.5 bg-brand-bg/50 border border-brand-border/80 rounded-lg group/copy">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black text-brand-primary uppercase tracking-widest opacity-60">User ID:</span>
-                            <span className="text-[10px] font-black text-brand-primary uppercase tracking-widest">@{formData?.username || 'unknown'}#{formData?.tag || '0000'}</span>
+                        <div className="space-y-1.5 pt-1">
+                          <div className="flex items-center bg-brand-bg/50 border border-brand-border/80 rounded-xl focus-within:border-brand-primary transition-all">
+                            <span className="pl-4 pr-1 text-brand-text-dim font-black text-xs select-none">@</span>
+                            <input
+                              type="text"
+                              value={formData.username}
+                              onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z]/g, '') })}
+                              className="flex-1 py-2 text-xs font-black text-brand-text focus:outline-none bg-transparent"
+                              placeholder="username"
+                            />
+                            <span className="pr-4 pl-1 text-brand-text-dim font-black text-xs select-none opacity-40">#{formData.tag || '0000'}</span>
                           </div>
-                          <button
-                            onClick={copyId}
-                            className="p-1 hover:bg-brand-primary/10 rounded-md transition-all active:scale-95 text-brand-primary"
-                            title="Copy User ID"
-                          >
-                            {copied ? <Check size={12} strokeWidth={3} /> : <Copy size={12} strokeWidth={3} />}
-                          </button>
                         </div>
                       </div>
                     ) : (

@@ -7,7 +7,7 @@ import { Sparkles, User, GraduationCap, BookOpen, Heart, Zap, ArrowRight, X, Loa
 
 const Onboarding = () => {
     const { addToast } = useUI();
-    const { updateUser } = useAuth();
+    const { user, updateUser } = useAuth();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
@@ -110,15 +110,16 @@ const Onboarding = () => {
                         {/* Username */}
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-brand-text-dim uppercase tracking-widest ml-1">Username</label>
-                            <div className="relative group">
-                                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-text-dim group-focus-within:text-brand-primary transition-colors" size={16} />
+                            <div className="flex items-center bg-brand-bg border border-brand-border/50 rounded-[14px] focus-within:border-brand-primary transition-all">
+                                <span className="pl-4 pr-1 text-brand-text-dim font-black text-xs select-none">@</span>
                                 <input
                                     type="text"
                                     value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    className="w-full pl-11 pr-5 py-2.5 bg-brand-bg border border-brand-border/50 rounded-[14px] text-xs font-bold text-brand-text focus:border-brand-primary focus:outline-none transition-all"
-                                    placeholder="Choose a unique username"
+                                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z]/g, ''))}
+                                    className="flex-1 py-2.5 bg-transparent text-xs font-black text-brand-text focus:outline-none placeholder:font-normal"
+                                    placeholder="yourname"
                                 />
+                                <span className="pr-4 pl-1 text-brand-text-dim font-black text-xs select-none opacity-40">#{user?.tag || '1234'}</span>
                             </div>
                         </div>
 

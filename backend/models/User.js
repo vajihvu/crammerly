@@ -41,7 +41,9 @@ const userSchema = new mongoose.Schema({
         unique: true,
         sparse: true,
         minlength: 3,
-        maxlength: 30
+        maxlength: 30,
+        lowercase: true,
+        match: [/^[a-z]+$/, 'Username must contain only lowercase letters (no symbols, numbers, or spaces)']
     },
     institution: { type: String, trim: true },
     course: { type: String, trim: true },
