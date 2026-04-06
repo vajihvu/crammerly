@@ -402,7 +402,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
         </div>
 
         {showAddFriend && (
-          <div className="px-6 py-6 bg-brand-muted/10 border-b border-brand-border/30 animate-in slide-in-from-top duration-300">
+          <div className="px-6 py-4 bg-brand-bg/50 backdrop-blur-xl border-b border-brand-border/30 animate-in slide-in-from-top duration-300">
             <div className="flex gap-2 items-center">
               <input
                 type="text"
@@ -411,7 +411,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
                 onChange={(e) => { setNewFriendName(e.target.value); if (searchResults) setSearchResults(null); }}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Enter Unique UserID"
-                className="flex-1 min-w-0 bg-brand-bg border border-brand-border rounded-xl px-4 py-2.5 text-base text-brand-text focus:outline-none focus:border-brand-primary font-bold placeholder:text-brand-muted"
+                className="w-full max-w-[260px] min-w-0 bg-brand-muted/20 border border-brand-border/50 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:border-brand-primary font-bold placeholder:text-brand-muted/60"
               />
               <button
                 onClick={handleSearch}
@@ -420,7 +420,12 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
               >
                 {isSearching ? <Loader size={14} className="animate-spin" /> : 'Search'}
               </button>
-              <button onClick={() => { setShowAddFriend(false); setSearchResults(null); setNewFriendName(''); }} className="shrink-0 px-3 sm:px-4 py-2 sm:py-2.5 bg-brand-muted/20 hover:bg-brand-muted/40 text-brand-text-dim text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">Cancel</button>
+              <button 
+                onClick={() => { setShowAddFriend(false); setSearchResults(null); setNewFriendName(''); }} 
+                className="shrink-0 px-2 sm:px-3 py-2 sm:py-2.5 text-brand-text-dim hover:text-brand-text text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         )}
@@ -465,7 +470,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
                 </div>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-start pt-10 px-8 bg-brand-surface animate-in fade-in zoom-in-95 duration-500 overflow-y-auto">
+              <div className="flex-1 flex flex-col items-center justify-start pt-6 px-8 bg-brand-surface animate-in fade-in zoom-in-95 duration-500 overflow-y-auto">
                 {searchResults === null ? (
                   <>
                     <div className="w-24 h-24 bg-brand-primary/10 rounded-full flex items-center justify-center border border-brand-primary/20 mb-8 shadow-2xl">
@@ -516,7 +521,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
           {/* Right Side: Suggestions */}
           {showAddFriend && (
             <div className="w-full md:flex-1 bg-brand-surface/40 backdrop-blur-md flex flex-col shrink-0 md:overflow-hidden border-t md:border-t-0 md:border-l border-brand-border/20">
-              <div className="p-6 border-b border-brand-border/30 bg-gradient-to-br from-brand-primary/10 via-transparent to-transparent shrink-0">
+              <div className="p-4 px-6 border-b border-brand-border/30 bg-gradient-to-br from-brand-primary/10 via-transparent to-transparent shrink-0">
                 <div className="flex items-center gap-2">
                   <Sparkles className="text-brand-primary drop-shadow-[0_0_8px_rgba(201,181,156,0.3)]" size={18} />
                   <h3 className="text-lg font-black text-brand-text tracking-tight uppercase">Suggested For You</h3>
@@ -524,7 +529,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
               </div>
 
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar flex flex-col">
+              <div className="flex-1 overflow-y-auto pt-2 px-6 pb-6 space-y-3 custom-scrollbar flex flex-col">
                 {filteredSuggestions.length === 0 ? (
                   <div className="flex-1 flex flex-col items-center justify-center opacity-70">
                     <TrendingUp className="mx-auto mb-3 text-brand-muted" size={32} />
