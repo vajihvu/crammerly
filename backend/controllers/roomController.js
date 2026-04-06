@@ -114,6 +114,15 @@ export const joinRoom = asyncHandler(async (req, res) => {
 
     const isCreator = room.creator_id && room.creator_id.toString() === req.user._id.toString();
 
+    // Policy: Only creators can join future-scheduled rooms until they become active (today or past)
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const roomScheduleDate = room.schedule_date || null;
+    
+    if (roomScheduleDate && roomScheduleDate > today && !isCreator) {
+        return res.sendError('This room is scheduled for later and is not yet active', 403, 'ROOM_NOT_ACTIVE');
+    }
+
     // Authorization: Private rooms require the correct code
     if (room.privacy === 'Private' && !isCreator) {
         const { code } = req.body;

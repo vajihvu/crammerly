@@ -317,7 +317,9 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                         </div>
                         <span className="text-xs font-black text-brand-text-dim ml-1 uppercase tracking-tighter font-sans">{room.members.length} / 20</span>
                       </div>
-                      <button className="px-6 py-2.5 bg-brand-primary hover:bg-brand-primary/90 text-brand-bg rounded-xl text-[10px] font-[1000] uppercase tracking-widest shadow-accent transition-all group-hover:scale-105 font-sans">Join Room</button>
+                      {(!(room.scheduleDate || room.schedule_date) || (room.scheduleDate || room.schedule_date) <= today || room.creator_id === currentUser.id) && (
+                        <button className="px-6 py-2.5 bg-brand-primary hover:bg-brand-primary/90 text-brand-bg rounded-xl text-[10px] font-[1000] uppercase tracking-widest shadow-accent transition-all group-hover:scale-105 font-sans">Join Room</button>
+                      )}
                     </div>
                   </div>
                 ))}
