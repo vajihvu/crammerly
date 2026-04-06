@@ -401,38 +401,37 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
           )}
         </div>
 
-        {showAddFriend && (
-          <div className="px-6 py-4 bg-brand-bg/50 backdrop-blur-xl border-b border-brand-border/30 animate-in slide-in-from-top duration-300">
-            <div className="flex gap-2 items-center">
-              <input
-                type="text"
-                autoFocus
-                value={newFriendName}
-                onChange={(e) => { setNewFriendName(e.target.value); if (searchResults) setSearchResults(null); }}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                placeholder="Enter Unique UserID"
-                className="w-full max-w-[260px] min-w-0 bg-brand-muted/20 border border-brand-border/50 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:border-brand-primary font-bold placeholder:text-brand-muted/60"
-              />
-              <button
-                onClick={handleSearch}
-                disabled={isSearching}
-                className="shrink-0 px-3 sm:px-4 py-2 sm:py-2.5 bg-brand-text hover:bg-white text-brand-bg text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
-              >
-                {isSearching ? <Loader size={14} className="animate-spin" /> : 'Search'}
-              </button>
-              <button 
-                onClick={() => { setShowAddFriend(false); setSearchResults(null); setNewFriendName(''); }} 
-                className="shrink-0 px-2 sm:px-3 py-2 sm:py-2.5 text-brand-text-dim hover:text-brand-text text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden bg-brand-bg relative">
           {/* Left Side: Friends List */}
           <div className="w-full md:flex-1 flex flex-col border-b md:border-b-0 md:border-r border-brand-border/30 shrink-0 md:shrink md:overflow-hidden min-h-[500px] md:min-h-0">
+            {showAddFriend && (
+              <div className="px-4 sm:px-6 py-4 bg-brand-bg/50 backdrop-blur-xl border-b border-brand-border/30 animate-in slide-in-from-top duration-300">
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="text"
+                    autoFocus
+                    value={newFriendName}
+                    onChange={(e) => { setNewFriendName(e.target.value); if (searchResults) setSearchResults(null); }}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder="Enter Unique UserID"
+                    className="w-full max-w-[260px] min-w-0 bg-brand-muted/20 border border-brand-border/50 rounded-xl px-4 py-2.5 text-sm text-brand-text focus:outline-none focus:border-brand-primary font-bold placeholder:text-brand-muted/60"
+                  />
+                  <button
+                    onClick={handleSearch}
+                    disabled={isSearching}
+                    className="shrink-0 px-3 sm:px-4 py-2 sm:py-2.5 bg-brand-text hover:bg-white text-brand-bg text-[9px] sm:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                  >
+                    {isSearching ? <Loader size={14} className="animate-spin" /> : 'Search'}
+                  </button>
+                  <button 
+                    onClick={() => { setShowAddFriend(false); setSearchResults(null); setNewFriendName(''); }} 
+                    className="shrink-0 px-2 sm:px-3 py-2 sm:py-2.5 text-brand-text-dim hover:text-brand-text text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
             {!showAddFriend ? (
               <>
 
@@ -521,7 +520,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
           {/* Right Side: Suggestions */}
           {showAddFriend && (
             <div className="w-full md:flex-1 bg-brand-surface/40 backdrop-blur-md flex flex-col shrink-0 md:overflow-hidden border-t md:border-t-0 md:border-l border-brand-border/20">
-              <div className="pt-1 pb-4 px-6 border-b border-brand-border/30 bg-gradient-to-br from-brand-primary/10 via-transparent to-transparent shrink-0">
+              <div className="pt-2 pb-4 px-6 border-b border-brand-border/30 bg-gradient-to-br from-brand-primary/10 via-transparent to-transparent shrink-0">
                 <div className="flex items-center gap-2">
                   <Sparkles className="text-brand-primary drop-shadow-[0_0_8px_rgba(201,181,156,0.3)]" size={18} />
                   <h3 className="text-lg font-black text-brand-text tracking-tight uppercase">Suggested For You</h3>
