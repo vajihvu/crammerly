@@ -70,9 +70,9 @@ function MenuSidebar({
   const [showDndTimePicker, setShowDndTimePicker] = useState(false);
 
   const statusOptions = [
-    { status: 'online', label: 'Online', color: 'bg-[#4ADE80]', text: 'text-[#4ADE80]', bg: 'bg-[#4ADE80]/15', pulse: true },
-    { status: 'busy', label: 'Do Not Disturb', color: 'bg-[#FB7185]', text: 'text-[#FB7185]', bg: 'bg-[#FB7185]/15' },
-    { status: 'offline', label: 'Offline', color: 'bg-[#94A3B8]', text: 'text-[#94A3B8]', bg: 'bg-[#94A3B8]/15' }
+    { status: 'online', label: 'Online', color: 'bg-emerald-500', text: 'text-emerald-500', bg: 'bg-emerald-500/15', pulse: true },
+    { status: 'busy', label: 'Do Not Disturb', color: 'bg-rose-500', text: 'text-rose-500', bg: 'bg-rose-500/15' },
+    { status: 'offline', label: 'Offline', color: 'bg-brand-muted', text: 'text-brand-text-dim', bg: 'bg-brand-muted/15' }
   ];
 
   const activeStatus = statusOptions.find(opt => opt.status === userStatus) || statusOptions[0];
@@ -86,7 +86,7 @@ function MenuSidebar({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-brand-text/40 backdrop-blur-md z-[100000] animate-in fade-in duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100000] animate-in fade-in duration-300"
         onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}
       ></div>
 

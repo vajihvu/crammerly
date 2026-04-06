@@ -110,7 +110,7 @@ const StudyHeatmap = ({ activity = {} }) => {
                                     'translate(-50%, -100%)'
                         }}
                     >
-                        <div className="bg-brand-text text-brand-bg px-3 py-1.5 rounded-xl shadow-premium border border-white/10 whitespace-nowrap relative">
+                        <div className="bg-brand-primary text-brand-bg px-3 py-1.5 rounded-xl shadow-premium border border-white/10 whitespace-nowrap relative">
                             <div className="flex flex-col items-center gap-0.5">
                                 <span className="text-[8px] font-black uppercase tracking-widest opacity-60">
                                     {new Date(hoveredCell.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -127,7 +127,7 @@ const StudyHeatmap = ({ activity = {} }) => {
                                     }`}
                                 style={{ transform: tooltipPos.align === 'center' ? 'translateX(-50%)' : 'none' }}
                             >
-                                <div className="border-8 border-transparent border-t-brand-text"></div>
+                                <div className="border-8 border-transparent border-t-brand-primary"></div>
                             </div>
                         </div>
                     </div>

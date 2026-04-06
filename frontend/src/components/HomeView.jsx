@@ -95,12 +95,12 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
         <div className="flex flex-row gap-3 sm:gap-4 w-full lg:w-auto">
           <button
             onClick={onCreateRoom}
-            className="flex-1 lg:flex-none flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-6 bg-brand-text hover:bg-brand-text/90 text-brand-bg rounded-2xl sm:rounded-[32px] shadow-2xl transition-all hover:-translate-y-1 active:scale-95 group border border-brand-border/10"
+            className="flex-1 lg:flex-none flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-6 bg-brand-surface hover:bg-brand-card text-brand-text rounded-2xl sm:rounded-[32px] shadow-2xl transition-all hover:-translate-y-1 active:scale-95 group border border-brand-border/10"
           >
-            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-brand-primary/20 rounded-xl flex items-center justify-center transition-all group-hover:scale-110">
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-brand-primary/10 rounded-xl flex items-center justify-center transition-all group-hover:scale-110">
               <Plus size={16} strokeWidth={3} className="text-brand-primary sm:w-6 sm:h-6" />
             </div>
-            <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-bg transition-colors font-sans leading-none">CREATE ROOM</span>
+            <span className="text-[9px] sm:text-[11px] font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] text-brand-text/60 group-hover:text-brand-text transition-colors font-sans leading-none">CREATE ROOM</span>
           </button>
 
           <button
@@ -295,8 +295,8 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                             </>
                           ) : (
                             <>
-                              <span className="w-2 h-2 rounded-full bg-brand-success animate-pulse shadow-[0_0_10px_#798777]"></span>
-                              <span className="text-[10px] font-black text-brand-success uppercase tracking-widest font-sans">Active Link</span>
+                              <span className="w-2 h-2 rounded-full bg-brand-primary animate-pulse shadow-[0_0_10px_#E5B25C]"></span>
+                              <span className="text-[10px] font-black text-brand-primary uppercase tracking-widest font-sans">Active Link</span>
                             </>
                           )}
                         </div>
@@ -317,7 +317,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                         </div>
                         <span className="text-xs font-black text-brand-text-dim ml-1 uppercase tracking-tighter font-sans">{room.members.length} / 20</span>
                       </div>
-                      <button className="px-6 py-2.5 bg-brand-text hover:bg-brand-text/90 text-brand-bg rounded-xl text-[10px] font-[1000] uppercase tracking-widest shadow-accent transition-all group-hover:scale-105 font-sans ring-1 ring-brand-primary/20">Join Room</button>
+                      <button className="px-6 py-2.5 bg-brand-primary hover:bg-brand-primary/90 text-brand-bg rounded-xl text-[10px] font-[1000] uppercase tracking-widest shadow-accent transition-all group-hover:scale-105 font-sans">Join Room</button>
                     </div>
                   </div>
                 ))}

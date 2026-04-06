@@ -84,20 +84,20 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
                   <button
                     type="button"
                     onClick={() => setEditedRoom({ ...editedRoom, privacy: 'Public' })}
-                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${editedRoom.privacy === 'Public' ? 'bg-brand-text text-brand-bg shadow-sm' : 'bg-brand-muted/15 text-brand-text-dim hover:bg-brand-muted/30'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${editedRoom.privacy === 'Public' ? 'bg-brand-primary text-brand-bg shadow-sm' : 'bg-brand-muted/15 text-brand-text-dim hover:bg-brand-muted/30'}`}
                   >
                     Public
                   </button>
                   <button
                     type="button"
                     onClick={() => setEditedRoom({ ...editedRoom, privacy: 'Private' })}
-                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${editedRoom.privacy === 'Private' ? 'bg-brand-text text-brand-bg shadow-sm' : 'bg-brand-muted/15 text-brand-text-dim hover:bg-brand-muted/30'}`}
+                    className={`flex-1 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${editedRoom.privacy === 'Private' ? 'bg-brand-primary text-brand-bg shadow-sm' : 'bg-brand-muted/15 text-brand-text-dim hover:bg-brand-muted/30'}`}
                   >
                     Private
                   </button>
                 </div>
                 <div className="flex gap-2 pt-1">
-                  <button onClick={handleUpdate} className="flex-1 py-1.5 bg-brand-primary text-white rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-accent hover:scale-105 transition-all"><Check size={14} /> Save</button>
+                   <button onClick={handleUpdate} className="flex-1 py-1.5 bg-brand-primary text-brand-bg rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 shadow-accent hover:scale-105 transition-all"><Check size={14} /> Save</button>
                   <button onClick={() => { setIsEditing(false); setEditedRoom({ ...room }); }} className="flex-1 py-1.5 bg-brand-muted/20 text-brand-text-dim rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-brand-muted/40 transition-all"><X size={14} /> Cancel</button>
                 </div>
               </div>
@@ -252,7 +252,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 min-w-[60px] sm:min-w-[100px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all ${activeTab === tab ? 'bg-brand-text text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text hover:bg-brand-surface/50'}`}
+                 className={`flex-1 min-w-[60px] sm:min-w-[100px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all ${activeTab === tab ? 'bg-brand-primary text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text hover:bg-brand-surface/50'}`}
               >
                 {tab === 'chat' && <MessageCircle size={16} className="sm:w-5 sm:h-5" />}
                 {tab === 'video' && <Video size={16} className="sm:w-5 sm:h-5" />}

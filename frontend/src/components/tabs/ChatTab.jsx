@@ -215,7 +215,7 @@ function ChatTab({ room, currentUser, addToast }) {
               key={msg.id}
               className={`flex ${msg.sender_id === currentUser.id ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[70%] ${msg.sender_id === currentUser.id ? 'bg-brand-primary text-white shadow-accent' : 'bg-brand-surface border border-brand-border text-brand-text'} rounded-2xl p-4 shadow-sm`}>
+              <div className={`max-w-[70%] ${msg.sender_id === currentUser.id ? 'bg-brand-primary text-brand-bg shadow-accent' : 'bg-brand-surface border border-brand-border text-brand-text'} rounded-2xl p-4 shadow-sm`}>
                 {msg.sender_id !== currentUser.id && (
                   <p className="text-xs mb-1 font-black uppercase tracking-widest italic">
                     <span className="text-brand-secondary">{msg.senderName}</span>
@@ -254,7 +254,7 @@ function ChatTab({ room, currentUser, addToast }) {
                   <MessageContent text={msg.text} />
                 )}
 
-                <p className={`text-[10px] font-black mt-2 uppercase tracking-widest ${msg.sender_id === currentUser.id ? 'text-white/50' : 'text-brand-text-dim/50'}`}>
+                <p className={`text-[10px] font-black mt-2 uppercase tracking-widest ${msg.sender_id === currentUser.id ? 'text-brand-bg/60' : 'text-brand-text-dim/50'}`}>
                   {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                 </p>
               </div>
@@ -393,7 +393,7 @@ function ChatTab({ room, currentUser, addToast }) {
               {message.trim() || isRecording ? (
                 <button
                   onClick={handleSend}
-                  className="w-10 h-10 bg-brand-primary text-white rounded-full flex items-center justify-center shadow-accent transition-all animate-in zoom-in-75 duration-200 active:scale-90"
+                  className="w-10 h-10 bg-brand-primary text-brand-bg rounded-full flex items-center justify-center shadow-accent transition-all animate-in zoom-in-75 duration-200 active:scale-90"
                   title="Send Message"
                 >
                   <Send size={18} fill="currentColor" />

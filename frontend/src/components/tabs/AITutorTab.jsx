@@ -120,14 +120,14 @@ function AITutorTab({ room }) {
         ) : (
           messages.map((msg, idx) => (
             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[80%] ${msg.role === 'user' ? 'bg-brand-primary text-white shadow-lg' : 'bg-brand-bg border border-brand-border text-brand-text'} rounded-2xl p-4 shadow-md`}>
+              <div className={`max-w-[80%] ${msg.role === 'user' ? 'bg-brand-primary text-brand-bg shadow-lg' : 'bg-brand-bg border border-brand-border text-brand-text'} rounded-2xl p-4 shadow-md`}>
                 {msg.role === 'assistant' && (
                   <div className="flex items-center gap-2 mb-2">
                     <Bot size={16} className="text-brand-primary" />
                     <span className="text-[10px] font-black text-brand-primary uppercase tracking-widest">AI Tutor</span>
                   </div>
                 )}
-                <p className={`whitespace-pre-wrap leading-relaxed ${msg.role === 'user' ? 'text-white font-medium' : 'text-brand-text'}`}>{msg.content}</p>
+                <p className={`whitespace-pre-wrap leading-relaxed ${msg.role === 'user' ? 'text-brand-bg font-medium' : 'text-brand-text'}`}>{msg.content}</p>
               </div>
             </div>
           ))
@@ -160,7 +160,7 @@ function AITutorTab({ room }) {
             <button
               onClick={handleSend}
               disabled={isLoading || !input.trim()}
-              className={`w-[48px] h-[48px] rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 shrink-0 ${isLoading ? 'bg-brand-muted opacity-50' : 'bg-brand-text hover:bg-brand-text/90'}`}
+              className={`w-[48px] h-[48px] rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90 shrink-0 ${isLoading ? 'bg-brand-muted opacity-50' : 'bg-brand-primary text-brand-bg hover:bg-brand-primary/90'}`}
               title="Send Message"
             >
               {isLoading ? (

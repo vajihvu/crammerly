@@ -22,20 +22,20 @@
 }
 
 html.dark {
-    --bg-main: #0B0A09;
-    --bg-surface: #141312;
-    --bg-card: #1E1C1A;
-    --border-dim: #2A2826;
-    --border-bright: #3D3935;
-    --accent-primary: #D6C7B4;
-    --accent-secondary: #B8A38B;
-    --accent-tertiary: #9E8D7A;
-    --accent-success: #9DB49A;
-    --accent-warning: #E5B76C;
-    --accent-danger: #D48B74;
-    --text-primary: #F2F0ED;
-    --text-secondary: #AAA7A4;
-    --text-muted: #7A7774;
+    --bg-main: #221E1B;
+    --bg-surface: #2A2521;
+    --bg-card: #332D29;
+    --border-dim: rgba(189, 183, 171, 0.1);
+    --border-bright: rgba(189, 183, 171, 0.2);
+    --accent-primary: #E5B25C;
+    --accent-secondary: #D69F4D;
+    --accent-tertiary: #B88942;
+    --accent-success: #8E9B7E;
+    --accent-warning: #E5B25C;
+    --accent-danger: #B35C44;
+    --text-primary: #EAE3DA;
+    --text-secondary: #BDB7AB;
+    --text-muted: #8C867C;
 }
 
 @layer base {
@@ -134,7 +134,7 @@ html.dark {
 }
 
 .dark .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #4A4642;
+    background-color: var(--accent-secondary);
 }
 
 .custom-scrollbar::-webkit-scrollbar-button {
