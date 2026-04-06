@@ -114,7 +114,7 @@ function MenuSidebar({
             </div>
             <div>
               <h3 className="text-lg font-bold text-brand-text tracking-tight">{currentUser.name}</h3>
-              <p className="text-xs text-brand-text-dim font-medium">@{currentUser.username}</p>
+              <p className="text-xs text-brand-text-dim font-medium lowercase">@{currentUser.username}#{currentUser.tag}</p>
             </div>
           </div>
         </div>
