@@ -8,7 +8,7 @@ import VideoTab from './tabs/VideoTab';
 import AITutorTab from './tabs/AITutorTab';
 import ProgressTab from './tabs/ProgressTab';
 
-function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoom, onLeaveRoom, activeTab, setActiveTab, addToast }) {
+function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoom, activeTab, setActiveTab, addToast }) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedRoom, setEditedRoom] = React.useState(room || {});
   const [showRoomInfo, setShowRoomInfo] = React.useState(false);

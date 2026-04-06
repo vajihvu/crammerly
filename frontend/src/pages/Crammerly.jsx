@@ -308,7 +308,6 @@ export default function Crammerly() {
               onMarkProgress={markProgress}
               onDeleteRoom={deleteRoom}
               onSendMessage={sendMessage}
-              onLeaveRoom={leaveRoom}
               onUpdateRoom={updateRoom}
               activeTab={activeTab}
               setActiveTab={setActiveTab}
