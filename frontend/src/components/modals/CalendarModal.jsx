@@ -196,7 +196,6 @@ function CalendarModal({ onClose, openConfirm }) {
                             <ChevronLeft size={24} className="sm:w-8 sm:h-8" />
                         </button>
                         <div className="flex flex-col items-center">
-                            <h4 className="text-[8px] sm:text-[10px] font-black tracking-[0.3em] sm:tracking-[0.6em] text-brand-text/40 uppercase mb-1 sm:mb-2">Content Schedule</h4>
                             <h2 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-[0.2em] sm:tracking-[0.4em] text-brand-text uppercase leading-none">
                                 {monthNames[currentMonth]}
                             </h2>
