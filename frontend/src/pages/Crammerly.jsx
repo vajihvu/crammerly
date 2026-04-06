@@ -201,6 +201,8 @@ export default function Crammerly() {
       addToast('Profile updated successfully!', 'success');
     } catch (error) {
       console.error('Failed to update profile:', error);
+      const message = error.response?.data?.message || 'Failed to update profile';
+      addToast(message, 'error');
       setCurrentUser(prevUser);
     }
   };

@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { X, Plus, CheckCircle, Github, Linkedin, Briefcase, GraduationCap, UserCircle, Camera, Share2, Copy, Check, Shield, Globe } from 'lucide-react';
 
-import StudyHeatmap from '../ui/StudyHeatmap';
 
 
-function ProfileModal({ currentUser = {}, onClose, onUpdateProfile, studyActivity = {} }) {
+
+function ProfileModal({ currentUser = {}, onClose, onUpdateProfile }) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: 'User',
@@ -373,10 +373,6 @@ function ProfileModal({ currentUser = {}, onClose, onUpdateProfile, studyActivit
                     </div>
                   )}
                 </div>
-
-                {!isEditing && (
-                  <StudyHeatmap activity={studyActivity} />
-                )}
               </div>
         </div>
       </div>

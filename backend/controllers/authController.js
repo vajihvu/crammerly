@@ -29,7 +29,7 @@ export const formatUserPayload = (user) => ({
     email: user.email,
     name: user.name,
     username: user.username || undefined,
-    tag: user.tag || undefined,
+    tag: user.tag ? user.tag.toString().slice(0, 4) : undefined,
     avatar: user.avatar || undefined,
     institution: user.institution || undefined,
     course: user.course || undefined,
@@ -534,6 +534,12 @@ export const updateUserProfile = async (req, res, next) => {
             token: passwordChanged ? generateAccessToken(updatedUser, newSessionId) : undefined
         });
     } catch (error) {
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.username) {
+            const duplicateError = new Error('This username already exists');
+            duplicateError.statusCode = 400;
+            duplicateError.code = 'RES_DUPLICATE';
+            return next(duplicateError);
+        }
         next(error);
     }
 };

@@ -87,7 +87,6 @@ const userSchema = new mongoose.Schema({
     },
     tag: {
         type: String,
-        unique: true,
         index: true
     },
     googleId: {
@@ -209,7 +208,7 @@ userSchema.pre('save', async function () {
         const maxAttempts = 5;
 
         while (!isUnique && attempts < maxAttempts) {
-            const newTag = Math.floor(100000 + Math.random() * 900000).toString();
+            const newTag = Math.floor(1000 + Math.random() * 9000).toString();
             const existing = await this.constructor.findOne({ tag: newTag });
             if (!existing) {
                 this.tag = newTag;
