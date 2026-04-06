@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usersApi } from '../api/users';
 import { useUI } from '../context/UIContext';
+import { useAuth } from '../context/AuthContext';
 import { Sparkles, User, GraduationCap, BookOpen, Heart, Zap, ArrowRight, X, Loader2 } from 'lucide-react';
 
 const Onboarding = () => {
     const { addToast } = useUI();
+    const { updateUser } = useAuth();
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
 
     const [username, setUsername] = useState('');
@@ -57,20 +61,18 @@ const Onboarding = () => {
             });
             await usersApi.completeOnboarding();
 
-        // Sync updated profile into cached user so Crammerly doesn't redirect back
-        try {
-            const stored = JSON.parse(localStorage.getItem('userInfo')) || {};
-            const mergedFields = response?.data || {};
-            if (stored.user) {
-                stored.user = { ...stored.user, ...mergedFields, isOnboarded: true };
-            } else {
-                Object.assign(stored, mergedFields, { isOnboarded: true });
+            // Sync updated profile into global auth state
+            if (response.success) {
+                updateUser({ 
+                    user: { 
+                        ...response.data.user, 
+                        isOnboarded: true 
+                    } 
+                });
             }
-            localStorage.setItem('userInfo', JSON.stringify(stored));
-        } catch { /* ignore parse errors */ }
 
             addToast('Profile set up successfully! Welcome to Crammerly.', 'success');
-            window.location.href = '/'; // Full reload to pick up updated user state
+            navigate('/');
         } catch (err) {
             addToast(err.response?.data?.message || 'Failed to save profile. Please try again.', 'error');
         } finally {
@@ -81,19 +83,11 @@ const Onboarding = () => {
     const handleSkip = async () => {
         try {
             await usersApi.completeOnboarding();
+            updateUser({ user: { isOnboarded: true } });
+            navigate('/');
         } catch {
-            // Silent — they can always update profile later
+            addToast('Failed to skip onboarding. Please try again.', 'error');
         }
-        // Sync isOnboarded into cached user
-        try {
-            const stored = JSON.parse(localStorage.getItem('userInfo'));
-            if (stored) {
-                if (stored.user) stored.user.isOnboarded = true;
-                else stored.isOnboarded = true;
-                localStorage.setItem('userInfo', JSON.stringify(stored));
-            }
-        } catch { /* ignore */ }
-        window.location.href = '/';
     };
 
     return (

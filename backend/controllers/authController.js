@@ -542,7 +542,7 @@ export const updateUserProfile = async (req, res, next) => {
         }
 
         return res.sendSuccess({
-            ...formatUserPayload(updatedUser),
+            user: formatUserPayload(updatedUser),
             token: passwordChanged ? generateAccessToken(updatedUser, newSessionId) : undefined
         });
     } catch (error) {

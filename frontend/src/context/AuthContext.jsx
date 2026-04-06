@@ -128,6 +128,18 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const updateUser = useCallback((data) => {
+        setUser(prev => {
+            const next = {
+                ...prev,
+                ...data,
+                user: { ...(prev?.user || {}), ...(data?.user || data) }
+            };
+            localStorage.setItem('userInfo', JSON.stringify(next));
+            return next;
+        });
+    }, []);
+
     return (
         <AuthContext.Provider value={{ 
             user, 
@@ -136,6 +148,7 @@ export const AuthProvider = ({ children }) => {
             logout, 
             googleLogin,
             verify2FA,
+            updateUser,
             loading 
         }}>
             {children}

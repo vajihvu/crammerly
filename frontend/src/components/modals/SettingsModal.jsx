@@ -5,7 +5,7 @@ import { usersApi } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 
 function SettingsModal({ initialTab = 'general', onClose }) {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const [activeTab, setActiveTab] = useState(initialTab);
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
     const [selectedLanguage, setSelectedLanguage] = useState(user?.settings?.language || 'ENGLISH (US)');
@@ -30,7 +30,7 @@ function SettingsModal({ initialTab = 'general', onClose }) {
         }
         const saveSettings = async () => {
             try {
-                await usersApi.updateProfile({
+                const response = await usersApi.updateProfile({
                     settings: {
                         privacy: {
                             allowInvites: privacy.invites,
@@ -39,25 +39,31 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                         }
                     }
                 });
+                if (response.success) {
+                    updateUser(response.data);
+                }
             } catch (err) {
                 console.error('Failed to save privacy settings:', err);
             }
         };
         saveSettings();
-    }, [privacy]);
+    }, [privacy, updateUser]);
 
     // Auto-save language when changed
     const handleLanguageChange = useCallback(async (lang) => {
         setSelectedLanguage(lang);
         setIsLanguageOpen(false);
         try {
-            await usersApi.updateProfile({
+            const response = await usersApi.updateProfile({
                 settings: { language: lang }
             });
+            if (response.success) {
+                updateUser(response.data);
+            }
         } catch (err) {
             console.error('Failed to save language setting:', err);
         }
-    }, []);
+    }, [updateUser]);
 
     // MFA Setup States
     const [qrCodeData, setQrCodeData] = useState(null);
