@@ -33,16 +33,4 @@ export const authApi = {
 
     changePassword: (currentPassword, newPassword) =>
         client.put('/auth/password', { currentPassword, newPassword }).then(res => res.data),
-
-    generate2FA: () =>
-        client.post('/auth/2fa/generate', {}).then(res => res.data),
-
-    enable2FA: (code) =>
-        client.post('/auth/2fa/enable', { code }).then(res => res.data),
-
-    disable2FA: (password) =>
-        client.post('/auth/2fa/disable', { password }).then(res => res.data),
-
-    verify2FA: (tempToken, code) =>
-        client.post('/auth/verify-2fa', { tempToken, code }).then(res => res.data),
 };

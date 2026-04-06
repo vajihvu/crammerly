@@ -18,11 +18,7 @@ import {
     googleLogin,
     deleteAccount,
     exportData,
-    changePassword,
-    generate2FA,
-    enable2FA,
-    disable2FA,
-    verify2FA
+    changePassword
 } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validator.js';
@@ -299,11 +295,7 @@ router.post('/reset-password/:token', csrfGuard, validate(resetPasswordSchema), 
 // Change Password
 router.put('/password', protect, csrfGuard, changePassword);
 
-// Two-Factor Authentication
-router.post('/2fa/generate', protect, csrfGuard, generate2FA);
-router.post('/2fa/enable', protect, csrfGuard, enable2FA);
-router.post('/2fa/disable', protect, csrfGuard, disable2FA);
-router.post('/verify-2fa', verify2FA);
+
 
 // GDPR — Right to Erasure (Art.17)
 router.delete('/account', protect, csrfGuard, deleteAccount);
