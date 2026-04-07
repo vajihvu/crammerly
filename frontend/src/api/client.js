@@ -94,8 +94,16 @@ client.interceptors.response.use(
                     return client(originalRequest);
                 }
             } catch (refreshError) {
-                // Refresh failed - trigger logout
-                emit(apiEvents.UNAUTHORIZED);
+                // If the refresh itself is rate-limited, don't necessarily logout immediately
+                // unless we have no other choice. But for now, we should at least notify
+                // and avoid a crash.
+                if (refreshError.response?.status === 429) {
+                    console.warn('Refresh token rate limited. Waiting before next attempt.');
+                    // Optionally: we could wait and retry, but for now just reject
+                    // so the component can show a "Too many requests" message
+                } else {
+                    emit(apiEvents.UNAUTHORIZED);
+                }
                 return Promise.reject(refreshError);
             }
         }

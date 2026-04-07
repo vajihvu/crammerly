@@ -106,15 +106,15 @@ function MenuSidebar({
 
           <div className="flex flex-col gap-3">
             <div className="w-14 h-14 bg-brand-muted rounded-full flex items-center justify-center text-xl font-black text-brand-text shadow-xl border-2 border-brand-surface overflow-hidden">
-              {currentUser.avatarUrl ? (
+              {currentUser?.avatarUrl ? (
                 <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
-                (currentUser.name || '?')[0].toUpperCase()
+                (currentUser?.name || '?')[0].toUpperCase()
               )}
             </div>
             <div>
-              <h3 className="text-lg font-bold text-brand-text tracking-tight">{currentUser.name}</h3>
-              <p className="text-xs text-brand-text-dim font-medium lowercase">@{currentUser.username}#{currentUser.tag}</p>
+              <h3 className="text-lg font-bold text-brand-text tracking-tight">{currentUser?.name || 'Anonymous'}</h3>
+              <p className="text-xs text-brand-text-dim font-medium lowercase">@{currentUser?.username || 'user'}#{currentUser?.tag || '0000'}</p>
             </div>
           </div>
         </div>

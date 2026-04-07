@@ -10,7 +10,7 @@ export const friendsApi = {
      */
     getAll: async () => {
         const { data } = await client.get('/friends');
-        return data.data || [];
+        return Array.isArray(data.data) ? data.data : [];
     },
 
     /**

@@ -49,15 +49,15 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
         if (socket) {
             const handleMemberJoined = ({ id, name }) => {
                 const activeId = currentRoomRef.current?.id;
-                setRooms(prev => prev.map(r => {
+                setRooms(prev => Array.isArray(prev) ? prev.map(r => {
                     if (r.id === activeId) {
-                        const isAlreadyMember = r.members.some(m => m.id === id);
+                        const isAlreadyMember = Array.isArray(r.members) && r.members.some(m => m.id === id);
                         if (!isAlreadyMember) {
-                            return { ...r, members: [...r.members, { id, name, progress: [] }] };
+                            return { ...r, members: [...(r.members || []), { id, name, progress: [] }] };
                         }
                     }
                     return r;
-                }));
+                }) : []);
 
                 if (currentRoomRef.current) {
                     setCurrentRoom(prev => {
@@ -101,13 +101,12 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
             };
 
             const handleMemberLeft = ({ id }) => {
-                const activeId = currentRoomRef.current?.id;
-                setRooms(prev => prev.map(r => {
-                    if (r.id === activeId) {
-                        return { ...r, members: r.members.filter(m => m.id !== id) };
-                    }
-                    return r;
-                }));
+                setRooms(prev => Array.isArray(prev) ? prev.map(r => {
+                    return {
+                        ...r,
+                        members: Array.isArray(r.members) ? r.members.filter(m => m.id !== id) : []
+                    };
+                }) : []);
 
                 if (currentRoomRef.current) {
                     setCurrentRoom(prev => {
@@ -161,17 +160,30 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
 
     // ── Join room ──
     const joinRoom = async (room, code = undefined) => {
+        if (!currentUser || !currentUser.id) {
+            addToast('Please sign in to join rooms', 'warning');
+            return false;
+        }
+
         const userId = currentUser.id;
-        const isAlreadyMember = room.members?.some(m => m.id === userId);
+        const isAlreadyMember = Array.isArray(room.members) && room.members.some(m => m.id === userId);
         const updatedRoom = {
             ...room,
             members: isAlreadyMember ? room.members : [...(room.members || []), { id: userId, name: currentUser.name, progress: [] }]
         };
 
         try {
-            await roomsApi.join(room.id, code);
+            const response = await roomsApi.join(room.id, code);
+            // Even if response.success is false, axios might not throw depends on backend middleware, 
+            // but our asyncHandler/sendError should return 4xx which axios throws.
+            if (response && response.success === false) {
+                 addToast(response.message || 'Failed to join', 'danger');
+                 return false;
+            }
         } catch (error) {
             console.error('Failed to join room:', error);
+            const msg = error.response?.data?.message || 'Failed to join room';
+            addToast(msg, 'danger');
             return false;
         }
 
@@ -185,15 +197,15 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
     // ── Join by code ──
     const joinRoomByCode = async (code) => {
         try {
-            const room = await roomsApi.getByCode(code);
-            if (!room) {
-                addToast('Invalid room code or room not found', 'error');
-                return false;
+            const roomData = await roomsApi.getByCode(code);
+            if (roomData && roomData.id) {
+                return await joinRoom(roomData);
             }
-            return await joinRoom(room, code);
+            return false;
         } catch (error) {
-            addToast('Invalid room code or room not found', 'error');
-            console.error('Failed to join room by code:', error);
+            console.error('Failed to join by code:', error);
+            const msg = error.response?.data?.message || 'Invalid room code';
+            addToast(msg, 'danger');
             return false;
         }
     };

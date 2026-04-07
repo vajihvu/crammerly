@@ -137,7 +137,6 @@ export default function Crammerly() {
     leaveRoomBase();
     setView('home');
   };
-
   // ── Sync view with room status ──
 
   // ── Sync view with room status ──
@@ -251,9 +250,15 @@ export default function Crammerly() {
     setIsInRoom(false);
   };
 
-  const handleRoomClick = (room) => {
+  const handleRoomClick = async (room) => {
     trackActivity({ id: room.id, title: room.name, type: 'room', genre: room.topic });
-    joinRoom(room).then(() => setView('room'));
+    const success = await joinRoom(room);
+    if (success) setView('room');
+  };
+
+  const handleJoinByCode = async (code) => {
+    const success = await joinRoomByCode(code);
+    if (success) setView('room');
   };
 
   const handleCreateRoom = async (...args) => {
@@ -369,7 +374,7 @@ export default function Crammerly() {
           )}
 
           {modals.createRoom && <CreateRoomModal onClose={() => closeModal('createRoom')} onCreateRoom={handleCreateRoom} addToast={addToast} />}
-          {modals.join && <JoinByCodeModal onClose={resetToHome} onJoin={joinRoomByCode} />}
+          {modals.join && <JoinByCodeModal onClose={resetToHome} onJoin={handleJoinByCode} />}
           {modals.search && <GlobalSearchModal onClose={resetToHome} onJoinRoom={joinRoom} />}
           {modals.friends && <FriendsModal currentUser={currentUser} onClose={resetToHome} friendsList={friends} setFriendsList={setFriends} addToast={addToast} />}
           {modals.profile && <ProfileModal currentUser={currentUser} onUpdateProfile={updateUserProfile} onClose={resetToHome} />}

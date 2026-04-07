@@ -89,13 +89,13 @@ const Header = ({
                     <button
                         onClick={() => openModal('profile')}
                         className="p-0.5 md:p-1 rounded-full transition-all active:scale-90"
-                        title={currentUser.name}
+                        title={currentUser?.name || 'Profile'}
                     >
                         <div className="w-8 h-8 sm:w-9 sm:h-9 md:w-11 md:h-11 bg-brand-muted/20 border-2 border-brand-border/30 rounded-full flex items-center justify-center text-[10px] sm:text-xs md:text-sm font-black text-brand-text shadow-sm overflow-hidden">
-                            {currentUser.avatarUrl ? (
+                            {currentUser?.avatarUrl ? (
                                 <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
-                                (currentUser.name || '?')[0].toUpperCase()
+                                (currentUser?.name || '?')[0].toUpperCase()
                             )}
                         </div>
                     </button>
