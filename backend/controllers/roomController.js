@@ -16,6 +16,7 @@ export const getAllRooms = asyncHandler(async (req, res) => {
     if (cached) return res.sendSuccess(cached);
 
     const query = {
+        isDM: { $ne: true },
         $or: [
             { privacy: 'Public' },
             { 'members.user': req.user._id }
