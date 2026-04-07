@@ -70,6 +70,7 @@ function FriendsModal({ onClose, addToast }) {
   const [activeMessageId, setActiveMessageId] = useState(null);
   const [currentMessage, setCurrentMessage] = useState('');
   const [lastSearchedId, setLastSearchedId] = useState('');
+  const [suggestedUsers, setSuggestedUsers] = useState([]);
 
   // Initial Data Load
   useEffect(() => {
@@ -190,7 +191,7 @@ function FriendsModal({ onClose, addToast }) {
       if (selectedFriend.dmRoomId) {
         await messagesApi.send(selectedFriend.dmRoomId, { content });
       }
-    } catch (_err) {
+    } catch {
       if (addToast) addToast('Failed to send message', 'danger');
     }
   };
@@ -230,7 +231,7 @@ function FriendsModal({ onClose, addToast }) {
 
         mediaRecorder.current.start();
         setIsRecording(true);
-      } catch (_err) {
+      } catch {
         if (addToast) addToast('Microphone access denied', 'danger');
       }
     } else {
@@ -248,7 +249,7 @@ function FriendsModal({ onClose, addToast }) {
           type: 'file',
           fileData: { name: file.name, size: file.size }
         });
-      } catch (err) {
+      } catch {
         if (addToast) addToast('Failed to upload file', 'danger');
       }
     }
@@ -303,7 +304,7 @@ function FriendsModal({ onClose, addToast }) {
       // Refresh friends
       const { data } = await friendsApi.getAll();
       setFriends(data);
-    } catch (err) {
+    } catch {
       if (addToast) addToast('Failed to accept request', 'danger');
     }
   };
@@ -313,7 +314,7 @@ function FriendsModal({ onClose, addToast }) {
       await friendsApi.declineRequest(notif.relatedId || notif.requestId);
       setNotifications(prev => prev.filter(n => n.id !== notif.id));
       if (addToast) addToast('Request declined', 'info');
-    } catch (err) {
+    } catch {
       if (addToast) addToast('Failed to decline request', 'danger');
     }
   };

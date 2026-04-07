@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { getSocket } from '../utils/socket';
-import { useAuth } from './AuthContext';
 import { useUI } from './UIContext';
 
 const VideoCallContext = createContext();
@@ -260,4 +259,5 @@ export const VideoCallProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useVideoCall = () => useContext(VideoCallContext);
