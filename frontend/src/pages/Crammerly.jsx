@@ -78,7 +78,10 @@ export default function Crammerly() {
     const userId = getUserId();
     if (!userId) return [];
     const saved = localStorage.getItem(`crammer_notifications_${userId}`);
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
   });
 
   const [recentActivity, setRecentActivity] = useState(() => {
@@ -86,7 +89,8 @@ export default function Crammerly() {
     if (!userId) return [];
     try {
       const saved = localStorage.getItem(`crammer_recent_activity_${userId}`);
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch { return []; }
   });
 
@@ -99,7 +103,10 @@ export default function Crammerly() {
         const saved = localStorage.getItem(`crammer_recent_activity_${userId}`);
         if (saved) {
           requestAnimationFrame(() => {
-            setRecentActivity(JSON.parse(saved));
+            try {
+              const parsed = JSON.parse(saved);
+              setRecentActivity(Array.isArray(parsed) ? parsed : []);
+            } catch { setRecentActivity([]); }
           });
         }
       } catch (err) { console.error('Failed to load recent activity:', err); }
@@ -176,7 +183,8 @@ export default function Crammerly() {
   // ── Track recent activity ──
   const trackActivity = React.useCallback((activity) => {
     setRecentActivity(prev => {
-      const filtered = prev.filter(a => a.id !== activity.id);
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const filtered = safePrev.filter(a => a.id !== activity.id);
       const updated = [{ ...activity, timestamp: new Date().toISOString() }, ...filtered].slice(0, 10);
       const userId = getUserId();
       if (userId) {

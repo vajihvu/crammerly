@@ -29,9 +29,16 @@ export function useStudyData({ authUser, currentUser, addToast, openConfirm }) {
                 ]);
 
                 if (tData.status === 'fulfilled' && Array.isArray(tData.value)) setTodos(tData.value);
+                else setTodos([]);
+
                 if (jData.status === 'fulfilled' && Array.isArray(jData.value)) setJournalEntries(jData.value);
+                else setJournalEntries([]);
+
                 if (nData.status === 'fulfilled' && Array.isArray(nData.value)) setStudyNotes(nData.value);
+                else setStudyNotes([]);
+
                 if (fData.status === 'fulfilled' && Array.isArray(fData.value)) setFriends(fData.value);
+                else setFriends([]);
                 if (stats.status === 'fulfilled') setStudyStats(stats.value);
 
                 const failed = [tData, jData, nData, fData, stats].filter(r => r.status === 'rejected');

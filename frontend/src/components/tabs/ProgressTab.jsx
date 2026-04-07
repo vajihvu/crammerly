@@ -63,8 +63,8 @@ function ProgressTab({ room, currentMember, onMarkProgress }) {
           Recent Activity
         </h3>
         <div className="space-y-2">
-          {(room.members || [])
-            .flatMap(member => (member.progress || []).map(p => ({ ...p, memberName: member.name || 'Anonymous' })))
+          {Array.isArray(room.members)
+            ? room.members.flatMap(member => (Array.isArray(member.progress) ? member.progress : []).map(p => ({ ...p, memberName: member.name || 'Anonymous' })))
             .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0))
             .slice(0, 10)
             .map((activity, idx) => (
@@ -78,7 +78,7 @@ function ProgressTab({ room, currentMember, onMarkProgress }) {
                 <p className="text-xs text-brand-text-dim">{activity.task}</p>
                 <p className="text-[10px] text-brand-text-dim/50 mt-0.5">{activity.time ? new Date(activity.time).toLocaleString() : 'Recent'}</p>
               </div>
-            ))}
+            )) : null}
         </div>
       </div>
     </div>

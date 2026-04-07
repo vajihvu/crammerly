@@ -48,10 +48,15 @@ function ChatTab({ room, currentUser, addToast }) {
       setMessagesError(null);
       try {
         const data = await messagesApi.getAll(room.id);
-        setMessages(data);
+        if (Array.isArray(data)) {
+          setMessages(data);
+        } else {
+          setMessages([]);
+        }
       } catch (err) {
         console.error('Failed to load messages:', err);
         setMessagesError('Failed to load messages');
+        setMessages([]);
       } finally {
         setLoadingMessages(false);
       }
@@ -161,12 +166,12 @@ function ChatTab({ room, currentUser, addToast }) {
     setShowStickerPicker(false);
   };
 
-  const filteredMessages = showSearch && searchTerm.trim()
-    ? (messages || []).filter(msg =>
+  const filteredMessages = Array.isArray(messages) && showSearch && searchTerm.trim()
+    ? messages.filter(msg =>
       (msg.text || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (msg.senderName || '').toLowerCase().includes(searchTerm.toLowerCase())
     )
-    : (messages || []);
+    : (Array.isArray(messages) ? messages : []);
 
   return (
     <div className="bg-brand-card rounded-2xl border border-brand-border flex flex-col flex-1 min-h-0 h-full overflow-hidden">
@@ -204,12 +209,12 @@ function ChatTab({ room, currentUser, addToast }) {
             setMessagesError(null);
             messagesApi.getAll(room.id).then(data => { setMessages(data); setLoadingMessages(false); }).catch(() => { setMessagesError('Failed to load messages'); setLoadingMessages(false); });
           }} />
-        ) : filteredMessages.length === 0 ? (
+        ) : Array.isArray(filteredMessages) && filteredMessages.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
             <MessageCircle size={48} className="mx-auto mb-4 opacity-50" />
             <p>{showSearch && searchTerm ? 'No messages found' : 'No messages yet. Start chatting!'}</p>
           </div>
-        ) : (
+        ) : Array.isArray(filteredMessages) ? (
           filteredMessages.map(msg => (
             <div
               key={msg.id}
@@ -260,7 +265,7 @@ function ChatTab({ room, currentUser, addToast }) {
               </div>
             </div>
           ))
-        )}
+        ) : null}
         <div ref={messagesEndRef} />
       </div>
 

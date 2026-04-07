@@ -37,10 +37,12 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
   };
 
   const filteredGenres = genres.filter(g => g !== 'All' && g.toLowerCase().includes(genreSearch.toLowerCase()));
-  const frequentlyVisited = recentActivity?.map(a => a.genre).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).slice(0, 2);
-  if (frequentlyVisited.length < 2) {
-      if (!frequentlyVisited.includes('Coding')) frequentlyVisited.push('Coding');
-      if (!frequentlyVisited.includes('Math') && frequentlyVisited.length < 2) frequentlyVisited.push('Math');
+  const frequentlyVisited = Array.isArray(recentActivity)
+    ? recentActivity.map(a => a.genre).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).slice(0, 2)
+    : [];
+  if (Array.isArray(frequentlyVisited)) {
+    if (!frequentlyVisited.includes('Coding')) frequentlyVisited.push('Coding');
+    if (!frequentlyVisited.includes('Math') && frequentlyVisited.length < 2) frequentlyVisited.push('Math');
   }
 
   const userInterests = currentUser.interests && currentUser.interests.length > 0
@@ -52,7 +54,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-  const displayedRooms = (rooms || []).filter(room => {
+  const displayedRooms = Array.isArray(rooms) ? rooms.filter(room => {
     const topic = room.topic || '';
     const matchesGenre = activeGenre === 'All' || topic.toLowerCase().includes(activeGenre.toLowerCase());
     if (!matchesGenre) return false;
@@ -65,7 +67,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
     }
     if (activeStatus === 'My Rooms') {
       const isCreator = room.creator_id === currentUser.id;
-      const isMember = room.members?.some(m => (m.id === currentUser.id || m.profile_id === currentUser.id));
+      const isMember = Array.isArray(room.members) && room.members.some(m => (m.id === currentUser.id || m.profile_id === currentUser.id));
       return isCreator || isMember;
     }
     if (activeStatus === 'Scheduled') {
@@ -73,7 +75,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
       return roomScheduleDate && roomScheduleDate > today;
     }
     return true;
-  });
+  }) : [];
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -115,7 +117,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
         </div>
       </div>
 
-      {recentActivity.length > 0 && (
+      {Array.isArray(recentActivity) && recentActivity.length > 0 && (
         <div className="animate-in fade-in slide-in-from-top-4 duration-200 mb-8 mt-2">
           <div className="flex items-center gap-3 mb-4 px-2">
             <div className="w-1.5 h-6 bg-brand-primary rounded-full"></div>
@@ -125,7 +127,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
             {recentActivity.map((activity) => (
               <button
                 key={activity.id}
-                onClick={() => onRoomClick((rooms || []).find(r => r.id === activity.id) || activity)}
+                onClick={() => onRoomClick((Array.isArray(rooms) ? rooms : []).find(r => r.id === activity.id) || activity)}
                 className="flex-shrink-0 flex items-center gap-4 p-5 bg-brand-surface border border-brand-border/40 hover:border-brand-primary rounded-[28px] transition-all shadow-premium min-w-[240px] group text-left"
               >
                 <div className="w-12 h-12 bg-brand-primary/10 rounded-2xl flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-brand-bg transition-all shrink-0">
@@ -272,14 +274,14 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                   {activeStatus === 'Scheduled' ? 'Why not plan ahead and schedule a session for others to join later?' : 'Why not start a new topic and invite others to join your session?'}
                 </p>
                 <div className="flex flex-wrap justify-center gap-3">
-                  {userInterests.map((interest, idx) => (
+                  {(userInterests || []).map((interest, idx) => (
                     <button key={idx} onClick={onCreateRoom} className="px-6 py-3 bg-brand-muted/30 hover:bg-brand-muted/45 rounded-xl text-sm font-bold border border-brand-border transition-all text-brand-text">
                       {activeStatus === 'Scheduled' ? 'Schedule' : 'Start'} {interest} Discussion
                     </button>
                   ))}
                 </div>
               </div>
-            ) : (
+            ) : Array.isArray(displayedRooms) ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {displayedRooms.map(room => (
                   <div key={room.id} className="group bg-brand-surface rounded-[24px] p-6 border border-brand-border hover:border-brand-primary cursor-pointer overflow-hidden relative transition-all shadow-premium hover:-translate-y-1" onClick={() => onRoomClick(room)}>
@@ -315,7 +317,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                         <div className="flex -space-x-2">
                           {[1, 2, 3].map(i => <div key={i} className={`w-7 h-7 rounded-full border-2 border-brand-surface bg-brand-card flex items-center justify-center text-[10px] font-black text-brand-secondary shadow-sm ${i === 2 ? 'bg-brand-bg' : i === 3 ? 'bg-brand-surface' : ''}`}>{room.name[0]}</div>)}
                         </div>
-                        <span className="text-xs font-black text-brand-text-dim ml-1 uppercase tracking-tighter font-sans">{room.members.length} / 20</span>
+                        <span className="text-xs font-black text-brand-text-dim ml-1 uppercase tracking-tighter font-sans">{Array.isArray(room.members) ? room.members.length : 0} / 20</span>
                       </div>
                       {(!(room.scheduleDate || room.schedule_date) || (room.scheduleDate || room.schedule_date) <= today || room.creator_id === currentUser.id) && (
                         <button className="px-6 py-2.5 bg-brand-primary hover:bg-brand-primary/90 text-brand-bg rounded-xl text-[10px] font-[1000] uppercase tracking-widest shadow-accent transition-all group-hover:scale-105 font-sans">Join Room</button>
@@ -324,10 +326,11 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                   </div>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       </div>
+
     </div>
   );
 }

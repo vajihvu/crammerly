@@ -266,7 +266,7 @@ function VideoTab({ room, onUpdateRoom }) {
       ) : (
         <div className="flex-1 flex flex-col">
           <div className="grid grid-cols-2 gap-4 mb-6">
-            {(room.members || []).map((member, idx) => (
+            {Array.isArray(room.members) ? room.members.map((member, idx) => (
               <div key={idx} className="aspect-video bg-brand-bg rounded-xl border border-brand-border flex items-center justify-center relative overflow-hidden group">
                 <div className="w-20 h-20 bg-brand-muted rounded-3xl flex items-center justify-center text-3xl font-black text-brand-text shadow-2xl rotate-3 transition-transform group-hover:scale-110">
                   {(member.name || '?')[0].toUpperCase()}
@@ -275,7 +275,7 @@ function VideoTab({ room, onUpdateRoom }) {
                 {/* Simulated video indicator */}
                 <div className="absolute top-3 right-3 w-3 h-3 bg-green-500 rounded-full border-2 border-brand-bg animate-pulse"></div>
               </div>
-            ))}
+            )) : null}
             {isScreenSharing && (
               <div className="aspect-video bg-brand-primary/10 rounded-xl border-2 border-dashed border-brand-primary flex items-center justify-center relative animate-pulse col-span-2">
                 <div className="flex flex-col items-center gap-3">
