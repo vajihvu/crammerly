@@ -154,7 +154,7 @@ function FriendsModal({ onClose, addToast }) {
           if (socket) socket.emit('leave_room', selectedFriend.dmRoomId);
       };
     }
-  }, [activeView, selectedFriend]);
+  }, [activeView, selectedFriend, chatHistory]);
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -618,7 +618,9 @@ function FriendsModal({ onClose, addToast }) {
             )}
             {!showAddFriend ? (
               <div className="md:flex-1 overflow-visible md:overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 custom-scrollbar bg-brand-bg flex flex-col">
-                {activeTab === 'friends' ? (
+            {loadingFriends ? (
+              <FriendListSkeleton count={5} />
+            ) : activeTab === 'friends' ? (
                   Object.keys(groupedFriends).sort().length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] opacity-60">
                       <User size={64} className="text-brand-muted mb-4" />

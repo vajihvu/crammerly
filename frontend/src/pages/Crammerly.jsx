@@ -73,9 +73,16 @@ export default function Crammerly() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [recentActivity, setRecentActivity] = useState([]);
+  const [recentActivity, setRecentActivity] = useState(() => {
+    const userId = getUserId();
+    if (!userId) return [];
+    try {
+      const saved = localStorage.getItem(`crammer_recent_activity_${userId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
 
-  // Initialize from storage once
+  // Re-sync if user changes
   useEffect(() => {
     const userId = getUserId();
     if (userId) {
@@ -84,7 +91,7 @@ export default function Crammerly() {
         if (saved) setRecentActivity(JSON.parse(saved));
       } catch (err) { console.error('Failed to load recent activity:', err); }
     }
-  }, [authUser?.user?._id || authUser?.id]);
+  }, [authUser?.user?._id, authUser?.id]); // Simplified dependencies
 
   // ── Composed hooks ──
   const {
@@ -117,14 +124,17 @@ export default function Crammerly() {
       const actualUser = authUser.user || authUser;
       const nextId = actualUser._id || actualUser.id;
       
-      // Only update if something actually changed to avoid cascading re-renders
-      setCurrentUser(prev => {
-        if (prev?.id === nextId && prev?.updatedAt === actualUser.updatedAt) return prev;
-        return {
-          ...prev,
-          ...actualUser,
-          id: nextId
-        };
+      // Use requestAnimationFrame to avoid synchronous cascading renders
+      // which allows the browser to finish the current render before triggered the next one
+      requestAnimationFrame(() => {
+        setCurrentUser(prev => {
+          if (prev?.id === nextId && prev?.updatedAt === actualUser.updatedAt) return prev;
+          return {
+            ...prev,
+            ...actualUser,
+            id: nextId
+          };
+        });
       });
     }
   }, [authUser]);
