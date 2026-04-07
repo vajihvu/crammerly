@@ -5,10 +5,9 @@ import FriendItem from './friends/FriendItem';
 import SuggestionItem from './friends/SuggestionItem';
 import { friendsApi, notificationsApi, messagesApi } from '../../api';
 import { getSocket } from '../../utils/socket';
-
 const AudioMessage = ({ url, isMe }) => {
-  const [isPlaying, setIsPlaying] = React.useState(false);
-  const audioRef = React.useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
 
   const togglePlay = () => {
     if (isPlaying) {
@@ -42,13 +41,12 @@ const AudioMessage = ({ url, isMe }) => {
     </div>
   );
 };
-function FriendsModal({ currentUser = {}, onClose, addToast }) {
+function FriendsModal({ onClose, addToast }) {
 
   const [activeView, setActiveView] = useState('list'); // 'list' or 'chat'
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
   const [friends, setFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [chatMode, setChatMode] = useState('text');
@@ -67,7 +65,6 @@ function FriendsModal({ currentUser = {}, onClose, addToast }) {
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [newFriendName, setNewFriendName] = useState('');
   const [pendingRequests, setPendingRequests] = useState(new Set());
-  const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [sentMessages, setSentMessages] = useState({});
   const [activeMessageId, setActiveMessageId] = useState(null);
@@ -77,7 +74,6 @@ function FriendsModal({ currentUser = {}, onClose, addToast }) {
   // Initial Data Load
   useEffect(() => {
     const loadData = async () => {
-      setLoading(true);
       try {
         const [friendsData, notificationsData] = await Promise.all([
           friendsApi.getAll(),
@@ -85,11 +81,11 @@ function FriendsModal({ currentUser = {}, onClose, addToast }) {
         ]);
         setFriends(friendsData);
         setNotifications(notificationsData);
-      } catch (err) {
-        console.error('Failed to load friends/notifications:', err);
+      } catch (_err) {
+        console.error('Failed to load friends/notifications:', _err);
         if (addToast) addToast('Failed to load your social data', 'danger');
       } finally {
-        setLoading(false);
+        // loading state removed
       }
     };
     loadData();
@@ -194,7 +190,7 @@ function FriendsModal({ currentUser = {}, onClose, addToast }) {
       if (selectedFriend.dmRoomId) {
         await messagesApi.send(selectedFriend.dmRoomId, { content });
       }
-    } catch (err) {
+    } catch (_err) {
       if (addToast) addToast('Failed to send message', 'danger');
     }
   };
@@ -234,7 +230,7 @@ function FriendsModal({ currentUser = {}, onClose, addToast }) {
 
         mediaRecorder.current.start();
         setIsRecording(true);
-      } catch (err) {
+      } catch (_err) {
         if (addToast) addToast('Microphone access denied', 'danger');
       }
     } else {

@@ -9,7 +9,6 @@ export const UIProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
     const [globalLoading, setGlobalLoading] = useState(false);
 
-    // eslint-disable-next-line no-unused-vars
     const addToast = useCallback((message, type = 'info', duration = 5000) => {
         const id = Date.now();
         setToasts(prev => [...prev, { id, message, type, duration }]);

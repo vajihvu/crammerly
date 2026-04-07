@@ -5,6 +5,7 @@ import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff, Maximize, Minimize, User
 const CallModal = () => {
     const {
         callState,
+        callType,
         remoteUser,
         localStream,
         remoteStream,

@@ -5,8 +5,14 @@ import { useUI } from './UIContext';
 
 const VideoCallContext = createContext();
 
+const ICE_SERVERS = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+    ]
+};
+
 export const VideoCallProvider = ({ children }) => {
-    const { user } = useAuth();
     const { addToast } = useUI();
     const [callState, setCallState] = useState('idle'); // idle, outgoing, incoming, active
     const [callType, setCallType] = useState('video'); // video, voice
@@ -19,13 +25,6 @@ export const VideoCallProvider = ({ children }) => {
     const peerConnection = useRef(null);
     const socket = useRef(null);
     const pendingCandidates = useRef([]);
-
-    const ICE_SERVERS = {
-        iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-        ]
-    };
 
     // Cleanup WebRTC
     const cleanupCall = useCallback(() => {
