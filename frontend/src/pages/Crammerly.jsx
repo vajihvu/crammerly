@@ -56,8 +56,16 @@ export default function Crammerly() {
   const [userStatus, setUserStatus] = useState('online');
   const [isFirstVisit, setIsFirstVisit] = useState(() => !localStorage.getItem('crammer_not_first_visit'));
 
-  // Derived from authUser via the sync useEffect below — never read from stale localStorage
-  const [currentUser, setCurrentUser] = useState(null);
+  // Derived from authUser — stable reference that updates synchronously
+  const currentUser = React.useMemo(() => {
+    if (!authUser) return null;
+    const actualUser = authUser.user || authUser;
+    const nextId = actualUser._id || actualUser.id;
+    return {
+      ...actualUser,
+      id: nextId
+    };
+  }, [authUser]);
 
   const getUserId = () => {
     try {
@@ -123,26 +131,7 @@ export default function Crammerly() {
     setView('home');
   };
 
-  // ── Auth sync ──
-  useEffect(() => {
-    if (authUser) {
-      const actualUser = authUser.user || authUser;
-      const nextId = actualUser._id || actualUser.id;
-      
-      // Use requestAnimationFrame to avoid synchronous cascading renders
-      // which allows the browser to finish the current render before triggered the next one
-      requestAnimationFrame(() => {
-        setCurrentUser(prev => {
-          if (prev?.id === nextId && prev?.updatedAt === actualUser.updatedAt) return prev;
-          return {
-            ...prev,
-            ...actualUser,
-            id: nextId
-          };
-        });
-      });
-    }
-  }, [authUser]);
+  // ── Sync view with room status ──
 
   // ── Sync view with room status ──
   useEffect(() => {

@@ -28,10 +28,10 @@ export function useStudyData({ authUser, currentUser, addToast, openConfirm }) {
                     studyApi.sessions.getStats()
                 ]);
 
-                if (tData.status === 'fulfilled') setTodos(tData.value);
-                if (jData.status === 'fulfilled') setJournalEntries(jData.value);
-                if (nData.status === 'fulfilled') setStudyNotes(nData.value);
-                if (fData.status === 'fulfilled') setFriends(fData.value);
+                if (tData.status === 'fulfilled' && Array.isArray(tData.value)) setTodos(tData.value);
+                if (jData.status === 'fulfilled' && Array.isArray(jData.value)) setJournalEntries(jData.value);
+                if (nData.status === 'fulfilled' && Array.isArray(nData.value)) setStudyNotes(nData.value);
+                if (fData.status === 'fulfilled' && Array.isArray(fData.value)) setFriends(fData.value);
                 if (stats.status === 'fulfilled') setStudyStats(stats.value);
 
                 const failed = [tData, jData, nData, fData, stats].filter(r => r.status === 'rejected');

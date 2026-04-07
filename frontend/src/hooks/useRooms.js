@@ -20,10 +20,15 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
         setRoomsError(null);
         try {
             const loadedRooms = await roomsApi.getAll();
-            setRooms(loadedRooms);
+            if (Array.isArray(loadedRooms)) {
+                setRooms(loadedRooms);
+            } else {
+                setRooms([]);
+            }
         } catch (err) {
             console.error('Room loading error:', err);
             setRoomsError('Failed to load rooms');
+            setRooms([]); // Reset to empty array on error to prevent crash
         } finally {
             setLoadingRooms(false);
         }
@@ -115,7 +120,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                 socket.off('member_left', handleMemberLeft);
             };
         }
-    }, [loadRooms, currentRoom, authUser, addToast]);
+    }, [currentRoom?.id, authUser, addToast]); // Depend on ID instead of object
 
     // ── Create room (requires auth) ──
     const createRoom = async (roomName, task, topic, privacy, scheduleDate, scheduleTime) => {
@@ -163,7 +168,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
 
         setCurrentRoom(updatedRoom);
         setIsInRoom(true);
-        setRooms(prev => prev.map(r => r.id === room.id ? updatedRoom : r));
+        setRooms(prev => Array.isArray(prev) ? prev.map(r => r.id === room.id ? updatedRoom : r) : [updatedRoom]);
         addToast(`Successfully joined ${room.name}!`, 'success');
         return true;
     };
