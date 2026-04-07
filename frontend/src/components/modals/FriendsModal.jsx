@@ -76,12 +76,14 @@ function FriendsModal({ onClose, addToast }) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [friendsData, notificationsData] = await Promise.all([
+        const [friendsData, notificationsData, suggestionsData] = await Promise.all([
           friendsApi.getAll(),
-          notificationsApi.getAll()
+          notificationsApi.getAll(),
+          friendsApi.search('')
         ]);
         setFriends(friendsData);
         setNotifications(notificationsData);
+        setSuggestedUsers(suggestionsData);
       } catch (_err) {
         console.error('Failed to load friends/notifications:', _err);
         if (addToast) addToast('Failed to load your social data', 'danger');
