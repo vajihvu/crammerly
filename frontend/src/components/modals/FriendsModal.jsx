@@ -128,10 +128,10 @@ function FriendsModal({ onClose, addToast }) {
     if (activeView === 'chat' && selectedFriend?.dmRoomId) {
       const loadHistory = async () => {
         try {
-          const { data } = await messagesApi.getByRoom(selectedFriend.dmRoomId);
+          const response = await messagesApi.getByRoom(selectedFriend.dmRoomId);
           setChatHistory(prev => ({
             ...prev,
-            [selectedFriend._id || selectedFriend.id]: data.messages
+            [selectedFriend._id || selectedFriend.id]: response?.messages || []
           }));
         } catch (err) {
           console.error('Failed to load chat history:', err);
@@ -360,7 +360,8 @@ function FriendsModal({ onClose, addToast }) {
   const emojis = ['😊', '😂', '🔥', '🚀', '✨', '👍', '🙏', '🎬', '📸', '❤️', '😎', '🎉'];
 
   if (activeView === 'chat' && selectedFriend) {
-    const currentChat = chatHistory[selectedFriend.id] || [];
+    const friendId = selectedFriend._id || selectedFriend.id;
+    const currentChat = Array.isArray(chatHistory[friendId]) ? chatHistory[friendId] : [];
 
     return (
       <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-md z-[150] flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto" onClick={onClose}>
