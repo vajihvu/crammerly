@@ -103,7 +103,6 @@ const startServer = async () => {
     if (!config.isTest) {
         await connectDB();
         startMaintenanceScheduler();
-        await initBackgroundJobs();
     }
 
 
@@ -122,6 +121,9 @@ const startServer = async () => {
 
     // Initialize Socket.io
     initSocket(server);
+
+    // Initialize background jobs (non-blocking to server startup)
+    initBackgroundJobs();
 
     // Graceful Shutdown Handler
     const shutdown = async (signal) => {
