@@ -82,6 +82,7 @@ export default function Crammerly() {
     } catch { return []; }
   });
 
+  const authId = authUser?.user?._id || authUser?.id;
   // Re-sync if user changes
   useEffect(() => {
     const userId = getUserId();
@@ -91,7 +92,7 @@ export default function Crammerly() {
         if (saved) setRecentActivity(JSON.parse(saved));
       } catch (err) { console.error('Failed to load recent activity:', err); }
     }
-  }, [authUser?.user?._id, authUser?.id]); // Simplified dependencies
+  }, [authId]); // Simplified dependencies
 
   // ── Composed hooks ──
   const {
@@ -190,7 +191,7 @@ export default function Crammerly() {
       }
       return updated;
     });
-  }, [authUser?.user?._id || authUser?.id]);
+  }, [authId]);
 
   // ── Notifications ──
   const clearAllNotifications = () => {
