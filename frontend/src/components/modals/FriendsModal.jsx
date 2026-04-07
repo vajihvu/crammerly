@@ -61,6 +61,7 @@ function FriendsModal({ onClose, addToast }) {
   const audioChunks = useRef([]);
   
   const [chatHistory, setChatHistory] = useState({});
+  const [loadedChats, setLoadedChats] = useState(new Set());
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const [emojiPickerTab, setEmojiPickerTab] = useState('emoji');
@@ -129,17 +130,20 @@ function FriendsModal({ onClose, addToast }) {
   // Load chat history when switching to chat
   useEffect(() => {
     if (activeView === 'chat' && selectedFriend?.dmRoomId) {
+      const roomId = selectedFriend.dmRoomId;
+      const friendId = selectedFriend._id || selectedFriend.id;
+
       const loadHistory = async () => {
-        const friendId = selectedFriend._id || selectedFriend.id;
         // Skip re-fetching if we already have history for this session
-        if (chatHistory[friendId] && chatHistory[friendId].length > 0) return;
+        if (loadedChats.has(roomId)) return;
 
         try {
-          const response = await messagesApi.getByRoom(selectedFriend.dmRoomId);
+          const response = await messagesApi.getByRoom(roomId);
           setChatHistory(prev => ({
             ...prev,
             [friendId]: response?.messages || []
           }));
+          setLoadedChats(prev => new Set([...prev, roomId]));
         } catch (err) {
           console.error('Failed to load chat history:', err);
         }
@@ -148,13 +152,13 @@ function FriendsModal({ onClose, addToast }) {
       
       // Join the DM room
       const socket = getSocket();
-      if (socket) socket.emit('join_room', selectedFriend.dmRoomId);
+      if (socket) socket.emit('join_room', roomId);
       
       return () => {
-          if (socket) socket.emit('leave_room', selectedFriend.dmRoomId);
+          if (socket) socket.emit('leave_room', roomId);
       };
     }
-  }, [activeView, selectedFriend, chatHistory]);
+  }, [activeView, selectedFriend, loadedChats]);
 
   useEffect(() => {
     if (chatEndRef.current) {
