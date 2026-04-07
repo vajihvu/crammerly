@@ -51,6 +51,7 @@ const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: config.isProduction,
     sameSite: config.isProduction ? 'none' : 'strict', // 'none' required for cross-site cookie transmission
+    domain: config.jwt.cookieDomain || undefined, // Explicitly set domain for cross-subdomain support
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days (Matches config.jwt.refreshExpiresIn logic)
 };
 
