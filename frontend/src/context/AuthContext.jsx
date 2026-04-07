@@ -111,11 +111,17 @@ export const AuthProvider = ({ children }) => {
 
     const updateUser = useCallback((data) => {
         setUser(prev => {
+            if (!prev) return prev;
+            // Support both { user: ... } and just the user object
+            const userData = data?.user || data;
             const next = {
                 ...prev,
-                ...data,
-                user: { ...(prev?.user || {}), ...(data?.user || data) }
+                user: { ...prev.user, ...userData }
             };
+            // If data contains a token (e.g. password change), update it too
+            if (data?.token) {
+                next.token = data.token;
+            }
             localStorage.setItem('userInfo', JSON.stringify(next));
             return next;
         });

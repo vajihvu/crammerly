@@ -5,6 +5,7 @@ import { todosApi } from './todos';
 import { recordsApi } from './records';
 import { studyApi } from './study';
 import { friendsApi } from './friends';
+import { notificationsApi } from './notifications';
 import { messagesApi } from './messages';
 import { sessionsApi } from './sessions';
 import { bugsApi } from './bugs';
@@ -19,6 +20,7 @@ export {
     recordsApi,
     studyApi,
     friendsApi,
+    notificationsApi,
     messagesApi,
     sessionsApi,
     bugsApi,
@@ -33,6 +35,7 @@ export default {
     records: recordsApi,
     study: studyApi,
     friends: friendsApi,
+    notifications: notificationsApi,
     messages: messagesApi,
     sessions: sessionsApi,
     bugs: bugsApi,

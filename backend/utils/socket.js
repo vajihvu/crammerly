@@ -68,6 +68,9 @@ export const initSocket = (server) => {
     io.on('connection', (socket) => {
         logger.info(`🔌 User connected: ${socket.user.name} (${socket.id})`);
 
+        // Join private user room for direct notifications
+        socket.join(`user_${socket.user._id}`);
+
         socket.on('join_room', (roomId) => {
             socket.join(roomId);
             logger.info(`👥 User ${socket.user.name} joined room: ${roomId}`);
@@ -127,6 +130,49 @@ export const initSocket = (server) => {
             });
         });
 
+        // --- WebRTC Signaling Events ---
+
+        // 1. Initiate a call
+        socket.on('call:request', ({ toUserId, signalData }) => {
+            io.to(`user_${toUserId}`).emit('call:incoming', {
+                from: {
+                    id: socket.user._id,
+                    name: socket.user.name,
+                    avatar: socket.user.avatar,
+                    tag: socket.user.tag
+                },
+                signalData
+            });
+            logger.info(`📞 Call request from ${socket.user.name} to user ${toUserId}`);
+        });
+
+        // 2. Accept a call
+        socket.on('call:accept', ({ toUserId, signalData }) => {
+            io.to(`user_${toUserId}`).emit('call:accepted', {
+                signalData
+            });
+            logger.info(`✅ Call accepted by ${socket.user.name} for user ${toUserId}`);
+        });
+
+        // 3. Decline a call
+        socket.on('call:decline', ({ toUserId }) => {
+            io.to(`user_${toUserId}`).emit('call:declined');
+            logger.info(`❌ Call declined by ${socket.user.name} for user ${toUserId}`);
+        });
+
+        // 4. Forward WebRTC signals (ICE candidates / SDP)
+        socket.on('call:signal', ({ toUserId, signalData }) => {
+            io.to(`user_${toUserId}`).emit('call:signal', {
+                signalData
+            });
+        });
+
+        // 5. End a call
+        socket.on('call:end', ({ toUserId }) => {
+            io.to(`user_${toUserId}`).emit('call:ended');
+            logger.info(`📴 Call ended by ${socket.user.name}`);
+        });
+
         socket.on('disconnect', () => {
             logger.info(`🔌 User disconnected: ${socket.id}`);
         });
@@ -148,5 +194,14 @@ export const getIO = () => {
 export const emitToRoom = (roomId, event, data) => {
     if (io) {
         io.to(roomId).emit(event, data);
+    }
+};
+
+/**
+ * Emit to a specific user
+ */
+export const emitToUser = (userId, event, data) => {
+    if (io) {
+        io.to(`user_${userId}`).emit(event, data);
     }
 };

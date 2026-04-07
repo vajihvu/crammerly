@@ -9,27 +9,23 @@ const FriendItem = ({ friend, onChat, onCall }) => (
         <div className="flex items-center gap-3 sm:gap-5">
             <div className="relative">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-brand-bg rounded-full flex items-center justify-center overflow-hidden border-2 border-brand-border group-hover:border-brand-primary/50 transition-all">
-                    <span className="text-lg sm:text-xl font-black text-brand-muted group-hover:text-brand-primary">
-                        {friend.avatar || (friend.name || '?')[0].toUpperCase()}
-                    </span>
+                    {friend.avatar_url ? (
+                        <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                        <span className="text-lg sm:text-xl font-black text-brand-muted group-hover:text-brand-primary">
+                            {(friend.name || friend.username || '?')[0].toUpperCase()}
+                        </span>
+                    )}
                 </div>
-                <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 sm:border-4 border-brand-bg rounded-full ${friend.status === 'online' ? 'bg-brand-success' :
-                    friend.status === 'do not disturb' ? 'bg-brand-danger' :
-                        'bg-brand-muted'
-                    }`}></div>
+                <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 sm:border-4 border-brand-bg rounded-full ${friend.isOnline ? 'bg-brand-success' : 'bg-brand-muted'}`}></div>
             </div>
             <div className="font-inter">
-                <h4 className="text-sm font-bold text-brand-text group-hover:text-brand-primary transition-colors tracking-tight uppercase">{friend.name}</h4>
+                <h4 className="text-sm font-bold text-brand-text group-hover:text-brand-primary transition-colors tracking-tight uppercase">{friend.name || friend.username}</h4>
                 <div className="flex items-center gap-1.5">
-                    <span className={`w-1 h-1 rounded-full ${friend.status === 'online' ? 'bg-brand-success' :
-                        friend.status === 'away' ? 'bg-brand-warning' :
-                            friend.status === 'busy' ? 'bg-brand-danger' :
-                                'bg-brand-muted'
-                        }`}></span>
-                    <p className={`text-[8px] uppercase font-semibold tracking-widest transition-colors ${friend.status === 'online' ? 'text-brand-success' :
-                        friend.status === 'do not disturb' ? 'text-brand-danger' :
-                            'text-brand-text-dim'
-                        }`}>{friend.status}</p>
+                    <span className={`w-1 h-1 rounded-full ${friend.isOnline ? 'bg-brand-success' : 'bg-brand-muted'}`}></span>
+                    <p className={`text-[8px] uppercase font-semibold tracking-widest transition-colors ${friend.isOnline ? 'text-brand-success' : 'text-brand-text-dim'}`}>
+                        {friend.isOnline ? 'Online' : 'Offline'}
+                    </p>
                 </div>
             </div>
         </div>

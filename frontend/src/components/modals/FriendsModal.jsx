@@ -1,130 +1,260 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { X, UserPlus, MessageCircle, Video, Paperclip, Smile, Send, Mic, Search, FileText, ArrowLeft, PhoneCall, Sticker, User, Sparkles, Check, TrendingUp, Loader } from 'lucide-react';
+import { useVideoCall } from '../../context/VideoCallContext';
+import { X, UserPlus, MessageCircle, Video, Paperclip, Smile, Send, Mic, Search, FileText, ArrowLeft, PhoneCall, Sticker, User, Sparkles, Check, TrendingUp, Loader, Bell, UserCheck, ShieldClose, Play, Pause, Headphones } from 'lucide-react';
 import FriendItem from './friends/FriendItem';
 import SuggestionItem from './friends/SuggestionItem';
-import { friendsApi } from '../../api';
+import { friendsApi, notificationsApi, messagesApi } from '../../api';
+import { getSocket } from '../../utils/socket';
 
-const MessageContent = ({ text }) => {
-  const isCode = text.startsWith('```') && text.endsWith('```');
-  if (isCode) {
-    const code = text.slice(3, -3);
-    return (
-      <div className="bg-black/20 rounded-xl p-4 my-2 border border-white/5 font-mono text-[11px] overflow-x-auto text-left">
-        <pre className="text-brand-primary/80 whitespace-pre-wrap">{code}</pre>
+const AudioMessage = ({ url, isMe }) => {
+  const [isPlaying, setIsPlaying] = React.useState(false);
+  const audioRef = React.useRef(null);
+
+  const togglePlay = () => {
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  return (
+    <div className={`flex items-center gap-3 px-4 py-2 ${isMe ? 'bg-white/20' : 'bg-brand-muted/20'} rounded-2xl min-w-[200px]`}>
+      <button 
+        onClick={togglePlay}
+        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isMe ? 'bg-white text-brand-primary' : 'bg-brand-primary text-white'}`}
+      >
+        {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} className="ml-0.5" fill="currentColor" />}
+      </button>
+      <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden relative">
+        <div className={`absolute inset-y-0 left-0 ${isMe ? 'bg-white' : 'bg-brand-primary'} w-1/3 rounded-full`} />
       </div>
-    );
-  }
-  return <p className="text-[14px] leading-relaxed font-semibold text-left">{text}</p>;
+      <Headphones size={14} className="opacity-50" />
+      <audio 
+        ref={audioRef} 
+        src={url} 
+        onEnded={() => setIsPlaying(false)} 
+        onPause={() => setIsPlaying(false)}
+        onPlay={() => setIsPlaying(true)}
+        className="hidden" 
+      />
+    </div>
+  );
 };
+function FriendsModal({ currentUser = {}, onClose, addToast }) {
 
-function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast }) {
+  const [activeView, setActiveView] = useState('list'); // 'list' or 'chat'
+  const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
+  const [friends, setFriends] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const [activeView, setActiveView] = useState('list');
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [chatMode, setChatMode] = useState('text');
   const [message, setMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [chatHistory, setChatHistory] = useState(() => {
-    const saved = localStorage.getItem('crammer_dm_history');
-    return saved ? JSON.parse(saved) : {};
-  });
+  
+  const mediaRecorder = useRef(null);
+  const audioChunks = useRef([]);
+  
+  const [chatHistory, setChatHistory] = useState({});
   const chatEndRef = useRef(null);
   const fileInputRef = useRef(null);
-  const [emojiPickerTab, setEmojiPickerTab] = useState('emoji'); // 'emoji', 'sticker', 'gif'
+  const [emojiPickerTab, setEmojiPickerTab] = useState('emoji');
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [newFriendName, setNewFriendName] = useState('');
   const [pendingRequests, setPendingRequests] = useState(new Set());
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [sentMessages, setSentMessages] = useState({}); // { userId: messageCount }
+  const [sentMessages, setSentMessages] = useState({});
   const [activeMessageId, setActiveMessageId] = useState(null);
   const [currentMessage, setCurrentMessage] = useState('');
   const [lastSearchedId, setLastSearchedId] = useState('');
 
+  // Initial Data Load
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const [friendsData, notificationsData] = await Promise.all([
+          friendsApi.getAll(),
+          notificationsApi.getAll()
+        ]);
+        setFriends(friendsData);
+        setNotifications(notificationsData);
+      } catch (err) {
+        console.error('Failed to load friends/notifications:', err);
+        if (addToast) addToast('Failed to load your social data', 'danger');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [addToast]);
 
-  // friendsList and setFriendsList are now passed as props
+  // Socket Listeners
+  useEffect(() => {
+    const socket = getSocket();
+    if (socket) {
+      const handleNewNotification = (notif) => {
+        setNotifications(prev => [notif, ...prev]);
+        if (addToast) addToast(notif.content, 'info');
+      };
 
-  const defaultMessages = [
-    { id: 'd1', text: 'Hey! Did you finish the editing session? 🎬', sender: 'them', time: '10:42 AM' },
-    { id: 'd2', text: 'Almost done! Just adding some final transitions.', sender: 'me', time: '10:45 AM' }
-  ];
+      const handleNewMessage = (msg) => {
+        // If the message belongs to the current open chat, update history
+        if (selectedFriend && msg.room_id === selectedFriend.dmRoomId) {
+          setChatHistory(prev => ({
+            ...prev,
+            [selectedFriend._id || selectedFriend.id]: [...(prev[selectedFriend._id || selectedFriend.id] || []), msg]
+          }));
+        }
+      };
+
+      socket.on('new_notification', handleNewNotification);
+      socket.on('new_message', handleNewMessage);
+
+      return () => {
+        socket.off('new_notification', handleNewNotification);
+        socket.off('new_message', handleNewMessage);
+      };
+    }
+  }, [selectedFriend, addToast]);
+
+  // Load chat history when switching to chat
+  useEffect(() => {
+    if (activeView === 'chat' && selectedFriend?.dmRoomId) {
+      const loadHistory = async () => {
+        try {
+          const { data } = await messagesApi.getByRoom(selectedFriend.dmRoomId);
+          setChatHistory(prev => ({
+            ...prev,
+            [selectedFriend._id || selectedFriend.id]: data.messages
+          }));
+        } catch (err) {
+          console.error('Failed to load chat history:', err);
+        }
+      };
+      loadHistory();
+      
+      // Join the DM room
+      const socket = getSocket();
+      if (socket) socket.emit('join_room', selectedFriend.dmRoomId);
+      
+      return () => {
+          if (socket) socket.emit('leave_room', selectedFriend.dmRoomId);
+      };
+    }
+  }, [activeView, selectedFriend]);
 
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-    localStorage.setItem('crammer_dm_history', JSON.stringify(chatHistory));
-  }, [chatHistory, message, activeView]);
+  }, [chatHistory, message, activeView, selectedFriend]);
 
-  const filteredFriends = (friendsList || []).filter(f =>
-    (f.name || f.full_name || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFriends = friends.filter(f =>
+    (f.name || f.username || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const groupedFriends = [...filteredFriends]
-    .sort((a, b) => (a.name || a.full_name || '').localeCompare(b.name || b.full_name || ''))
-    .reduce((acc, friend) => {
-      const name = friend.name || friend.full_name || 'U';
-      const groupName = friend.status === 'online' ? 'Active Now' : name[0].toUpperCase();
-      if (!acc[groupName]) acc[groupName] = [];
-      acc[groupName].push(friend);
-      return acc;
-    }, {});
+  const groupedFriends = filteredFriends.reduce((acc, friend) => {
+    const group = friend.isOnline ? 'Active Now' : 'Offline';
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(friend);
+    return acc;
+  }, {});
+
+  const { initiateCall, callState } = useVideoCall();
 
   const openChat = (friend, mode = 'text') => {
     setSelectedFriend(friend);
+    if (mode === 'video' || mode === 'voice') {
+      initiateCall({
+        id: friend._id || friend.id,
+        name: friend.name,
+        avatar: friend.avatar_url || friend.avatar,
+        tag: friend.tag
+      });
+      return;
+    }
     setChatMode(mode);
     setActiveView('chat');
-    if (!chatHistory[friend.id]) {
-      setChatHistory(prev => ({ ...prev, [friend.id]: [...defaultMessages] }));
-    }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!message.trim() || !selectedFriend) return;
-
-    const newMsg = {
-      id: Date.now().toString(),
-      text: message,
-      sender: 'me',
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setChatHistory(prev => ({
-      ...prev,
-      [selectedFriend.id]: [...(prev[selectedFriend.id] || []), newMsg]
-    }));
+    const content = message.trim();
     setMessage('');
     setShowEmojiPicker(false);
-    addToast(`Message sent to ${selectedFriend.name}`, 'success');
+
+    try {
+      if (selectedFriend.dmRoomId) {
+        await messagesApi.send(selectedFriend.dmRoomId, { content });
+      }
+    } catch (err) {
+      if (addToast) addToast('Failed to send message', 'danger');
+    }
   };
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') handleSendMessage();
   };
 
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
+  const toggleRecording = async () => {
     if (!isRecording) {
-      // Simulate voice note behavior
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder.current = new MediaRecorder(stream);
+        audioChunks.current = [];
+
+        mediaRecorder.current.ondataavailable = (e) => {
+          if (e.data.size > 0) audioChunks.current.push(e.data);
+        };
+
+        mediaRecorder.current.onstop = async () => {
+          const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = async () => {
+            const base64Audio = reader.result;
+            if (selectedFriend?.dmRoomId) {
+              await messagesApi.send(selectedFriend.dmRoomId, {
+                content: 'Voice Message',
+                type: 'voice',
+                fileData: { url: base64Audio, name: 'voice_note.webm', mimeType: 'audio/webm' }
+              });
+              if (addToast) addToast('Voice note sent!', 'success');
+            }
+          };
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.current.start();
+        setIsRecording(true);
+      } catch (err) {
+        if (addToast) addToast('Microphone access denied', 'danger');
+      }
+    } else {
+      mediaRecorder.current?.stop();
+      setIsRecording(false);
     }
   };
 
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files[0];
-    if (file && selectedFriend) {
-      const newMsg = {
-        id: Date.now().toString(),
-        text: `Sent a file: ${file.name}`,
-        type: 'file',
-        sender: 'me',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setChatHistory(prev => ({
-        ...prev,
-        [selectedFriend.id]: [...(prev[selectedFriend.id] || []), newMsg]
-      }));
+    if (file && selectedFriend?.dmRoomId) {
+      try {
+        await messagesApi.send(selectedFriend.dmRoomId, {
+          content: `Sent file: ${file.name}`,
+          type: 'file',
+          fileData: { name: file.name, size: file.size }
+        });
+      } catch (err) {
+        if (addToast) addToast('Failed to upload file', 'danger');
+      }
     }
   };
 
@@ -139,48 +269,62 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
     setIsSearching(true);
     setLastSearchedId(newFriendName);
     try {
-      const results = await friendsApi.search(newFriendName);
-      // Filter out self and already friends
-      const filteredResults = results.filter(u =>
-        u.id !== currentUser.id &&
-        !friendsList.some(f => f.friendId === u.id)
-      );
-      setSearchResults(filteredResults.length > 0 ? filteredResults : 'none');
-    } catch {
-      addToast('Search failed', 'danger');
+      const { data } = await friendsApi.search(newFriendName);
+      setSearchResults(data.length > 0 ? data : 'none');
+    } catch (err) {
+      console.error('Search failed:', err);
+      setSearchResults('none');
     } finally {
       setIsSearching(false);
     }
   };
 
-  const addFoundFriend = async (user) => {
+  const handleAddSuggested = async (user) => {
     try {
-      await friendsApi.sendRequest(currentUser.id, user.id);
-      setPendingRequests(prev => new Set([...prev, user.id]));
-      addToast(`Friend request sent to ${user.full_name || user.username}`, 'success');
-      setNewFriendName('');
-      setSearchResults(null);
-      setShowAddFriend(false);
-    } catch {
-      addToast('Failed to send request', 'danger');
+      await friendsApi.sendRequest(user._id || user.id);
+      setPendingRequests(prev => new Set([...prev, user._id || user.id]));
+      if (addToast) addToast('Request sent!', 'success');
+    } catch (err) {
+      if (addToast) addToast(err.response?.data?.message || 'Failed to send request', 'danger');
     }
   };
 
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      try {
-        const results = await friendsApi.search('');
-        setSuggestedUsers(results.filter(u => u.id !== currentUser.id && !friendsList.some(f => f.friendId === u.id)).slice(0, 6));
-      } catch {
-        console.error('Failed to fetch suggestions');
-      }
-    };
-    fetchSuggestions();
-  }, [friendsList, currentUser.id]);
-
-  const handleAddSuggested = (user) => {
-    addFoundFriend(user);
+  const addFoundFriend = async (user) => {
+    try {
+      await friendsApi.sendRequest(user._id || user.id);
+      setPendingRequests(prev => new Set([...prev, user._id || user.id]));
+      if (addToast) addToast('Request sent!', 'success');
+    } catch (err) {
+      if (addToast) addToast(err.response?.data?.message || 'Failed to send request', 'danger');
+    }
   };
+
+  const acceptRequest = async (notif) => {
+    try {
+      await friendsApi.acceptRequest(notif.relatedId || notif.requestId);
+      setNotifications(prev => prev.filter(n => n.id !== notif.id));
+      if (addToast) addToast('Friend request accepted!', 'success');
+      // Refresh friends
+      const { data } = await friendsApi.getAll();
+      setFriends(data);
+    } catch (err) {
+      if (addToast) addToast('Failed to accept request', 'danger');
+    }
+  };
+
+  const declineRequest = async (notif) => {
+    try {
+      await friendsApi.declineRequest(notif.relatedId || notif.requestId);
+      setNotifications(prev => prev.filter(n => n.id !== notif.id));
+      if (addToast) addToast('Request declined', 'info');
+    } catch (err) {
+      if (addToast) addToast('Failed to decline request', 'danger');
+    }
+  };
+
+  const filteredSuggestions = suggestedUsers.filter(u => 
+    !friends.some(f => (f._id || f.id) === (u._id || u.id))
+  );
 
 
   const handleSuggestionMessageClick = (user) => {
@@ -189,7 +333,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
       return;
     }
     const currentCount = sentMessages[user.id] || 0;
-    const isFriend = friendsList.some(f => f.name === user.name);
+    const isFriend = friends.some(f => (f.name || f.username) === user.name);
     if (!isFriend && currentCount >= 1) {
       if (addToast) {
         addToast("Wait for friend request to be accepted to send more messages.", 'warning');
@@ -211,9 +355,6 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
     setCurrentMessage('');
   };
 
-  const filteredSuggestions = suggestedUsers.filter(user => {
-    return !friendsList.some(f => f.friendId === user.id);
-  });
 
 
 
@@ -257,8 +398,30 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
               </div>
             </div>
             <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-              <button onClick={() => setChatMode('voice')} className={`p-2 sm:p-2.5 rounded-xl transition-all shrink-0 ${chatMode === 'voice' ? 'bg-brand-primary text-white' : 'text-brand-text-dim hover:bg-brand-muted/20'}`}><PhoneCall size={16} sm:size={18} /></button>
-              <button onClick={() => setChatMode('video')} className={`p-2 sm:p-2.5 rounded-xl transition-all shrink-0 ${chatMode === 'video' ? 'bg-brand-primary text-white' : 'text-brand-text-dim hover:bg-brand-muted/20'}`}><Video size={18} sm:size={20} /></button>
+              <button 
+                onClick={() => initiateCall({ 
+                  id: selectedFriend._id || selectedFriend.id, 
+                  name: selectedFriend.name, 
+                  avatar: selectedFriend.avatar_url || selectedFriend.avatar,
+                  tag: selectedFriend.tag 
+                })} 
+                disabled={callState !== 'idle'}
+                className="p-2 sm:p-2.5 rounded-xl transition-all shrink-0 text-brand-text-dim hover:bg-brand-muted/20 disabled:opacity-30"
+              >
+                <PhoneCall size={16} sm:size={18} />
+              </button>
+              <button 
+                onClick={() => initiateCall({ 
+                  id: selectedFriend._id || selectedFriend.id, 
+                  name: selectedFriend.name, 
+                  avatar: selectedFriend.avatar_url || selectedFriend.avatar,
+                  tag: selectedFriend.tag 
+                })} 
+                disabled={callState !== 'idle'}
+                className="p-2 sm:p-2.5 rounded-xl transition-all shrink-0 text-brand-text-dim hover:bg-brand-muted/20 disabled:opacity-30"
+              >
+                <Video size={18} sm:size={20} />
+              </button>
               <button onClick={() => setChatMode('text')} className={`p-2 sm:p-2.5 rounded-xl transition-all shrink-0 ${chatMode === 'text' ? 'bg-brand-primary text-white' : 'text-brand-text-dim hover:bg-brand-muted/20'}`}><MessageCircle size={18} sm:size={20} /></button>
               <div className="w-px h-6 bg-brand-border/50 mx-0.5 sm:mx-1 shrink-0" />
               <button onClick={onClose} className="p-2 sm:p-2.5 text-brand-text-dim hover:text-brand-text transition-colors active:scale-95 shrink-0"><X size={18} sm:size={20} /></button>
@@ -277,7 +440,11 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
                           ? 'bg-brand-primary text-white rounded-tr-none'
                           : 'bg-brand-surface text-brand-text rounded-tl-none'
                           }`}>
-                          <MessageContent text={msg.text} />
+                          {msg.type === 'voice' ? (
+                            <AudioMessage url={msg.fileData?.url} isMe={msg.sender === 'me'} />
+                          ) : (
+                            <MessageContent text={msg.text} />
+                          )}
                           {msg.type === 'file' && (
                             <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-black/10 rounded-lg">
                               <FileText size={16} className="text-brand-secondary" />
@@ -350,18 +517,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
               </div>
             )}
 
-            {(chatMode === 'voice' || chatMode === 'video') && (
-              <div className="h-full bg-brand-bg flex flex-col items-center justify-center p-10">
-                <div className="w-40 h-40 bg-brand-surface rounded-full flex items-center justify-center shadow-2xl mb-10 border-4 border-brand-primary/20">
-                  {chatMode === 'voice' ? <Mic size={64} className="text-white animate-pulse" /> : <Video size={64} className="text-white animate-pulse" />}
-                </div>
-                <h2 className="text-2xl font-black text-brand-text mb-2">{selectedFriend.name}</h2>
-                <p className="text-brand-primary text-xs font-black uppercase tracking-widest mb-10">Calling...</p>
-                <button onClick={() => setChatMode('text')} className="w-16 h-16 bg-brand-text rounded-full flex items-center justify-center text-brand-bg rotate-[135deg] shadow-xl hover:bg-white transition-all">
-                  <PhoneCall size={28} />
-                </button>
-              </div>
-            )}
+            {/* Legacy calling UI removed - handled by global CallModal */}
           </div>
         </div>
       </div>
@@ -391,12 +547,33 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
                   className="pl-10 pr-4 py-2 bg-brand-bg border border-brand-border/80 rounded-xl text-[11px] text-brand-text focus:outline-none focus:ring-1 focus:ring-brand-primary/30 focus:border-brand-primary placeholder:text-brand-muted transition-all font-bold w-40 sm:w-64"
                 />
               </div>
+          <div className="flex items-center gap-2 sm:gap-6">
+            <div className="flex bg-brand-bg rounded-2xl p-1 border border-brand-border/30">
               <button
-                onClick={() => setShowAddFriend(true)}
-                className="text-brand-text font-black text-[9px] sm:text-[11px] uppercase tracking-widest hover:text-brand-primary transition-colors bg-brand-muted/20 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-brand-border shrink-0"
+                onClick={() => setActiveTab('friends')}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'friends' ? 'bg-brand-text text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text'}`}
               >
-                Add Friends
+                Friends
               </button>
+              <button
+                onClick={() => setActiveTab('requests')}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'requests' ? 'bg-brand-text text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text'}`}
+              >
+                Requests
+                {notifications.filter(n => n.type === 'FRIEND_REQUEST').length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary text-white text-[8px] flex items-center justify-center rounded-full border-2 border-brand-bg animate-pulse">
+                    {notifications.filter(n => n.type === 'FRIEND_REQUEST').length}
+                  </span>
+                )}
+              </button>
+            </div>
+            <button
+              onClick={() => setShowAddFriend(true)}
+              className="text-brand-text font-black text-[9px] sm:text-[11px] uppercase tracking-widest hover:text-brand-primary transition-colors bg-brand-muted/20 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-brand-border shrink-0"
+            >
+              Add Friends
+            </button>
+          </div>
             </div>
           )}
         </div>
@@ -433,11 +610,9 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
               </div>
             )}
             {!showAddFriend ? (
-              <>
-
-
-                <div className="md:flex-1 overflow-visible md:overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 space-y-6 sm:space-y-10 custom-scrollbar bg-brand-bg flex flex-col">
-                  {Object.keys(groupedFriends).sort().length === 0 ? (
+              <div className="md:flex-1 overflow-visible md:overflow-y-auto px-4 sm:px-8 py-6 sm:py-8 custom-scrollbar bg-brand-bg flex flex-col">
+                {activeTab === 'friends' ? (
+                  Object.keys(groupedFriends).sort().length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] opacity-60">
                       <User size={64} className="text-brand-muted mb-4" />
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-muted">No Friends Found</p>
@@ -448,7 +623,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
                       if (b === 'Active Now') return 1;
                       return a.localeCompare(b);
                     }).map(group => (
-                      <div key={group} className="space-y-3 sm:space-y-4">
+                      <div key={group} className="space-y-3 sm:space-y-4 mb-6">
                         <div className="flex items-center gap-2 sm:gap-4">
                           <h3 className="text-[9px] sm:text-[10px] font-bold text-brand-muted tracking-[0.2em] sm:tracking-[0.3em] uppercase">{group}</h3>
                           <div className="flex-1 h-px bg-brand-border/10"></div>
@@ -456,7 +631,7 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
                         <div className="space-y-3">
                           {groupedFriends[group].map((friend) => (
                             <FriendItem
-                              key={friend.id}
+                              key={friend._id || friend.id}
                               friend={friend}
                               onChat={() => openChat(friend)}
                               onCall={() => openChat(friend, 'voice')}
@@ -465,9 +640,47 @@ function FriendsModal({ currentUser = {}, onClose, friendsList = [], addToast })
                         </div>
                       </div>
                     ))
-                  )}
-                </div>
-              </>
+                  )
+                ) : (
+                  /* Requests Tab */
+                  notifications.filter(n => n.type === 'FRIEND_REQUEST').length === 0 ? (
+                    <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] opacity-60">
+                      <Bell size={64} className="text-brand-muted mb-4" />
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-muted">No Pending Requests</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {notifications.filter(n => n.type === 'FRIEND_REQUEST').map((notif) => (
+                        <div key={notif.id} className="bg-brand-card border border-brand-border/50 rounded-3xl p-5 flex items-center justify-between shadow-xl animate-in slide-in-from-bottom-2 duration-300">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-brand-bg rounded-full flex items-center justify-center border-2 border-brand-border text-brand-primary text-xl font-black overflow-hidden shadow-premium">
+                              {notif.sender?.avatar_url ? <img src={notif.sender.avatar_url} className="w-full h-full object-cover" /> : (notif.sender?.name || '?')[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <h4 className="text-sm font-black text-brand-text uppercase tracking-tight">{notif.sender?.name || 'Unknown User'}</h4>
+                              <p className="text-[8px] font-bold text-brand-text-dim uppercase tracking-widest">Wants to collaborate</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => acceptRequest(notif)}
+                              className="w-10 h-10 bg-brand-text hover:bg-brand-primary text-brand-bg rounded-full flex items-center justify-center shadow-lg transition-all active:scale-90"
+                            >
+                              <UserCheck size={20} />
+                            </button>
+                            <button
+                              onClick={() => declineRequest(notif)}
+                              className="w-10 h-10 bg-brand-bg hover:bg-brand-danger text-brand-text-dim hover:text-white rounded-full flex items-center justify-center border border-brand-border transition-all active:scale-90"
+                            >
+                              <ShieldClose size={20} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )
+                )}
+              </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-start pt-6 px-8 bg-brand-surface animate-in fade-in zoom-in-95 duration-500 overflow-y-auto">
                 {searchResults === null ? (

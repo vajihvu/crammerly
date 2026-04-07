@@ -254,7 +254,7 @@ export default function Crammerly() {
       <div className="min-h-screen bg-brand-bg flex flex-col items-center justify-center">
         <Sparkles className="text-brand-primary" size={48} />
         <h2 className="mt-6 text-xl font-black text-brand-text uppercase tracking-widest">Crammerly</h2>
-        <p className="mt-2 text-sm text-brand-text-dim">Sign in to get started</p>
+        <p className="mt-2 text-sm text-brand-text-dim">Take Learning to the Next Level</p>
         <ModalPortal>
           {modals.auth && <Suspense fallback={null}><AuthModal closable={false} onClose={() => closeModal('auth')} /></Suspense>}
         </ModalPortal>

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 import { X, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
 import { apiEvents } from '../api/client';
+import { ToastContainer } from '../components/utils/Toast';
 
 const UIContext = createContext();
 
@@ -10,8 +11,9 @@ export const UIProvider = ({ children }) => {
 
     // eslint-disable-next-line no-unused-vars
     const addToast = useCallback((message, type = 'info', duration = 5000) => {
-        // Notifications disabled globally across entire ecosystem per user request
-        return 'disabled';
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type, duration }]);
+        return id;
     }, []);
 
     const removeToast = useCallback((id) => {
@@ -64,6 +66,8 @@ export const UIProvider = ({ children }) => {
                     </div>
                 </div>
             )}
+            {/* Global Toasts */}
+            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </UIContext.Provider>
     );
 };

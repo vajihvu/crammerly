@@ -6,35 +6,43 @@ import client from './client';
 
 export const friendsApi = {
     /**
-     * Fetch all friends/requests for a user
+     * Fetch all friends for the current user
      */
-    getAll: async (userId) => {
-        console.log('Fetching friends for', userId);
-        return [];
+    getAll: async () => {
+        const { data } = await client.get('/friends');
+        return data.data || [];
     },
 
     /**
      * Send a friend request
      */
-    sendRequest: async (userId, friendId) => {
-        console.log('Sending request from', userId, 'to', friendId);
-        return { success: true };
+    sendRequest: async (toUserId) => {
+        const { data } = await client.post('/friends/request', { toUserId });
+        return data;
     },
 
     /**
      * Accept a friend request
      */
-    acceptRequest: async (friendshipId) => {
-        console.log('Accepting friendship', friendshipId);
-        return { success: true };
+    acceptRequest: async (requestId) => {
+        const { data } = await client.post(`/friends/accept/${requestId}`);
+        return data;
+    },
+
+    /**
+     * Decline a friend request
+     */
+    declineRequest: async (requestId) => {
+        const { data } = await client.post(`/friends/decline/${requestId}`);
+        return data;
     },
 
     /**
      * Remove or reject a friend
      */
-    remove: async (friendshipId) => {
-        console.log('Removing friendship', friendshipId);
-        return true;
+    remove: async (friendId) => {
+        const { data } = await client.delete(`/friends/${friendId}`);
+        return data;
     },
 
     /**
@@ -42,7 +50,6 @@ export const friendsApi = {
      */
     search: async (query = '') => {
         const { data } = await client.get(`/friends/search?q=${encodeURIComponent(query)}`);
-        // The backend `sendSuccess` usually puts payload on `data.data`
         return data.data || [];
     }
 };

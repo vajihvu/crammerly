@@ -57,6 +57,15 @@ const roomSchema = new mongoose.Schema({
         default: 50,
         min: 2,
         max: 200
+    },
+    roomType: {
+        type: String,
+        enum: ['Study', 'DM'],
+        default: 'Study'
+    },
+    isDM: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

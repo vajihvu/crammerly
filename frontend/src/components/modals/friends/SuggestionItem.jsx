@@ -14,13 +14,13 @@ const SuggestionItem = ({
     <div className="group p-4 bg-brand-bg/80 hover:bg-brand-card rounded-2xl border border-brand-border/50 hover:border-brand-primary/50 transition-all shadow-sm">
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 bg-brand-card rounded-full flex items-center justify-center text-sm font-black text-brand-primary border border-brand-border/80 shrink-0 group-hover:scale-110 transition-transform shadow-premium">
-                    {user.avatar || (user.name || '?')[0].toUpperCase()}
+                <div className="w-10 h-10 bg-brand-card rounded-full flex items-center justify-center text-sm font-black text-brand-primary border border-brand-border/80 shrink-0 group-hover:scale-110 transition-transform shadow-premium overflow-hidden">
+                    {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : (user.name || user.username || '?')[0].toUpperCase()}
                 </div>
 
                 <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-brand-text truncate uppercase">{user.name}</h4>
-                    <p className="text-[8px] font-black text-brand-text-dim uppercase truncate">{user.mutualFriends} Mutual</p>
+                    <h4 className="text-xs font-bold text-brand-text truncate uppercase">{user.name || user.username}</h4>
+                    <p className="text-[8px] font-black text-brand-primary uppercase truncate tracking-widest">#{user.tag || '0000'}</p>
                 </div>
             </div>
 

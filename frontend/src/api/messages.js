@@ -9,8 +9,9 @@ export const messagesApi = {
      */
     getAll: async (roomId) => {
         const { data } = await client.get(`/messages/${roomId}`);
-        return Array.isArray(data.data) ? data.data : (data.data?.messages || []);
+        return data.data; // Return the whole data object which contains { messages, nextCursor, hasMore }
     },
+    getByRoom: (roomId) => messagesApi.getAll(roomId),
 
     /**
      * Send a new message to a room

@@ -15,6 +15,9 @@ import JoinByInvite from './pages/JoinByInvite';
 import Onboarding from './pages/Onboarding';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import config from './config/env';
+import SocketListener from './components/common/SocketListener';
+import { VideoCallProvider } from './context/VideoCallContext';
+import CallModal from './components/modals/video/CallModal';
 
 function App() {
     return (
@@ -22,7 +25,10 @@ function App() {
             <GoogleOAuthProvider clientId={config.googleClientId}>
                 <AuthProvider>
                     <UIProvider>
-                        <Router>
+                        <VideoCallProvider>
+                            <SocketListener />
+                            <CallModal />
+                            <Router>
                             <Routes>
                                 {/* Auth routes → redirect to root where AuthModal handles auth */}
                                 <Route path="/login" element={<Navigate to="/" replace />} />
@@ -74,6 +80,7 @@ function App() {
                                 <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>
                         </Router>
+                        </VideoCallProvider>
                     </UIProvider>
                 </AuthProvider>
             </GoogleOAuthProvider>

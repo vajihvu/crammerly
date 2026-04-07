@@ -13,10 +13,21 @@ function SettingsModal({ initialTab = 'general', onClose }) {
     
     // Interactive states — initialize from persisted user settings
     const [privacy, setPrivacy] = useState({
-        invites: currentUser?.settings?.privacy?.allowInvites ?? true,
-        online: currentUser?.settings?.privacy?.showOnlineStatus ?? true,
-        dms: currentUser?.settings?.privacy?.allowDMs ?? false
+        invites: true,
+        online: true,
+        dms: false
     });
+
+    // Initialize privacy settings when currentUser is available
+    useEffect(() => {
+        if (currentUser?.settings?.privacy) {
+            setPrivacy({
+                invites: currentUser.settings.privacy.allowInvites ?? true,
+                online: currentUser.settings.privacy.showOnlineStatus ?? true,
+                dms: currentUser.settings.privacy.allowDMs ?? false
+            });
+        }
+    }, [currentUser?.settings?.privacy]);
     const [micLevel, setMicLevel] = useState(0);
     
     // Track if initial load is done to avoid saving on mount

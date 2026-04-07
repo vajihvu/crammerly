@@ -8,6 +8,7 @@ import roomRoutes from './roomRoutes.js';
 import messageRoutes from './messageRoutes.js';
 import bugRoutes from './bugRoutes.js';
 import friendsRoutes from './friendsRoutes.js';
+import notificationRoutes from './notificationRoutes.js';
 import { aiLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
@@ -27,5 +28,6 @@ router.use('/rooms', roomRoutes);
 router.use('/messages', messageRoutes);
 router.use('/bugs', bugRoutes);
 router.use('/friends', friendsRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;
