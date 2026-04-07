@@ -59,7 +59,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                     return r;
                 }));
 
-                if (currentRoom) {
+                if (currentRoomRef.current) {
                     setCurrentRoom(prev => {
                         if (!prev) return prev;
                         const isAlreadyMember = prev.members.some(m => m.id === id);
@@ -78,7 +78,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                     return r;
                 }));
 
-                if (currentRoom) {
+                if (currentRoomRef.current) {
                     setCurrentRoom(prev => {
                         if (!prev) return prev;
                         return { ...prev, members: prev.members.map(m => m.id === userId ? { ...m, progress } : m) };
@@ -109,7 +109,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                     return r;
                 }));
 
-                if (currentRoom) {
+                if (currentRoomRef.current) {
                     setCurrentRoom(prev => {
                         if (!prev) return prev;
                         return { ...prev, members: prev.members.filter(m => m.id !== id) };
@@ -129,7 +129,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                 socket.off('member_left', handleMemberLeft);
             };
         }
-    }, [currentRoom?.id, authUser, addToast]); // Depend on ID instead of object
+    }, [loadRooms, authUser, addToast]); // currentRoom handled by Ref to avoid loop
 
     // ── Create room (requires auth) ──
     const createRoom = async (roomName, task, topic, privacy, scheduleDate, scheduleTime) => {
