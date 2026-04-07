@@ -94,14 +94,15 @@ client.interceptors.response.use(
                     return client(originalRequest);
                 }
             } catch (refreshError) {
-                // If the refresh itself is rate-limited, don't necessarily logout immediately
-                // unless we have no other choice. But for now, we should at least notify
-                // and avoid a crash.
-                if (refreshError.response?.status === 429) {
-                    console.warn('Refresh token rate limited. Waiting before next attempt.');
-                    // Optionally: we could wait and retry, but for now just reject
-                    // so the component can show a "Too many requests" message
+                // RACE CONDITION: If the server detects a rotation race (e.g. from another tab)
+                // it returns 401 with AUTH_ROTATION_RACE. In this case, we shouldn't logout.
+                // The new token is likely already in a cookie or about to be.
+                const errorCode = refreshError.response?.data?.error?.code || refreshError.response?.data?.code;
+
+                if (errorCode === 'AUTH_ROTATION_RACE' || refreshError.response?.status === 429) {
+                    console.warn('Refresh aborted due to race or rate-limiting. Avoiding logout.');
                 } else {
+                    // Real failure (e.g. invalid refresh token, session expired)
                     emit(apiEvents.UNAUTHORIZED);
                 }
                 return Promise.reject(refreshError);
