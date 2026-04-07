@@ -89,7 +89,11 @@ export default function Crammerly() {
     if (userId) {
       try {
         const saved = localStorage.getItem(`crammer_recent_activity_${userId}`);
-        if (saved) setRecentActivity(JSON.parse(saved));
+        if (saved) {
+          requestAnimationFrame(() => {
+            setRecentActivity(JSON.parse(saved));
+          });
+        }
       } catch (err) { console.error('Failed to load recent activity:', err); }
     }
   }, [authId]); // Simplified dependencies
@@ -191,7 +195,7 @@ export default function Crammerly() {
       }
       return updated;
     });
-  }, [authId]);
+  }, []);
 
   // ── Notifications ──
   const clearAllNotifications = () => {
