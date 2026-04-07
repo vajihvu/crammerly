@@ -162,8 +162,8 @@ function FriendsModal({ onClose, addToast }) {
     }
   }, [chatHistory, message, activeView, selectedFriend]);
 
-  const filteredFriends = friends.filter(f =>
-    (f.name || f.username || '').toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredFriends = (Array.isArray(friends) ? friends : []).filter(f =>
+    ((f.name || f.username || '')).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const groupedFriends = filteredFriends.reduce((acc, friend) => {
@@ -275,8 +275,8 @@ function FriendsModal({ onClose, addToast }) {
     setIsSearching(true);
     setLastSearchedId(newFriendName);
     try {
-      const { data } = await friendsApi.search(newFriendName);
-      setSearchResults(data.length > 0 ? data : 'none');
+      const data = await friendsApi.search(newFriendName);
+      setSearchResults(Array.isArray(data) && data.length > 0 ? data : 'none');
     } catch (err) {
       console.error('Search failed:', err);
       setSearchResults('none');
@@ -308,11 +308,11 @@ function FriendsModal({ onClose, addToast }) {
   const acceptRequest = async (notif) => {
     try {
       await friendsApi.acceptRequest(notif.relatedId || notif.requestId);
-      setNotifications(prev => prev.filter(n => n.id !== notif.id));
+      setNotifications(prev => (Array.isArray(prev) ? prev : []).filter(n => n.id !== notif.id));
       if (addToast) addToast('Friend request accepted!', 'success');
       // Refresh friends
-      const { data } = await friendsApi.getAll();
-      setFriends(data);
+      const data = await friendsApi.getAll();
+      setFriends(Array.isArray(data) ? data : []);
     } catch {
       if (addToast) addToast('Failed to accept request', 'danger');
     }
@@ -321,15 +321,15 @@ function FriendsModal({ onClose, addToast }) {
   const declineRequest = async (notif) => {
     try {
       await friendsApi.declineRequest(notif.relatedId || notif.requestId);
-      setNotifications(prev => prev.filter(n => n.id !== notif.id));
+      setNotifications(prev => (Array.isArray(prev) ? prev : []).filter(n => n.id !== notif.id));
       if (addToast) addToast('Request declined', 'info');
     } catch {
       if (addToast) addToast('Failed to decline request', 'danger');
     }
   };
 
-  const filteredSuggestions = suggestedUsers.filter(u => 
-    !friends.some(f => (f._id || f.id) === (u._id || u.id))
+  const filteredSuggestions = (Array.isArray(suggestedUsers) ? suggestedUsers : []).filter(u => 
+    !(Array.isArray(friends) ? friends : []).some(f => (f._id || f.id) === (u._id || u.id))
   );
 
 
