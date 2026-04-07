@@ -98,7 +98,7 @@ function SettingsModal({ initialTab = 'general', onClose }) {
     const [loadingSessions, setLoadingSessions] = useState(false);
 
     useEffect(() => {
-        if (activeTab === 'security') {
+        if (activeTab === 'security' || activeTab === 'general') {
             loadSessions();
         }
     }, [activeTab]);
@@ -298,16 +298,29 @@ function SettingsModal({ initialTab = 'general', onClose }) {
 
                                 <section>
                                     <h3 className="text-[10px] md:text-xs font-black text-brand-primary uppercase tracking-[0.2em] mb-4 md:mb-6">History</h3>
-                                    <div className="p-4 bg-brand-bg/30 rounded-2xl border border-brand-border/20 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <Smartphone size={18} className="text-brand-muted shrink-0" />
-                                            <div className="min-w-0">
-                                                <p className="text-sm font-bold text-brand-text uppercase tracking-tight truncate">Logged in</p>
-                                                <p className="text-[9px] font-medium text-brand-text-dim uppercase tracking-widest mt-0.5 truncate">Chrome • Windows • India</p>
-                                            </div>
+                                    {loadingSessions ? (
+                                        <div className="flex items-center justify-center py-6">
+                                            <div className="w-6 h-6 border-3 border-brand-primary/20 border-t-brand-primary rounded-full animate-spin" />
                                         </div>
-                                        <span className="px-3 py-1 bg-brand-success/10 text-brand-success text-[9px] font-black uppercase tracking-widest rounded-full border border-brand-success/20 shrink-0">Active</span>
-                                    </div>
+                                    ) : (() => {
+                                        const currentSession = (sessions || []).find(s => s.isCurrent);
+                                        return currentSession ? (
+                                            <div className="p-4 bg-brand-bg/30 rounded-2xl border border-brand-border/20 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-4">
+                                                <div className="flex items-center gap-4">
+                                                    <Monitor size={18} className="text-brand-muted shrink-0" />
+                                                    <div className="min-w-0">
+                                                        <p className="text-sm font-bold text-brand-text uppercase tracking-tight truncate">{currentSession.deviceName || 'Logged in'}</p>
+                                                        <p className="text-[9px] font-medium text-brand-text-dim uppercase tracking-widest mt-0.5 truncate">{currentSession.userAgent ? currentSession.userAgent.substring(0, 50) : 'Unknown device'} {currentSession.ipAddress ? `• ${currentSession.ipAddress}` : ''}</p>
+                                                    </div>
+                                                </div>
+                                                <span className="px-3 py-1 bg-brand-success/10 text-brand-success text-[9px] font-black uppercase tracking-widest rounded-full border border-brand-success/20 shrink-0">Active</span>
+                                            </div>
+                                        ) : (
+                                            <div className="p-4 bg-brand-bg/30 rounded-2xl border border-brand-border/20 text-center">
+                                                <p className="text-[10px] font-bold text-brand-text-dim uppercase tracking-widest">No session data available.</p>
+                                            </div>
+                                        );
+                                    })()}
                                 </section>
                             </div>
                         )}
