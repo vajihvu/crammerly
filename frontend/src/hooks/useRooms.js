@@ -1,5 +1,5 @@
 // src/hooks/useRooms.js
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { roomsApi } from '../api';
 import { getSocket } from '../utils/socket';
 
@@ -12,6 +12,12 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
     const [roomsError, setRoomsError] = useState(null);
     const [currentRoom, setCurrentRoom] = useState(null);
     const [isInRoom, setIsInRoom] = useState(false);
+    const currentRoomRef = useRef(currentRoom);
+
+    // Sync ref with state
+    useEffect(() => {
+        currentRoomRef.current = currentRoom;
+    }, [currentRoom]);
 
     // ── Load all rooms ──
     const loadRooms = useCallback(async () => {
@@ -42,8 +48,9 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
         const socket = getSocket();
         if (socket) {
             const handleMemberJoined = ({ id, name }) => {
+                const activeId = currentRoomRef.current?.id;
                 setRooms(prev => prev.map(r => {
-                    if (r.id === currentRoom?.id) {
+                    if (r.id === activeId) {
                         const isAlreadyMember = r.members.some(m => m.id === id);
                         if (!isAlreadyMember) {
                             return { ...r, members: [...r.members, { id, name, progress: [] }] };
@@ -63,8 +70,9 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
             };
 
             const handleProgressUpdated = ({ userId, progress }) => {
+                const activeId = currentRoomRef.current?.id;
                 setRooms(prev => prev.map(r => {
-                    if (r.id === currentRoom?.id) {
+                    if (r.id === activeId) {
                         return { ...r, members: r.members.map(m => m.id === userId ? { ...m, progress } : m) };
                     }
                     return r;
@@ -93,8 +101,9 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
             };
 
             const handleMemberLeft = ({ id }) => {
+                const activeId = currentRoomRef.current?.id;
                 setRooms(prev => prev.map(r => {
-                    if (r.id === currentRoom?.id) {
+                    if (r.id === activeId) {
                         return { ...r, members: r.members.filter(m => m.id !== id) };
                     }
                     return r;

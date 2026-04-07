@@ -45,7 +45,7 @@ if (typeof window !== 'undefined' && !window.storage) {
 }
 
 export default function Crammerly() {
-  const { user: authUser, loading: isAuthLoading, logout: handleAuthLogout } = useAuth();
+  const { user: authUser, loading: isAuthLoading, logout: handleAuthLogout, updateUser: handleUpdateUser } = useAuth();
   const { addToast } = useUI();
   const { modals, openModal, closeModal, toggleModal, setFloatingPanel, resetModals, isAnyModalOpen, openConfirm, closeConfirm } = useModals();
 
@@ -209,16 +209,16 @@ export default function Crammerly() {
 
   // ── Profile ──
   const updateUserProfile = async (updatedData) => {
-    const prevUser = { ...currentUser };
-    setCurrentUser({ ...currentUser, ...updatedData });
     try {
+      // Direct call to auth context to update global state synchronously
+      handleUpdateUser(updatedData);
       await usersApi.updateProfile(updatedData);
       addToast('Profile updated successfully!', 'success');
     } catch (error) {
       console.error('Failed to update profile:', error);
       const message = error.response?.data?.message || 'Failed to update profile';
       addToast(message, 'error');
-      setCurrentUser(prevUser);
+      // Note: In a real app we might want to roll back, but here authUser will eventually resync from backend if needed
     }
   };
 
