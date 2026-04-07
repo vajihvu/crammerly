@@ -5,16 +5,17 @@ import { usersApi } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 
 function SettingsModal({ initialTab = 'general', onClose }) {
-    const { user, updateUser } = useAuth();
+    const { user: authData, updateUser } = useAuth();
+    const currentUser = authData?.user || authData; // Failsafe for structure variations
     const [activeTab, setActiveTab] = useState(initialTab);
     const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-    const [selectedLanguage, setSelectedLanguage] = useState(user?.settings?.language || 'ENGLISH (US)');
+    const [selectedLanguage, setSelectedLanguage] = useState(currentUser?.settings?.language || 'ENGLISH (US)');
     
     // Interactive states — initialize from persisted user settings
     const [privacy, setPrivacy] = useState({
-        invites: user?.settings?.privacy?.allowInvites ?? true,
-        online: user?.settings?.privacy?.showOnlineStatus ?? true,
-        dms: user?.settings?.privacy?.allowDMs ?? false
+        invites: currentUser?.settings?.privacy?.allowInvites ?? true,
+        online: currentUser?.settings?.privacy?.showOnlineStatus ?? true,
+        dms: currentUser?.settings?.privacy?.allowDMs ?? false
     });
     const [micLevel, setMicLevel] = useState(0);
     
