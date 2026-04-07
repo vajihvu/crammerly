@@ -116,7 +116,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
       </div>
 
       {recentActivity.length > 0 && (
-        <div className="animate-in fade-in slide-in-from-top-4 duration-500 mb-8 mt-2">
+        <div className="animate-in fade-in slide-in-from-top-4 duration-200 mb-8 mt-2">
           <div className="flex items-center gap-3 mb-4 px-2">
             <div className="w-1.5 h-6 bg-brand-primary rounded-full"></div>
             <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-brand-text/60">Recently Visited</h4>
@@ -234,7 +234,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                   >
                     {tab}
                     {activeStatus === tab && (
-                      <div className="absolute bottom-0 left-0 right-0 h-[2px] sm:h-[3px] bg-brand-primary animate-in fade-in slide-in-from-left-4 duration-500" />
+                      <div className="absolute bottom-0 left-0 right-0 h-[2px] sm:h-[3px] bg-brand-primary animate-in fade-in slide-in-from-left-4 duration-200" />
                     )}
                   </button>
                 ))}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVideoCall } from '../../context/VideoCallContext';
 import { X, UserPlus, MessageCircle, Video, Paperclip, Smile, Send, Mic, Search, FileText, ArrowLeft, PhoneCall, Sticker, User, Sparkles, Check, TrendingUp, Loader, Bell, UserCheck, ShieldClose, Play, Pause, Headphones } from 'lucide-react';
+import { FriendListSkeleton } from '../ui/Skeletons';
 import FriendItem from './friends/FriendItem';
 import SuggestionItem from './friends/SuggestionItem';
 import { friendsApi, notificationsApi, messagesApi } from '../../api';
@@ -47,6 +48,7 @@ function FriendsModal({ onClose, addToast }) {
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
   const [friends, setFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [loadingFriends, setLoadingFriends] = useState(true);
 
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [chatMode, setChatMode] = useState('text');
@@ -76,6 +78,7 @@ function FriendsModal({ onClose, addToast }) {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setLoadingFriends(true);
         const [friendsData, notificationsData, suggestionsData] = await Promise.all([
           friendsApi.getAll(),
           notificationsApi.getAll(),
@@ -88,7 +91,7 @@ function FriendsModal({ onClose, addToast }) {
         console.error('Failed to load friends/notifications:', _err);
         if (addToast) addToast('Failed to load your social data', 'danger');
       } finally {
-        // loading state removed
+        setLoadingFriends(false);
       }
     };
     loadData();
@@ -127,11 +130,15 @@ function FriendsModal({ onClose, addToast }) {
   useEffect(() => {
     if (activeView === 'chat' && selectedFriend?.dmRoomId) {
       const loadHistory = async () => {
+        const friendId = selectedFriend._id || selectedFriend.id;
+        // Skip re-fetching if we already have history for this session
+        if (chatHistory[friendId] && chatHistory[friendId].length > 0) return;
+
         try {
           const response = await messagesApi.getByRoom(selectedFriend.dmRoomId);
           setChatHistory(prev => ({
             ...prev,
-            [selectedFriend._id || selectedFriend.id]: response?.messages || []
+            [friendId]: response?.messages || []
           }));
         } catch (err) {
           console.error('Failed to load chat history:', err);
@@ -365,7 +372,7 @@ function FriendsModal({ onClose, addToast }) {
 
     return (
       <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-md z-[150] flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto" onClick={onClose}>
-        <div className="bg-brand-surface w-full max-w-md h-full sm:h-[85vh] sm:rounded-[40px] border-0 sm:border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-300 font-inter" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-brand-surface w-full max-w-md h-full sm:h-[85vh] sm:rounded-[40px] border-0 sm:border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 font-inter" onClick={(e) => e.stopPropagation()}>
           <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} onClick={(e) => e.stopPropagation()} />
           {/* Chat Header */}
           <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-brand-border/50 flex items-center justify-between bg-brand-bg/50 backdrop-blur-2xl shrink-0 gap-2">
@@ -525,8 +532,8 @@ function FriendsModal({ onClose, addToast }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-center justify-center p-4 sm:p-8 overflow-y-auto animate-in fade-in duration-300" onClick={onClose}>
-      <div className="bg-brand-surface w-full max-w-5xl h-[85vh] rounded-[40px] border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 font-inter" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-center justify-center p-4 sm:p-8 overflow-y-auto animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-brand-surface w-full max-w-5xl h-[85vh] rounded-[40px] border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 font-inter" onClick={(e) => e.stopPropagation()}>
 
         <div className="px-3.5 sm:px-8 py-4 sm:py-6 flex items-center justify-between border-b border-brand-border/50 bg-brand-bg/50 backdrop-blur-xl shrink-0 gap-2 sm:gap-4">
           <div className="flex items-center gap-1.5 sm:gap-6 min-w-0">

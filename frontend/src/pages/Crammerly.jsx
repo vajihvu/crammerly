@@ -73,12 +73,18 @@ export default function Crammerly() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [recentActivity, setRecentActivity] = useState(() => {
+  const [recentActivity, setRecentActivity] = useState([]);
+
+  // Initialize from storage once
+  useEffect(() => {
     const userId = getUserId();
-    if (!userId) return [];
-    const saved = localStorage.getItem(`crammer_recent_activity_${userId}`);
-    return saved ? JSON.parse(saved) : [];
-  });
+    if (userId) {
+      try {
+        const saved = localStorage.getItem(`crammer_recent_activity_${userId}`);
+        if (saved) setRecentActivity(JSON.parse(saved));
+      } catch (err) { console.error('Failed to load recent activity:', err); }
+    }
+  }, [authUser?.user?._id || authUser?.id]);
 
   // ── Composed hooks ──
   const {
@@ -109,12 +115,17 @@ export default function Crammerly() {
   useEffect(() => {
     if (authUser) {
       const actualUser = authUser.user || authUser;
-      // eslint-disable-next-line
-      setCurrentUser(prev => ({
-        ...prev,
-        ...actualUser,
-        id: actualUser._id || actualUser.id
-      }));
+      const nextId = actualUser._id || actualUser.id;
+      
+      // Only update if something actually changed to avoid cascading re-renders
+      setCurrentUser(prev => {
+        if (prev?.id === nextId && prev?.updatedAt === actualUser.updatedAt) return prev;
+        return {
+          ...prev,
+          ...actualUser,
+          id: nextId
+        };
+      });
     }
   }, [authUser]);
 
@@ -159,17 +170,17 @@ export default function Crammerly() {
   }, [isAnyModalOpen]);
 
   // ── Track recent activity ──
-  const trackActivity = (activity) => {
+  const trackActivity = React.useCallback((activity) => {
     setRecentActivity(prev => {
       const filtered = prev.filter(a => a.id !== activity.id);
       const updated = [{ ...activity, timestamp: new Date().toISOString() }, ...filtered].slice(0, 10);
-      if (authUser) {
-        const userId = authUser.user?._id || authUser.user?.id || authUser._id || authUser.id;
+      const userId = getUserId();
+      if (userId) {
         localStorage.setItem(`crammer_recent_activity_${userId}`, JSON.stringify(updated));
       }
       return updated;
     });
-  };
+  }, [authUser?.user?._id || authUser?.id]);
 
   // ── Notifications ──
   const clearAllNotifications = () => {

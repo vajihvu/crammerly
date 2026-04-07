@@ -2,7 +2,7 @@
 import React from 'react';
 
 /* ─── Pulse animation base ─── */
-const pulse = 'animate-pulse bg-brand-border/30 rounded-xl';
+const pulse = 'animate-pulse bg-brand-border/40 rounded-xl';
 
 /* ─── Room Card Skeleton ─── */
 export function RoomCardSkeleton() {
@@ -63,15 +63,43 @@ export function ChatMessageSkeleton({ align = 'left' }) {
     );
 }
 
+/* ─── Friend Item Skeleton ─── */
+export function FriendItemSkeleton() {
+    return (
+        <div className="bg-brand-card p-4 sm:p-5 rounded-[24px] sm:rounded-[28px] flex items-center justify-between border border-brand-border/30">
+            <div className="flex items-center gap-3 sm:gap-5">
+                <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full ${pulse}`} />
+                <div className="space-y-2">
+                    <div className={`h-4 w-24 sm:w-32 ${pulse}`} />
+                    <div className={`h-2.5 w-12 sm:w-16 ${pulse}`} />
+                </div>
+            </div>
+            <div className="flex gap-2">
+                <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl ${pulse}`} />
+                <div className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl ${pulse}`} />
+            </div>
+        </div>
+    );
+}
+
+export function FriendListSkeleton({ count = 4 }) {
+    return (
+        <div className="space-y-3">
+            {Array.from({ length: count }).map((_, i) => (
+                <FriendItemSkeleton key={i} />
+            ))}
+        </div>
+    );
+}
+
 /* ─── Chat Skeleton (multiple messages) ─── */
 export function ChatSkeleton() {
     return (
-        <div className="space-y-5 p-4">
+        <div className="space-y-5 p-4 flex-1 overflow-hidden">
             <ChatMessageSkeleton align="left" />
             <ChatMessageSkeleton align="right" />
             <ChatMessageSkeleton align="left" />
             <ChatMessageSkeleton align="right" />
-            <ChatMessageSkeleton align="left" />
         </div>
     );
 }

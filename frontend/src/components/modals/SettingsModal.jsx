@@ -238,11 +238,11 @@ function SettingsModal({ initialTab = 'general', onClose }) {
     ];
 
     return (
-        <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl flex items-center justify-center p-0 sm:p-4 z-[1000] animate-in fade-in duration-300" onClick={onClose}>
-            <div
-                className="bg-brand-surface sm:rounded-[32px] w-full max-w-3xl h-full sm:h-[500px] border-0 sm:border border-brand-border/30 shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-500 font-sans"
-                onClick={(e) => e.stopPropagation()}
-            >
+    <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl flex items-center justify-center p-0 sm:p-4 z-[1000] animate-in fade-in duration-200" onClick={onClose}>
+        <div
+            className="bg-brand-surface sm:rounded-[32px] w-full max-w-3xl h-full sm:h-[500px] border-0 sm:border border-brand-border/30 shadow-2xl flex flex-col md:flex-row overflow-hidden animate-in zoom-in-95 duration-150 font-sans"
+            onClick={(e) => e.stopPropagation()}
+        >
                 {/* Sidebar */}
                 <div className="w-full md:w-56 bg-brand-bg/50 border-b md:border-b-0 md:border-r border-brand-border/20 flex flex-col pt-6 md:pt-8 shrink-0">
                     <div className="px-5 md:px-6 mb-5 md:mb-8 flex items-center justify-between md:block">
@@ -291,7 +291,7 @@ function SettingsModal({ initialTab = 'general', onClose }) {
 
                     <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-6 md:p-8 md:pt-14 md:pr-10">
                         {activeTab === 'general' && (
-                            <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-200">
                                 <section>
                                     <h3 className="text-[10px] md:text-xs font-black text-brand-primary uppercase tracking-[0.2em] mb-4 md:mb-6">Language</h3>
                                     <div className="space-y-4">

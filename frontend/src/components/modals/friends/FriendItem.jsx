@@ -46,4 +46,4 @@ const FriendItem = ({ friend, onChat, onCall }) => (
     </div>
 );
 
-export default FriendItem;
+export default React.memo(FriendItem);
