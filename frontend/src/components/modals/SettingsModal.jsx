@@ -20,11 +20,22 @@ function SettingsModal({ initialTab = 'general', onClose }) {
 
     // Initialize privacy settings when currentUser is available
     useEffect(() => {
-        if (currentUser?.settings?.privacy) {
-            setPrivacy({
-                invites: currentUser.settings.privacy.allowInvites ?? true,
-                online: currentUser.settings.privacy.showOnlineStatus ?? true,
-                dms: currentUser.settings.privacy.allowDMs ?? false
+        const serverPrivacy = currentUser?.settings?.privacy;
+        if (serverPrivacy) {
+            const nextPrivacy = {
+                invites: serverPrivacy.allowInvites ?? true,
+                online: serverPrivacy.showOnlineStatus ?? true,
+                dms: serverPrivacy.allowDMs ?? false
+            };
+            
+            // Only update if values are actually different to avoid triggering the save effect
+            setPrivacy(prev => {
+                if (prev.invites === nextPrivacy.invites && 
+                    prev.online === nextPrivacy.online && 
+                    prev.dms === nextPrivacy.dms) {
+                    return prev;
+                }
+                return nextPrivacy;
             });
         }
     }, [currentUser?.settings?.privacy]);
@@ -39,6 +50,16 @@ function SettingsModal({ initialTab = 'general', onClose }) {
             isInitialMount.current = false;
             return;
         }
+
+        // Check if local state actually differs from what we have from the server
+        const serverPrivacy = currentUser?.settings?.privacy;
+        const hasReaChanges = 
+            privacy.invites !== (serverPrivacy?.allowInvites ?? true) ||
+            privacy.online !== (serverPrivacy?.showOnlineStatus ?? true) ||
+            privacy.dms !== (serverPrivacy?.allowDMs ?? false);
+        
+        if (!hasReaChanges) return;
+
         const saveSettings = async () => {
             try {
                 const response = await usersApi.updateProfile({
@@ -57,8 +78,10 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                 console.error('Failed to save privacy settings:', err);
             }
         };
-        saveSettings();
-    }, [privacy, updateUser]);
+
+        const timeout = setTimeout(saveSettings, 1000); // Debounce saves
+        return () => clearTimeout(timeout);
+    }, [privacy, updateUser, currentUser?.settings?.privacy]);
 
     // Auto-save language when changed
     const handleLanguageChange = useCallback(async (lang) => {
@@ -111,9 +134,12 @@ function SettingsModal({ initialTab = 'general', onClose }) {
 
     useEffect(() => {
         if (activeTab === 'security' || activeTab === 'general') {
-            loadSessions();
+            // Only load if we haven't loaded them yet or if sessions is empty
+            if (sessions.length === 0) {
+                loadSessions();
+            }
         }
-    }, [activeTab]);
+    }, [activeTab, sessions.length]);
 
     const loadSessions = async () => {
         setLoadingSessions(true);
