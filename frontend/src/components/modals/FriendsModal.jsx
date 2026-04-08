@@ -56,7 +56,7 @@ const MessageContent = ({ text }) => {
   return <p className="font-medium leading-relaxed text-left">{text}</p>;
 };
 
-function FriendsModal({ onClose, addToast }) {
+function FriendsModal({ currentUser, onClose, addToast }) {
 
   const [activeView, setActiveView] = useState('list'); // 'list' or 'chat'
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
@@ -125,12 +125,30 @@ function FriendsModal({ onClose, addToast }) {
       };
 
       const handleNewMessage = (msg) => {
-        // If the message belongs to the current open chat, update history
-        if (selectedFriend && msg.room_id === selectedFriend.dmRoomId) {
-          setChatHistory(prev => ({
-            ...prev,
-            [selectedFriend._id || selectedFriend.id]: [...(prev[selectedFriend._id || selectedFriend.id] || []), msg]
-          }));
+        // Find which friend this message belongs to
+        const friend = friends.find(f => f.dmRoomId === msg.room_id) || (selectedFriend?.dmRoomId === msg.room_id ? selectedFriend : null);
+        
+        if (friend) {
+          const friendId = friend._id || friend.id;
+          const currentUserId = currentUser?._id || currentUser?.id;
+          
+          // Map to frontend message format
+          const formattedMsg = {
+            ...msg,
+            sender: String(msg.sender_id) === String(currentUserId) ? 'me' : 'them',
+            time: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          };
+
+          setChatHistory(prev => {
+            const hists = prev[friendId] || [];
+            // Avoid duplicates (e.g. if we get the message we just sent via socket too)
+            if (hists.some(m => m.id === msg.id)) return prev;
+            
+            return {
+              ...prev,
+              [friendId]: [...hists, formattedMsg]
+            };
+          });
         }
       };
 
@@ -142,7 +160,7 @@ function FriendsModal({ onClose, addToast }) {
         socket.off('new_message', handleNewMessage);
       };
     }
-  }, [selectedFriend, addToast]);
+  }, [selectedFriend, friends, currentUser, addToast]);
 
   // Load chat history when switching to chat
   useEffect(() => {

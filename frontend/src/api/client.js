@@ -122,7 +122,7 @@ client.interceptors.response.use(
                     // Only emit UNAUTHORIZED for definitive server rejections (expired/revoked session)
                     if (!client._sessionDead) {
                         client._sessionDead = true;
-                        console.error('🚫 Refresh failed: Session unrecoverable. Logging out.');
+                        console.warn('♻️ Session expired: Token refresh failed. Redirecting to login.');
                         emit(apiEvents.UNAUTHORIZED);
                     }
                 } else if (status === 403) {

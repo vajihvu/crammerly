@@ -174,7 +174,6 @@ function AuthModal({ onClose, closable = true }) {
                 onError={() => {
                   setError('Google Login Failed');
                 }}
-                useOneTap
               />
             </div>
 

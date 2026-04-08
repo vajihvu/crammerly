@@ -32,8 +32,10 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                 setRooms([]);
             }
         } catch (err) {
-            console.error('Room loading error:', err);
-            setRoomsError('Failed to load rooms');
+            if (err.response?.status !== 401) {
+                console.error('Room loading error:', err);
+                setRoomsError('Failed to load rooms');
+            }
             setRooms([]); // Reset to empty array on error to prevent crash
         } finally {
             setLoadingRooms(false);
@@ -181,9 +183,11 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                 return false;
             }
         } catch (error) {
-            console.error('Failed to join room:', error);
-            const msg = error.response?.data?.message || error.message || 'Failed to join room';
-            addToast(msg, 'danger');
+            if (error.response?.status !== 401) {
+                console.error('Failed to join room:', error);
+                const msg = error.response?.data?.message || error.message || 'Failed to join room';
+                addToast(msg, 'danger');
+            }
             return false;
         }
 
