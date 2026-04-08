@@ -1,5 +1,5 @@
 import express from 'express';
-import { getMessagesByRoom, sendMessage } from '../controllers/messageController.js';
+import { getMessagesByRoom, sendMessage, markAsRead } from '../controllers/messageController.js';
 
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validator.js';
@@ -11,7 +11,8 @@ router.use(protect);
 
 router.route('/:roomId')
     .get(getMessagesByRoom)
-    .post(validate(messageSchema), sendMessage);
+    .post(validate(messageSchema), sendMessage)
+    .patch(markAsRead);
 
 export default router;
 

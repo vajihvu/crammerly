@@ -149,23 +149,47 @@ function FriendsModal({ currentUser, onClose, addToast }) {
               [friendId]: [...hists, formattedMsg]
             };
           });
+
+          // If we are currently looking at this chat, mark it as read
+          if (selectedFriend && selectedFriend.dmRoomId === msg.room_id && activeView === 'chat') {
+            messagesApi.markAsRead(msg.room_id).catch(() => {});
+          }
+        }
+      };
+
+      const handleMessagesRead = ({ room_id, reader_id }) => {
+        const friend = friends.find(f => f.dmRoomId === room_id) || (selectedFriend?.dmRoomId === room_id ? selectedFriend : null);
+        if (friend) {
+          const friendId = friend._id || friend.id;
+          const currentUserId = currentUser?._id || currentUser?.id;
+          
+          if (String(reader_id) !== String(currentUserId)) {
+            setChatHistory(prev => ({
+              ...prev,
+              [friendId]: (prev[friendId] || []).map(m => m.sender === 'me' ? { ...m, isRead: true } : m)
+            }));
+          }
         }
       };
 
       socket.on('new_notification', handleNewNotification);
       socket.on('new_message', handleNewMessage);
+      socket.on('messages_read', handleMessagesRead);
 
       return () => {
         socket.off('new_notification', handleNewNotification);
         socket.off('new_message', handleNewMessage);
+        socket.off('messages_read', handleMessagesRead);
       };
     }
-  }, [selectedFriend, friends, currentUser, addToast]);
+  }, [selectedFriend, friends, currentUser, activeView, addToast]);
 
   // Load chat history when switching to chat
   useEffect(() => {
     if (activeView === 'chat' && selectedFriend?.dmRoomId) {
       const roomId = selectedFriend.dmRoomId;
+      if (socket) socket.emit('join_room', roomId);
+      messagesApi.markAsRead(roomId).catch(() => {});
       const friendId = selectedFriend._id || selectedFriend.id;
 
       const loadHistory = async () => {
@@ -507,7 +531,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                           )}
                         </div>
                         <span className={`text-[10px] font-black mt-2 inline-block uppercase tracking-widest opacity-70 ${msg.sender === 'me' ? 'text-brand-secondary mr-1' : 'text-brand-text-dim ml-1'}`}>
-                          {msg.time} {msg.sender === 'me' && '• READ'}
+                          {msg.time} {msg.sender === 'me' && `• ${msg.isRead ? 'READ' : 'SENT'}`}
                         </span>
                       </div>
                     </div>

@@ -22,6 +22,14 @@ export const messagesApi = {
     },
 
     /**
+     * Mark all messages in a room as read
+     */
+    markAsRead: async (roomId) => {
+        const { data } = await client.patch(`/messages/${roomId}/read`);
+        return data.data;
+    },
+
+    /**
      * REAL-TIME SUBSCRIPTIONS (Supabase removal)
      * For now, real-time is disabled. Components should poll or manually fetch.
      */

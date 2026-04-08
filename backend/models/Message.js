@@ -27,7 +27,11 @@ const messageSchema = new mongoose.Schema({
         name: { type: String, maxlength: 255 },
         mimeType: { type: String, maxlength: 100 },
         size: { type: Number, max: 25 * 1024 * 1024 }  // 25MB cap
-    }
+    },
+    readBy: [{
+        user_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        readAt: { type: Date, default: Date.now }
+    }]
 }, {
     timestamps: true
 });

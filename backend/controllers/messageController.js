@@ -49,6 +49,7 @@ export const getMessagesByRoom = asyncHandler(async (req, res) => {
         text: m.content,
         type: m.type,
         fileData: m.file_data,
+        isRead: m.sender_id?._id?.toString() === req.user._id.toString() ? (m.readBy?.length > 0) : true,
         timestamp: m.createdAt
     }));
 
@@ -103,6 +104,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
         type: populated.type,
         fileData: populated.file_data,
         room_id: roomId,
+        isRead: false,
         timestamp: populated.createdAt
     };
 
@@ -112,5 +114,51 @@ export const sendMessage = asyncHandler(async (req, res) => {
     });
 
     return res.sendSuccess(formatted, 201);
+});
+
+
+/**
+ * @desc    Mark all messages in a room as read for the current user
+ * @route   PATCH /api/v1/messages/:roomId/read
+ */
+export const markAsRead = asyncHandler(async (req, res) => {
+    const { roomId } = req.params;
+    const userId = req.user._id;
+
+    // Authorization check (same as other message routes)
+    const room = await Room.findById(roomId);
+    if (!room) {
+        return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
+    }
+
+    const isMember = room.members.some(m => m.user.toString() === userId.toString());
+    if (!isMember) {
+        return res.sendError('Access denied', 403, 'AUTH_FORBIDDEN');
+    }
+
+    // Update all messages in this room that weren't sent by the user and haven't been read by them yet
+    const result = await Message.updateMany(
+        {
+            room_id: roomId,
+            sender_id: { $ne: userId },
+            'readBy.user_id': { $ne: userId }
+        },
+        {
+            $push: { readBy: { user_id: userId, readAt: new Date() } }
+        }
+    );
+
+    // Broadcast read event if any messages were updated
+    if (result.modifiedCount > 0) {
+        import('../utils/socket.js').then(({ emitToRoom }) => {
+            emitToRoom(roomId, 'messages_read', {
+                room_id: roomId,
+                reader_id: userId,
+                readAt: new Date()
+            });
+        });
+    }
+
+    return res.sendSuccess({ modifiedCount: result.modifiedCount });
 });
 
