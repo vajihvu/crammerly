@@ -174,22 +174,27 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
 
         try {
             const response = await roomsApi.join(room.id, code);
-            // Even if response.success is false, axios might not throw depends on backend middleware, 
-            // but our asyncHandler/sendError should return 4xx which axios throws.
-            if (response && response.success === false) {
-                 addToast(response.message || 'Failed to join', 'danger');
-                 return false;
+            // Unified success check: response must exist and not have success: false
+            if (!response || response.success === false) {
+                const msg = response?.message || 'Failed to join room';
+                addToast(msg, 'danger');
+                return false;
             }
         } catch (error) {
             console.error('Failed to join room:', error);
-            const msg = error.response?.data?.message || 'Failed to join room';
+            const msg = error.response?.data?.message || error.message || 'Failed to join room';
             addToast(msg, 'danger');
             return false;
         }
 
+        // Only update state if join was successful
         setCurrentRoom(updatedRoom);
         setIsInRoom(true);
-        setRooms(prev => Array.isArray(prev) ? prev.map(r => r.id === room.id ? updatedRoom : r) : [updatedRoom]);
+        setRooms(prev => {
+            const safePrev = Array.isArray(prev) ? prev : [];
+            return safePrev.map(r => r.id === room.id ? updatedRoom : r);
+        });
+        
         addToast(`Successfully joined ${room.name}!`, 'success');
         return true;
     };

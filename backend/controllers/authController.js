@@ -47,7 +47,7 @@ import { OAuth2Client } from 'google-auth-library';
 const client = new OAuth2Client(config.googleClientId);
 
 const COOKIE_OPTIONS = {
-    path: '/api/v1/auth/refresh',
+    path: '/api/v1/auth',
     httpOnly: true,
     secure: config.isProduction,
     sameSite: config.isProduction ? 'none' : 'strict', // 'none' required for cross-site cookie transmission

@@ -42,6 +42,20 @@ const AudioMessage = ({ url, isMe }) => {
     </div>
   );
 };
+const MessageContent = ({ text }) => {
+  if (!text) return null;
+  const isCode = text.startsWith('```') && text.endsWith('```');
+  if (isCode) {
+    const code = text.slice(3, -3);
+    return (
+      <div className="bg-black/40 rounded-xl p-4 my-2 border border-white/10 font-mono text-[11px] overflow-x-auto text-left w-full">
+        <pre className="text-brand-primary whitespace-pre-wrap">{code}</pre>
+      </div>
+    );
+  }
+  return <p className="font-medium leading-relaxed text-left">{text}</p>;
+};
+
 function FriendsModal({ onClose, addToast }) {
 
   const [activeView, setActiveView] = useState('list'); // 'list' or 'chat'
@@ -160,11 +174,12 @@ function FriendsModal({ onClose, addToast }) {
     }
   }, [activeView, selectedFriend, loadedChats]);
 
+  // Scroll to bottom on new messages or view change
   useEffect(() => {
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [chatHistory, message, activeView, selectedFriend]);
+  }, [message, activeView, selectedFriend]); // Removed chatHistory to avoid recursive scroll loops
 
   const filteredFriends = (Array.isArray(friends) ? friends : []).filter(f =>
     ((f.name || f.username || '')).toLowerCase().includes(searchTerm.toLowerCase())
@@ -280,7 +295,9 @@ function FriendsModal({ onClose, addToast }) {
     setLastSearchedId(newFriendName);
     try {
       const data = await friendsApi.search(newFriendName);
-      setSearchResults(Array.isArray(data) && data.length > 0 ? data : 'none');
+      // Ensure we handle non-array returns or empty results gracefully
+      const results = Array.isArray(data) ? data : (data?.data && Array.isArray(data.data)) ? data.data : [];
+      setSearchResults(results.length > 0 ? results : 'none');
     } catch (err) {
       console.error('Search failed:', err);
       setSearchResults('none');
@@ -316,7 +333,8 @@ function FriendsModal({ onClose, addToast }) {
       if (addToast) addToast('Friend request accepted!', 'success');
       // Refresh friends
       const data = await friendsApi.getAll();
-      setFriends(Array.isArray(data) ? data : []);
+      const friendsList = Array.isArray(data) ? data : (data?.data && Array.isArray(data.data)) ? data.data : [];
+      setFriends(friendsList);
     } catch {
       if (addToast) addToast('Failed to accept request', 'danger');
     }
@@ -454,7 +472,7 @@ function FriendsModal({ onClose, addToast }) {
                           {msg.type === 'voice' ? (
                             <AudioMessage url={msg.fileData?.url} isMe={msg.sender === 'me'} />
                           ) : (
-                            <MessageContent text={msg.text} />
+                            <MessageContent text={msg.content || msg.text} />
                           )}
                           {msg.type === 'file' && (
                             <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-black/10 rounded-lg">

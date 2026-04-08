@@ -35,9 +35,16 @@ client.interceptors.request.use(
             emit(apiEvents.LOADING, true);
         }
 
-        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-        if (userInfo?.token) {
-            config.headers.Authorization = `Bearer ${userInfo.token}`;
+        const userInfoString = localStorage.getItem('userInfo');
+        if (userInfoString) {
+            try {
+                const userInfo = JSON.parse(userInfoString);
+                if (userInfo?.token && !config.headers.Authorization) {
+                    config.headers.Authorization = `Bearer ${userInfo.token}`;
+                }
+            } catch (e) {
+                console.error('Failed to parse userInfo from localStorage:', e);
+            }
         }
         return config;
     },
@@ -94,16 +101,29 @@ client.interceptors.response.use(
                     return client(originalRequest);
                 }
             } catch (refreshError) {
-                // RACE CONDITION: If the server detects a rotation race (e.g. from another tab)
-                // it returns 401 with AUTH_ROTATION_RACE. In this case, we shouldn't logout.
-                // The new token is likely already in a cookie or about to be.
+                const status = refreshError.response?.status;
                 const errorCode = refreshError.response?.data?.error?.code || refreshError.response?.data?.code;
 
-                if (errorCode === 'AUTH_ROTATION_RACE' || refreshError.response?.status === 429) {
-                    console.warn('Refresh aborted due to race or rate-limiting. Avoiding logout.');
-                } else {
-                    // Real failure (e.g. invalid refresh token, session expired)
+                if (errorCode === 'AUTH_ROTATION_RACE' || status === 429) {
+                    const delay = status === 429 ? 1000 : 0;
+                    console.warn(`♻️ Refresh aborted: ${errorCode || 'Rate-limited'}. Retrying in ${delay}ms...`);
+                    
+                    if (delay > 0) await new Promise(r => setTimeout(r, delay));
+                    
+                    // Sync token again before retry
+                    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                    if (userInfo.token) {
+                        originalRequest.headers['Authorization'] = `Bearer ${userInfo.token}`;
+                    }
+                    return client(originalRequest);
+                } else if (status === 401 || status === 403) {
+                    // Only emit UNAUTHORIZED for definitive server rejections (expired/revoked session)
+                    console.error('🚫 Refresh failed: Session unrecoverable. Logging out.');
                     emit(apiEvents.UNAUTHORIZED);
+                } else {
+                    // Network errors, 500s, etc. shouldn't trigger a global logout! 
+                    // Let the individual request fail instead of killing the whole session.
+                    console.warn(`⚠️ Refresh failed with non-auth error (${status || 'Network'}). Session preserved.`);
                 }
                 return Promise.reject(refreshError);
             }

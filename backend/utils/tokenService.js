@@ -61,10 +61,10 @@ export const rotateRefreshToken = async (req, oldToken, userAgent, ipAddress) =>
 
     // Reuse detection: If the token is in previousTokenHashes, it was already rotated.
     if (session.previousTokenHashes.includes(oldHash)) {
-        // GRACE PERIOD: Allow a small window (10s) for race conditions (e.g. multi-tab refresh)
+        // GRACE PERIOD: Allow a small window (30s) for race conditions (e.g. multi-tab refresh)
         // If the session was updated very recently, it's likely a legitiate race.
         const gap = Date.now() - new Date(session.updatedAt).getTime();
-        if (gap < 10000) {
+        if (gap < 30000) {
             logger.warn(`♻️ Rotation race detected for user ${userId}. Token already replaced ${gap}ms ago. Returning 401 without revocation.`);
             const error = new Error('Token rotation race detected. Please retry with the new token.');
             error.statusCode = 401;

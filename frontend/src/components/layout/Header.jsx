@@ -95,7 +95,7 @@ const Header = ({
                             {currentUser?.avatarUrl ? (
                                 <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
-                                (currentUser?.name || '?')[0].toUpperCase()
+                                (currentUser?.name || currentUser?.username || '?')[0].toUpperCase()
                             )}
                         </div>
                     </button>

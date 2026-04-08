@@ -331,7 +331,7 @@ export default function Crammerly() {
               addToast={addToast}
             />
           )}
-          {isInRoom && currentRoom && (
+          {isInRoom && currentRoom && authUser && (
             <RoomView
               room={currentRoom}
               currentUser={currentUser}
