@@ -188,8 +188,11 @@ function FriendsModal({ currentUser, onClose, addToast }) {
   useEffect(() => {
     if (activeView === 'chat' && selectedFriend?.dmRoomId) {
       const roomId = selectedFriend.dmRoomId;
+      const socket = getSocket();
+      
       if (socket) socket.emit('join_room', roomId);
       messagesApi.markAsRead(roomId).catch(() => {});
+      
       const friendId = selectedFriend._id || selectedFriend.id;
 
       const loadHistory = async () => {
@@ -208,16 +211,12 @@ function FriendsModal({ currentUser, onClose, addToast }) {
         }
       };
       loadHistory();
-      
-      // Join the DM room
-      const socket = getSocket();
-      if (socket) socket.emit('join_room', roomId);
-      
+
       return () => {
-          if (socket) socket.emit('leave_room', roomId);
+        if (socket) socket.emit('leave_room', roomId);
       };
     }
-  }, [activeView, selectedFriend, loadedChats]);
+  }, [activeView, selectedFriend]);
 
   // Scroll to bottom on new messages or view change
   useEffect(() => {
