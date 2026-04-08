@@ -46,14 +46,15 @@ const CallModal = () => {
                 {/* Video Container */}
                 <div className="relative flex-1 bg-black group">
                     {/* Remote Video / Voice Placeholder */}
-                    {callState === 'active' && remoteStream && callType === 'video' ? (
-                        <video
-                            ref={remoteVideoRef}
-                            autoPlay
-                            playsInline
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
+                    {/* Remote Video / Voice Placeholder */}
+                    <video
+                        ref={remoteVideoRef}
+                        autoPlay
+                        playsInline
+                        className={`w-full h-full object-cover transition-opacity duration-700 ${callState === 'active' && remoteStream && callType === 'video' ? 'opacity-100' : 'opacity-0 absolute'}`}
+                    />
+
+                    {(callState !== 'active' || !remoteStream || callType === 'voice') && (
                         <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-gradient-to-b from-zinc-900 to-black">
                             <div className={`relative w-40 h-40 rounded-full border-4 border-zinc-700 flex items-center justify-center overflow-hidden shadow-2xl ${callState === 'active' ? 'ring-4 ring-brand-primary animate-pulse' : ''}`}>
                                 {remoteUser?.avatar ? (

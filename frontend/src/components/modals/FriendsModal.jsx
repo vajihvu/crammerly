@@ -433,7 +433,7 @@ function FriendsModal({ onClose, addToast }) {
                   name: selectedFriend.name, 
                   avatar: selectedFriend.avatar_url || selectedFriend.avatar,
                   tag: selectedFriend.tag 
-                })} 
+                }, 'voice')} 
                 disabled={callState !== 'idle'}
                 className="p-2 sm:p-2.5 rounded-xl transition-all shrink-0 text-brand-text-dim hover:bg-brand-muted/20 disabled:opacity-30"
               >

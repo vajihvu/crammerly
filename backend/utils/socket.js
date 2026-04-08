@@ -162,6 +162,7 @@ export const initSocket = (server) => {
 
         // 4. Forward WebRTC signals (ICE candidates / SDP)
         socket.on('call:signal', ({ toUserId, signalData }) => {
+            if (!toUserId) return;
             io.to(`user_${toUserId}`).emit('call:signal', {
                 signalData
             });

@@ -24,21 +24,29 @@ export const VideoCallProvider = ({ children }) => {
     const peerConnection = useRef(null);
     const socket = useRef(null);
     const pendingCandidates = useRef([]);
+    const incomingSignal = useRef(null); // Store offer/candidates if they arrive early
 
     // Cleanup WebRTC
     const cleanupCall = useCallback(() => {
         if (peerConnection.current) {
+            peerConnection.current.onicecandidate = null;
+            peerConnection.current.ontrack = null;
+            peerConnection.current.onconnectionstatechange = null;
             peerConnection.current.close();
             peerConnection.current = null;
         }
         if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
+            localStream.getTracks().forEach(track => {
+                track.stop();
+                localStream.removeTrack(track);
+            });
             setLocalStream(null);
         }
         setRemoteStream(null);
         setCallState('idle');
         setRemoteUser(null);
         pendingCandidates.current = [];
+        incomingSignal.current = null;
     }, [localStream]);
 
     // Initialize Media
@@ -96,19 +104,30 @@ export const VideoCallProvider = ({ children }) => {
         setRemoteUser(from);
         setCallType(type);
         setCallState('incoming');
-        // We'll store the initial signal data to use when accepting
-        peerConnection.current = signalData; 
+        incomingSignal.current = signalData; 
     }, [callState]);
 
+    const addIceCandidate = async (pc, candidate) => {
+        try {
+            if (candidate) {
+                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            }
+        } catch (err) {
+            console.error('Error adding ICE candidate:', err);
+        }
+    };
+
     const handleCallAccepted = useCallback(async ({ signalData }) => {
-        if (!peerConnection.current) return;
+        const pc = peerConnection.current;
+        if (!pc) return;
+        
         setCallState('active');
-        await peerConnection.current.setRemoteDescription(new RTCSessionDescription(signalData));
+        await pc.setRemoteDescription(new RTCSessionDescription(signalData));
         
         // Process any queued candidates
         while (pendingCandidates.current.length > 0) {
             const candidate = pendingCandidates.current.shift();
-            await peerConnection.current.addIceCandidate(new RTCIceCandidate(candidate));
+            await addIceCandidate(pc, candidate);
         }
     }, []);
 
@@ -119,23 +138,22 @@ export const VideoCallProvider = ({ children }) => {
 
     const handleSignal = useCallback(async ({ signalData }) => {
         const pc = peerConnection.current;
-        if (!pc || pc instanceof RTCSessionDescription) return; // Still in signaling phase
-
+        
         if (signalData.type === 'offer') {
-            await pc.setRemoteDescription(new RTCSessionDescription(signalData));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socket.current?.emit('call:accept', { toUserId: remoteUser?.id, signalData: answer });
+            // Should be handled by handleIncomingCall first, but safeguard here
+            incomingSignal.current = signalData;
         } else if (signalData.type === 'answer') {
-            await pc.setRemoteDescription(new RTCSessionDescription(signalData));
+            if (pc) {
+                await pc.setRemoteDescription(new RTCSessionDescription(signalData));
+            }
         } else if (signalData.type === 'candidate') {
-            if (pc.remoteDescription) {
-                await pc.addIceCandidate(new RTCIceCandidate(signalData.candidate));
+            if (pc && pc.remoteDescription) {
+                await addIceCandidate(pc, signalData.candidate);
             } else {
                 pendingCandidates.current.push(signalData.candidate);
             }
         }
-    }, [remoteUser]);
+    }, []);
 
     const handleCallEnded = useCallback(() => {
         cleanupCall();
@@ -187,7 +205,7 @@ export const VideoCallProvider = ({ children }) => {
     };
 
     const acceptCall = async () => {
-        if (callState !== 'incoming' || !remoteUser) return;
+        if (callState !== 'incoming' || !remoteUser || !incomingSignal.current) return;
 
         const stream = await startLocalStream(callType);
         if (!stream) {
@@ -196,7 +214,7 @@ export const VideoCallProvider = ({ children }) => {
         }
 
         const pc = createPeerConnection(remoteUser.id, stream);
-        const offerSignal = peerConnection.current; // Stored offer
+        const offerSignal = incomingSignal.current;
         
         await pc.setRemoteDescription(new RTCSessionDescription(offerSignal));
         const answer = await pc.createAnswer();
@@ -206,6 +224,12 @@ export const VideoCallProvider = ({ children }) => {
             toUserId: remoteUser.id,
             signalData: answer
         });
+
+        // Process any candidates that arrived while waiting to accept
+        while (pendingCandidates.current.length > 0) {
+            const candidate = pendingCandidates.current.shift();
+            await addIceCandidate(pc, candidate);
+        }
 
         setCallState('active');
     };
