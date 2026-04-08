@@ -43,6 +43,9 @@ export function useStudyData({ authUser, currentUser, addToast, openConfirm }) {
 
                 const failed = [tData, jData, nData, fData, stats].filter(r => r.status === 'rejected');
                 if (failed.length > 0) {
+                    const isAuthError = failed.some(r => r.reason?.response?.status === 401);
+                    if (isAuthError) return; // Silent if auth fails (logout interceptor handles it)
+
                     console.error('Some bootstrap requests failed:', failed);
                     addToast('Some data failed to load. Pull down to refresh.', 'warning');
                 }

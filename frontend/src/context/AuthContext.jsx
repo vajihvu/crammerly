@@ -16,7 +16,30 @@ export const AuthProvider = ({ children }) => {
         }
     });
 
-    const [loading] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const verifySession = async () => {
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+            try {
+                // Try to get fresh profile data to verify current token/session
+                const response = await authApi.getProfile();
+                if (response.success) {
+                    updateUser(response.data);
+                }
+            } catch (err) {
+                if (err.response?.status === 401) {
+                    logout(true);
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+        verifySession();
+    }, []); // Run once on mount
 
     const logout = useCallback(async (skipServerLogOut = false) => {
         localStorage.removeItem('userInfo');

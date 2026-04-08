@@ -41,6 +41,7 @@ client.interceptors.request.use(
                 const userInfo = JSON.parse(userInfoString);
                 if (userInfo?.token && !config.headers.Authorization) {
                     config.headers.Authorization = `Bearer ${userInfo.token}`;
+                    client._sessionDead = false;
                 }
             } catch (e) {
                 console.error('Failed to parse userInfo from localStorage:', e);
@@ -96,6 +97,7 @@ client.interceptors.response.use(
                         // localStorage parse failed — token still usable for this request
                     }
 
+                    client._sessionDead = false;
                     client.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
                     originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
                     return client(originalRequest);
@@ -116,10 +118,17 @@ client.interceptors.response.use(
                         originalRequest.headers['Authorization'] = `Bearer ${userInfo.token}`;
                     }
                     return client(originalRequest);
-                } else if (status === 401 || status === 403) {
+                } else if (status === 401) {
                     // Only emit UNAUTHORIZED for definitive server rejections (expired/revoked session)
-                    console.error('🚫 Refresh failed: Session unrecoverable. Logging out.');
-                    emit(apiEvents.UNAUTHORIZED);
+                    if (!client._sessionDead) {
+                        client._sessionDead = true;
+                        console.error('🚫 Refresh failed: Session unrecoverable. Logging out.');
+                        emit(apiEvents.UNAUTHORIZED);
+                    }
+                } else if (status === 403) {
+                    // 403 Forbidden may be due to CSRF or specific resource permissions. 
+                    // Don't kill the whole session, just let the request fail.
+                    console.warn(`🔒 Refresh blocked: Forbidden (403). Possible CSRF or permission issue. Session preserved.`);
                 } else {
                     // Network errors, 500s, etc. shouldn't trigger a global logout! 
                     // Let the individual request fail instead of killing the whole session.

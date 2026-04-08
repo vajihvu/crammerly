@@ -345,7 +345,15 @@ export const refreshAccessToken = async (req, res, next) => {
     } catch (error) {
         await logAuditEvent({ req, event: 'AUTH_REFRESH', status: 'FAILURE', metadata: { reason: error.message } });
         logger.error(`Refresh Token Error: ${error.message}`);
-        res.clearCookie('refreshToken');
+        
+        // Only clear cookie for definitive "dead" token errors. 
+        // Do NOT clear for rotation races (401 with AUTH_ROTATION_RACE) or rate limits (429).
+        // If it's a race, the client already has a newer valid cookie; clearing it now would kill the session.
+        const isFatal = error.statusCode === 401 && error.code !== 'AUTH_ROTATION_RACE';
+        if (isFatal) {
+            res.clearCookie('refreshToken', COOKIE_OPTIONS);
+        }
+        
         if (!error.statusCode) error.statusCode = 401;
         if (!error.code) error.code = 'AUTH_INVALID';
         next(error);
