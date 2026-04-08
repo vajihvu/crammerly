@@ -162,3 +162,24 @@ export const markAsRead = asyncHandler(async (req, res) => {
     return res.sendSuccess({ modifiedCount: result.modifiedCount });
 });
 
+
+/**
+ * @desc    Upload a file for a message
+ * @route   POST /api/v1/messages/upload
+ */
+export const uploadFile = asyncHandler(async (req, res) => {
+    if (!req.file) {
+        return res.sendError('No file uploaded', 400);
+    }
+
+    // Construct the file URL (relative path works better if handled by frontend, but absolute is easier for now)
+    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+
+    return res.sendSuccess({
+        url: fileUrl,
+        name: req.file.originalname,
+        mimeType: req.file.mimetype,
+        size: req.file.size
+    });
+});
+

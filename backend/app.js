@@ -179,6 +179,9 @@ if (!config.isProduction) {
 const API_PREFIX = '/api/v1';
 app.use(API_PREFIX, v1Routes);
 
+// Static files for uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Basic health check (Simple version for monitoring/LBs)
 app.get('/health', (req, res) => {
     return res.sendSuccess({ status: 'ok', version: 'v3-cors-fix' });

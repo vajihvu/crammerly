@@ -316,16 +316,26 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     const file = e.target.files[0];
     if (file && selectedFriend?.dmRoomId) {
       try {
+        if (addToast) addToast('Uploading file...', 'info');
+        
+        // 1. Upload to server
+        const uploadedFile = await messagesApi.uploadFile(file);
+        
+        // 2. Send message with the returned URL
         await messagesApi.send(selectedFriend.dmRoomId, {
           content: `Sent file: ${file.name}`,
-          type: 'file',
+          type: uploadedFile.mimeType?.startsWith('image/') ? 'image' : 'file',
           fileData: { 
-            name: file.name, 
-            size: file.size,
-            type: file.type || 'application/octet-stream'
+            url: uploadedFile.url,
+            name: uploadedFile.name, 
+            size: uploadedFile.size,
+            mimeType: uploadedFile.mimeType
           }
         });
-      } catch {
+        
+        if (addToast) addToast('File sent successfully!', 'success');
+      } catch (err) {
+        console.error('Upload failed:', err);
         if (addToast) addToast('Failed to upload file', 'danger');
       }
     }
@@ -523,10 +533,32 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                             <MessageContent text={msg.content || msg.text} />
                           )}
                           {msg.type === 'file' && (
-                            <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-black/10 rounded-lg">
-                              <FileText size={16} className="text-brand-secondary" />
-                              <span className="text-[10px] font-bold uppercase tracking-wider">Document Attachment</span>
-                            </div>
+                            <a 
+                              href={msg.fileData?.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-3 mt-2 px-4 py-3 bg-black/10 hover:bg-black/20 rounded-xl transition-all border border-white/10 group no-underline"
+                            >
+                              <div className="w-10 h-10 rounded-lg bg-brand-primary/20 flex items-center justify-center shrink-0 group-hover:bg-brand-primary/30 transition-colors">
+                                <FileText size={20} className="text-brand-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-bold text-brand-text truncate mb-0.5">{msg.fileData?.name || 'Attachment'}</p>
+                                <p className="text-[10px] text-brand-text-dim uppercase tracking-tighter">
+                                  {msg.fileData?.size ? `${(msg.fileData.size / 1024).toFixed(1)} KB` : 'Click to Download'}
+                                </p>
+                              </div>
+                            </a>
+                          )}
+                          {msg.type === 'image' && msg.fileData?.url && (
+                             <div className="mt-2 rounded-xl overflow-hidden border border-white/10">
+                               <img 
+                                 src={msg.fileData.url} 
+                                 alt={msg.fileData.name} 
+                                 className="max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                                 onClick={() => window.open(msg.fileData.url, '_blank')}
+                               />
+                             </div>
                           )}
                         </div>
                         <span className={`text-[10px] font-black mt-2 inline-block uppercase tracking-widest opacity-70 ${msg.sender === 'me' ? 'text-brand-secondary mr-1' : 'text-brand-text-dim ml-1'}`}>

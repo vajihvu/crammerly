@@ -22,6 +22,18 @@ export const messagesApi = {
     },
 
     /**
+     * Upload a file
+     */
+    uploadFile: async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const { data } = await client.post('/messages/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return data.data;
+    },
+
+    /**
      * Mark all messages in a room as read
      */
     markAsRead: async (roomId) => {

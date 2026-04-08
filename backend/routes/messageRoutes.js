@@ -1,5 +1,6 @@
 import express from 'express';
-import { getMessagesByRoom, sendMessage, markAsRead } from '../controllers/messageController.js';
+import { getMessagesByRoom, sendMessage, markAsRead, uploadFile } from '../controllers/messageController.js';
+import { upload } from '../middleware/upload.js';
 
 import { protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validator.js';
@@ -13,6 +14,8 @@ router.route('/:roomId')
     .get(getMessagesByRoom)
     .post(validate(messageSchema), sendMessage)
     .patch(markAsRead);
+
+router.post('/upload', upload.single('file'), uploadFile);
 
 export default router;
 
