@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useEf
 import { X, CheckCircle, AlertCircle, Info, Loader2 } from 'lucide-react';
 import { apiEvents } from '../api/client';
 import { ToastContainer } from '../components/utils/Toast';
+import CookieBanner from '../components/ui/CookieBanner';
 
 const UIContext = createContext();
 
@@ -67,6 +68,7 @@ export const UIProvider = ({ children }) => {
             )}
             {/* Global Toasts */}
             <ToastContainer toasts={toasts} removeToast={removeToast} />
+            <CookieBanner />
         </UIContext.Provider>
     );
 };

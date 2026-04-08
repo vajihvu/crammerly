@@ -104,7 +104,10 @@ function FriendsModal({ onClose, addToast }) {
         setSuggestedUsers(suggestionsData);
       } catch (_err) {
         console.error('Failed to load friends/notifications:', _err);
-        if (addToast) addToast('Failed to load your social data', 'danger');
+        // Only show error toast if it's NOT a 401. 401 is handled by global logout.
+        if (addToast && _err?.response?.status !== 401) {
+          addToast('Failed to load your social data', 'danger');
+        }
       } finally {
         setLoadingFriends(false);
       }
@@ -275,7 +278,11 @@ function FriendsModal({ onClose, addToast }) {
         await messagesApi.send(selectedFriend.dmRoomId, {
           content: `Sent file: ${file.name}`,
           type: 'file',
-          fileData: { name: file.name, size: file.size }
+          fileData: { 
+            name: file.name, 
+            size: file.size,
+            type: file.type || 'application/octet-stream'
+          }
         });
       } catch {
         if (addToast) addToast('Failed to upload file', 'danger');
