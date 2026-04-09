@@ -7,7 +7,9 @@ export const bugsApi = {
      * @returns {Promise<Object>} The created bug report response
      */
     submitBug: async (bugData) => {
-        const response = await client.post('/bugs', bugData);
+        // Use _retry: true to tell the axios interceptor NOT to trigger a global logout 
+        // if this specific non-critical request fails with a 401.
+        const response = await client.post('/bugs', bugData, { _retry: true });
         return response.data;
     },
 
