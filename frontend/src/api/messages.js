@@ -37,7 +37,7 @@ export const messagesApi = {
      * Mark all messages in a room as read
      */
     markAsRead: async (roomId) => {
-        const { data } = await client.patch(`/messages/${roomId}/read`);
+        const { data } = await client.patch(`/messages/${roomId}`);
         return data.data;
     },
 

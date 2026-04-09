@@ -201,9 +201,17 @@ function FriendsModal({ currentUser, onClose, addToast }) {
 
         try {
           const response = await messagesApi.getByRoom(roomId);
+          
+          const currentUserId = currentUser?._id || currentUser?.id;
+          const formattedMessages = (response?.messages || []).map(msg => ({
+            ...msg,
+            sender: String(msg.sender_id) === String(currentUserId) ? 'me' : 'them',
+            time: new Date(msg.timestamp || msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }));
+
           setChatHistory(prev => ({
             ...prev,
-            [friendId]: response?.messages || []
+            [friendId]: formattedMessages
           }));
           setLoadedChats(prev => new Set([...prev, roomId]));
         } catch (err) {
