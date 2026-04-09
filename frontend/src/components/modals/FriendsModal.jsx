@@ -216,6 +216,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
         if (socket) socket.emit('leave_room', roomId);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeView, selectedFriend]);
 
   // Scroll to bottom on new messages or view change
