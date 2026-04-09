@@ -86,7 +86,7 @@ jobs:
 
       - name: Notify Slack — rollback complete
         if: success() && env.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v3.0.1
         with:
           payload: |
             {"text": "⏪ *Production rolled back* to `${{ inputs.image_tag }}`.\nReason: ${{ inputs.reason }}\nTriggered by: ${{ github.actor }}"}
@@ -96,7 +96,7 @@ jobs:
 
       - name: Notify Slack — rollback FAILED
         if: failure() && env.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v3.0.1
         with:
           payload: |
             {"text": "🔴 *ROLLBACK FAILED* — manual intervention required!\nTarget tag: `${{ inputs.image_tag }}`\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"}

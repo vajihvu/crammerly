@@ -61,7 +61,7 @@ jobs:
 
       - name: Notify Slack on test failure                 # (#20)
         if: failure() && github.ref == 'refs/heads/main' && env.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v3.0.1
         with:
           payload: |
             {"text": "❌ *CI tests failed* on `${{ github.ref_name }}` — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View run>"}
@@ -210,7 +210,7 @@ jobs:
 
       - name: Notify Slack — staging deployed              # (#20)
         if: success() && env.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v3.0.1
         with:
           payload: |
             {"text": "✅ *Staging deployed* — `${{ github.sha }}` is live on staging. <${{ secrets.STAGING_URL }}|Open staging>"}
@@ -220,7 +220,7 @@ jobs:
 
       - name: Notify Slack — staging failed                # (#20)
         if: failure() && env.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v3.0.1
         with:
           payload: |
             {"text": "❌ *Staging deploy failed* — <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>"}
@@ -278,7 +278,7 @@ jobs:
 
       - name: Notify Slack — production deployed           # (#20)
         if: success() && env.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v3.0.1
         with:
           payload: |
             {"text": "🚀 *Production deployed* — `${{ github.sha }}` is live. <${{ secrets.PRODUCTION_URL }}|Open app>"}
@@ -288,7 +288,7 @@ jobs:
 
       - name: Notify Slack — production FAILED             # (#20)
         if: failure() && env.SLACK_WEBHOOK_URL != ''
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v3.0.1
         with:
           payload: |
             {"text": "🔴 *PRODUCTION DEPLOY FAILED* — immediate action required! <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View logs>\n\nTo roll back: trigger the *Rollback* workflow from Actions tab."}
