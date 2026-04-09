@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, HelpCircle, Search, ChevronRight, MessageSquare, Book, PlayCircle, LifeBuoy, Shield, FileText, Activity, CheckCircle2 } from 'lucide-react';
+import { useUI } from '../../context/UIContext';
 
 const helpContent = {
     'Getting Started': [
@@ -179,6 +180,7 @@ const helpContent = {
 };
 
 function HelpModal({ onClose }) {
+    const { addToast } = useUI();
     const [searchQuery, setSearchQuery] = useState('');
     const [activeCategory, setActiveCategory] = useState(null);
     const [expandedItem, setExpandedItem] = useState(null);
@@ -351,12 +353,17 @@ function HelpModal({ onClose }) {
                             <button onClick={() => { setActiveCategory(footerCategories['Terms']); setExpandedItem(null); }} className="hover:text-brand-text transition-colors uppercase tracking-widest text-[9px]">Terms</button>
                             <button onClick={() => { setActiveCategory(footerCategories['Status']); setExpandedItem(null); }} className="hover:text-brand-text transition-colors uppercase tracking-widest text-[9px]">Status</button>
                         </div>
-                        <a
-                            href="mailto:support@crammerly.app?subject=Crammerly%20Support%20Request&body=Hi%20Crammerly%20Team%2C%0A%0AI%20need%20help%20with%3A%0A%0A"
+                        <button
+                            onClick={(e) => {
+                                e.preventDefault();
+                                window.location.href = "mailto:support@crammerly.app?subject=Crammerly%20Support%20Request&body=Hi%20Crammerly%20Team%2C%0A%0AI%20need%20help%20with%3A%0A%0A";
+                                navigator.clipboard.writeText('support@crammerly.app');
+                                addToast('Email address copied to clipboard!', 'success');
+                            }}
                             className="px-6 py-2.5 bg-brand-text text-brand-bg rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:scale-105 active:scale-95 transition-all"
                         >
                             Email Us
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
