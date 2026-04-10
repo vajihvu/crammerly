@@ -9,6 +9,7 @@ import { notificationsApi } from './notifications';
 import { messagesApi } from './messages';
 import { sessionsApi } from './sessions';
 import { bugsApi } from './bugs';
+import aiApi from './ai';
 import client from './client';
 
 export {
@@ -24,6 +25,7 @@ export {
     messagesApi,
     sessionsApi,
     bugsApi,
+    aiApi,
 };
 
 // Default export as a unified object if preferred
@@ -39,6 +41,7 @@ export default {
     messages: messagesApi,
     sessions: sessionsApi,
     bugs: bugsApi,
+    ai: aiApi,
     client,
 };
 

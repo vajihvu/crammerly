@@ -1,25 +1,40 @@
 // src/components/tabs/AITutorTab.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Send, MessageCircle, Loader } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { aiApi } from '../../api';
 
 function AITutorTab({ room }) {
-  const [messages, setMessages] = useState(() => {
-    try {
-      const saved = localStorage.getItem(`crammer_ai_chat_${room?.id}`);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const { user } = useAuth();
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
+  // Derive user ID safely
+  const userId = user?.id || user?._id || user?.user?.id || user?.user?._id;
+
+  // Load messages on mount or when user/room changes
   useEffect(() => {
-    if (room?.id) {
-      localStorage.setItem(`crammer_ai_chat_${room.id}`, JSON.stringify(messages));
+    if (userId && room?.id) {
+      try {
+        const key = `crammer_ai_chat_${userId}_${room.id}`;
+        const saved = localStorage.getItem(key);
+        setMessages(saved ? JSON.parse(saved) : []);
+      } catch (err) {
+        console.error("Failed to load AI chat history:", err);
+        setMessages([]);
+      }
     }
-  }, [messages, room?.id]);
+  }, [userId, room?.id]);
+
+  // Persist messages when they change
+  useEffect(() => {
+    if (userId && room?.id && messages.length > 0) {
+      const key = `crammer_ai_chat_${userId}_${room.id}`;
+      localStorage.setItem(key, JSON.stringify(messages));
+    }
+  }, [messages, userId, room?.id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -29,9 +44,9 @@ function AITutorTab({ room }) {
     const query = typeof overrideInput === 'string' ? overrideInput : input;
     if (!query.trim() || isLoading) return;
 
-    const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY;
     const userMessage = { role: 'user', content: query };
-    setMessages(prev => [...prev, userMessage]);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     
     if (typeof overrideInput !== 'string') {
         setInput('');
@@ -39,49 +54,22 @@ function AITutorTab({ room }) {
     setIsLoading(true);
 
     try {
-      if (!apiKey || apiKey === "YOUR_DEEPSEEK_API_KEY") {
-        // Demo mode fallback
-        setTimeout(() => {
-          const roomTopic = room?.topic || 'this subject';
-          const demoResponses = [
-            `That's a great question about ${roomTopic}! In this context, it's important to remember the core principles we've discussed.`,
-            `I'm currently in demo mode (API key not set), but I can tell you that ${roomTopic} is a fascinating subject with many real-world applications.`,
-            `Could you tell me more about what specific part of ${roomTopic} you're finding challenging?`
-          ];
-          const response = demoResponses[Math.floor(Math.random() * demoResponses.length)];
-          setMessages(prev => [...prev, { role: 'assistant', content: response }]);
-          setIsLoading(false);
-        }, 1000);
-        return;
+      // Use the secure backend proxy instead of direct deepseek calls
+      const res = await aiApi.chat(query, messages.map(msg => ({
+          role: msg.role,
+          content: msg.content
+      })));
+
+      if (res && res.choices && res.choices[0]) {
+          const aiText = res.choices[0].message.content || "Sorry, I couldn't generate a response.";
+          setMessages(prev => [...prev, { role: 'assistant', content: aiText }]);
+      } else {
+          throw new Error("Invalid response format from AI service");
       }
-
-      const response = await fetch("https://api.deepseek.com/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: "deepseek-chat",
-          messages: [
-            { role: "system", content: `You are an AI tutor helping students with ${room?.topic || 'their subject'}. Be encouraging, clear, and educational. Provide hints rather than full solutions.` },
-            ...messages.map(msg => ({ role: msg.role, content: msg.content })),
-            { role: "user", content: query }
-          ],
-          stream: false
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const aiText = data.choices[0].message.content || "Sorry, I couldn't generate a response.";
-      setMessages(prev => [...prev, { role: 'assistant', content: aiText }]);
     } catch (error) {
-      console.error("DeepSeek Error:", error);
-      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message || 'I encountered an issue. Please try again later.'}` }]);
+      console.error("AI Tutor Error:", error);
+      const errorMessage = error.response?.data?.message || error.message || 'I encountered an issue. Please try again later.';
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${errorMessage}` }]);
     } finally {
       setIsLoading(false);
     }
