@@ -1,2 +1,5 @@
 # Ignore NPM's internal picomatch ReDOS vulnerability (non-exploitable build-time transitive dependency)
 CVE-2026-33671
+
+# Ignore OpenSSL Denial of Service in CMS (non-exploitable in this context, awaiting alpine upstream sync)
+CVE-2026-28390
