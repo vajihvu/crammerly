@@ -643,8 +643,8 @@ function FriendsModal({ currentUser, onClose, addToast }) {
   }
 
   return (
-    <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-center justify-center p-4 sm:p-8 overflow-y-auto animate-in fade-in duration-200" onClick={onClose}>
-      <div className="bg-brand-surface w-full max-w-5xl h-[95vh] sm:h-[85vh] rounded-[32px] sm:rounded-[40px] border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 font-sans" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-center justify-center p-0 sm:p-8 overflow-hidden animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-brand-surface w-full max-w-5xl h-[100dvh] sm:h-[85vh] rounded-none sm:rounded-[40px] border-0 sm:border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 font-sans" onClick={(e) => e.stopPropagation()}>
 
         <div className="px-3.5 sm:px-8 py-4 sm:py-6 flex items-center justify-between border-b border-brand-border/50 bg-brand-bg/50 backdrop-blur-xl shrink-0 gap-2 sm:gap-4">
           <div className="flex items-center gap-1.5 sm:gap-6 min-w-0">
@@ -696,9 +696,9 @@ function FriendsModal({ currentUser, onClose, addToast }) {
           )}
         </div>
 
-        <div className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden bg-brand-bg relative">
+        <div className="flex-1 flex flex-col md:flex-row overflow-hidden bg-brand-bg relative">
           {/* Left Side: Friends List */}
-          <div className="w-full md:flex-1 flex flex-col border-b md:border-b-0 md:border-r border-brand-border/30 shrink-0 md:shrink md:overflow-hidden min-h-[500px] md:min-h-0">
+          <div className="w-full flex-1 flex flex-col border-r border-brand-border/30 shrink-0 md:shrink md:overflow-hidden md:min-h-0">
             {showAddFriend && (
               <div className="px-4 sm:px-6 py-4 bg-brand-bg/50 backdrop-blur-xl border-b border-brand-border/30 animate-in slide-in-from-top duration-300">
                 <div className="flex gap-2 items-center">

@@ -3,7 +3,6 @@ import { AuthProvider } from './context/AuthContext';
 import { UIProvider } from './context/UIContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import ProtectedRoute from './components/ProtectedRoute';
-import Home from './pages/Home';
 import Crammerly from './pages/Crammerly';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
@@ -42,14 +41,8 @@ function App() {
                                 <Route path="/terms" element={<TermsOfService />} />
 
                                 {/* Protected Routes */}
-                                <Route
-                                    path="/workspace"
-                                    element={
-                                        <ProtectedRoute>
-                                            <Home />
-                                        </ProtectedRoute>
-                                    }
-                                />
+                                {/* Redirect legacy workspace route */}
+                                <Route path="/workspace" element={<Navigate to="/" replace />} />
                                 
                                 {/* Admin Protected Routes */}
                                 <Route
