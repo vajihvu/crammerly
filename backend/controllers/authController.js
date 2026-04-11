@@ -527,24 +527,25 @@ export const updateUserProfile = async (req, res, next) => {
 
         // If password changed, issue new refresh token & session
         let newSessionId = req.sessionId;
+        let newRefreshToken;
         if (passwordChanged) {
-            const refreshToken = generateRefreshToken();
+            newRefreshToken = generateRefreshToken();
             const session = await Session.create({
                 user: user._id,
-                refreshTokenHash: hashToken(refreshToken),
+                refreshTokenHash: hashToken(newRefreshToken),
                 userAgent: req.headers['user-agent'],
                 ipAddress: req.ip,
                 expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
             });
             newSessionId = session._id;
 
-            res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
+            res.cookie('refreshToken', newRefreshToken, COOKIE_OPTIONS);
         }
 
         return res.sendSuccess({
             user: formatUserPayload(updatedUser),
             token: passwordChanged ? generateAccessToken(updatedUser, newSessionId) : undefined,
-            refreshToken: passwordChanged ? refreshToken : undefined
+            refreshToken: passwordChanged ? newRefreshToken : undefined
         });
     } catch (error) {
         if (error.code === 11000 && error.keyPattern && error.keyPattern.username) {

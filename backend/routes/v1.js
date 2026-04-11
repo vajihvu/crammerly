@@ -9,7 +9,6 @@ import messageRoutes from './messageRoutes.js';
 import bugRoutes from './bugRoutes.js';
 import friendsRoutes from './friendsRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
-import { aiLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
