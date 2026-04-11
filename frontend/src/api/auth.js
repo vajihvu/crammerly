@@ -10,11 +10,15 @@ export const authApi = {
     register: (userData) =>
         client.post('/auth/register', userData).then(res => res.data),
 
-    logout: () =>
-        client.post('/auth/logout', {}).then(res => res.data),
+    logout: () => {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        return client.post('/auth/logout', { refreshToken: userInfo.refreshToken }).then(res => res.data);
+    },
 
-    refresh: () =>
-        client.post('/auth/refresh', {}).then(res => res.data),
+    refresh: () => {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        return client.post('/auth/refresh', { refreshToken: userInfo.refreshToken }).then(res => res.data);
+    },
 
     getSessions: () =>
         client.get('/auth/sessions').then(res => res.data),

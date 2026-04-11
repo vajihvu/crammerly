@@ -68,7 +68,11 @@ function AITutorTab({ room }) {
       }
     } catch (error) {
       console.error("AI Tutor Error:", error);
-      const errorMessage = error.response?.data?.message || error.message || 'I encountered an issue. Please try again later.';
+      const errorMessage = 
+        error.response?.data?.error?.message || 
+        error.response?.data?.message || 
+        error.message || 
+        'I encountered an issue. Please try again later.';
       setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${errorMessage}` }]);
     } finally {
       setIsLoading(false);

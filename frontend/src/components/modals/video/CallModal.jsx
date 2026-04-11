@@ -41,7 +41,7 @@ const CallModal = () => {
             <div className="absolute inset-0 bg-black/80 backdrop-blur-md animate-in fade-in duration-500" />
 
             {/* Modal Content */}
-            <div className="relative w-full max-w-4xl aspect-video bg-zinc-900 rounded-[32px] overflow-hidden shadow-2xl flex flex-col border border-zinc-800 scale-in-center">
+            <div className="relative w-full h-[90vh] md:h-auto max-w-4xl md:aspect-video bg-zinc-900 rounded-3xl md:rounded-[32px] overflow-hidden shadow-2xl flex flex-col border border-zinc-800 scale-in-center">
                 
                 {/* Video Container */}
                 <div className="relative flex-1 bg-black group">

@@ -21,7 +21,7 @@ const router = express.Router();
 
 router.use('/auth', authRoutes);
 router.use('/records', recordRoutes);
-router.use('/ai', aiLimiter, aiRoutes);
+router.use('/ai', aiRoutes);
 router.use('/todos', todoRoutes);
 router.use('/study-sessions', studySessionRoutes);
 router.use('/rooms', roomRoutes);

@@ -15,7 +15,7 @@ const Header = ({
 }) => {
     return (
         <header className={`sticky top-0 z-[110] w-full bg-brand-surface border-b border-brand-border/20 shadow-sm opacity-100 transition-all ${(modals.profile || modals.friends || modals.calendar) ? 'hidden' : modals.floating ? 'hidden sm:block' : 'block'}`}>
-            <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between gap-4 relative z-10 !bg-brand-surface">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-4 relative z-10 !bg-brand-surface">
                 {/* Left Actions */}
                 <div className="flex items-center gap-1 md:gap-3 flex-1">
                     {isInRoom ? (

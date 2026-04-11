@@ -87,17 +87,18 @@ export const apiLimiter = rateLimit({
  * draining the API wallet.
  */
 export const aiLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5, // Strictly limit to 5 AI requests per hour
+    windowMs: 24 * 60 * 60 * 1000, // 24 hours
+    max: 5, // Strictly limit to 5 AI requests per day
     standardHeaders: true,
     legacyHeaders: false,
     store: store,
-    skip: () => config.isTest,
+    keyGenerator: (req) => req.user?._id || req.ip,
+    skip: (req) => config.isTest || (req.user && req.user.role === 'admin'), // Admins are exempt
     message: {
         success: false,
         error: {
             code: 'API_AI_QUOTA_EXCEEDED',
-            message: 'AI quota exceeded for this hour. Please try again later.'
+            message: 'Daily AI quota exceeded (5 prompts/day). Please try again tomorrow.'
         }
     }
 });

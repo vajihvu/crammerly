@@ -1,9 +1,46 @@
 // src/components/tabs/ChatTab.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Send, Mic, X, Plus, MessageCircle, Paperclip, Smile, FileText } from 'lucide-react';
+import { Search, Send, Mic, X, Plus, MessageCircle, Paperclip, Smile, FileText, Play, Pause, Headphones } from 'lucide-react';
 import { messagesApi } from '../../api';
 import { getSocket, joinRoom, leaveRoom } from '../../utils/socket';
 import { ChatSkeleton, NetworkError } from '../ui/Skeletons';
+
+const AudioMessage = ({ url, isMe }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef(null);
+
+  const togglePlay = () => {
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  return (
+    <div className={`flex items-center gap-3 px-4 py-2 ${isMe ? 'bg-white/20' : 'bg-brand-muted/20'} rounded-2xl min-w-[200px]`}>
+      <button 
+        onClick={togglePlay}
+        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isMe ? 'bg-white text-brand-primary' : 'bg-brand-primary text-white'}`}
+      >
+        {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} className="ml-0.5" fill="currentColor" />}
+      </button>
+      <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden relative">
+        <div className={`absolute inset-y-0 left-0 ${isMe ? 'bg-white' : 'bg-brand-primary'} w-1/3 rounded-full`} />
+      </div>
+      <Headphones size={14} className="opacity-50" />
+      <audio 
+        ref={audioRef} 
+        src={url} 
+        onEnded={() => setIsPlaying(false)} 
+        onPause={() => setIsPlaying(false)}
+        onPlay={() => setIsPlaying(true)}
+        className="hidden" 
+      />
+    </div>
+  );
+};
 
 const MessageContent = ({ text }) => {
   const isCode = text.startsWith('```') && text.endsWith('```');
@@ -29,6 +66,8 @@ function ChatTab({ room, currentUser, addToast }) {
   const [showStickerPicker, setShowStickerPicker] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const mediaRecorder = useRef(null);
+  const audioChunks = useRef([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
   const [messagesError, setMessagesError] = useState(null);
 
@@ -100,15 +139,47 @@ function ChatTab({ room, currentUser, addToast }) {
     }
   };
 
-  const handleVoiceRecord = () => {
-    if (isRecording) {
-      setIsRecording(false);
-      if (addToast) {
-        addToast('Voice message recorded! (Feature demo - real implementation requires WebRTC)', 'info');
+  const handleVoiceRecord = async () => {
+    if (!isRecording) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder.current = new MediaRecorder(stream);
+        audioChunks.current = [];
+
+        mediaRecorder.current.ondataavailable = (e) => {
+          if (e.data.size > 0) audioChunks.current.push(e.data);
+        };
+
+        mediaRecorder.current.onstop = async () => {
+          const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
+          const reader = new FileReader();
+          reader.readAsDataURL(audioBlob);
+          reader.onloadend = async () => {
+            const base64Audio = reader.result;
+            try {
+               await messagesApi.send(room.id, {
+                 content: 'Voice Message',
+                 type: 'voice',
+                 fileData: { url: base64Audio, name: 'voice_note.webm', mimeType: 'audio/webm' }
+               });
+               if (addToast) addToast('Voice note sent!', 'success');
+            } catch (err) {
+               console.error('Failed to send voice message:', err);
+               if (addToast) addToast('Failed to send voice message', 'danger');
+            }
+          };
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.current.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error('Microphone error:', err);
+        if (addToast) addToast('Microphone access denied', 'danger');
       }
     } else {
-      setIsRecording(true);
-      setTimeout(() => setIsRecording(false), 3000);
+      mediaRecorder.current?.stop();
+      setIsRecording(false);
     }
   };
 
@@ -255,9 +326,11 @@ function ChatTab({ room, currentUser, addToast }) {
                   <div className="text-6xl">{msg.text}</div>
                 )}
 
-                {(msg.type === 'text' || msg.type === 'file') && (
+                {msg.type === 'voice' ? (
+                  <AudioMessage url={msg.fileData?.url} isMe={msg.sender_id === currentUser.id} />
+                ) : (msg.type === 'text' || msg.type === 'file') ? (
                   <MessageContent text={msg.text} />
-                )}
+                ) : null}
 
                 <p className={`text-[10px] font-black mt-2 uppercase tracking-widest ${msg.sender_id === currentUser.id ? 'text-brand-bg/60' : 'text-brand-text-dim/50'}`}>
                   {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}

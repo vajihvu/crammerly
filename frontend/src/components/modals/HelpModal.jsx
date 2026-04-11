@@ -356,9 +356,12 @@ function HelpModal({ onClose }) {
                         <button
                             onClick={(e) => {
                                 e.preventDefault();
-                                window.location.href = "mailto:support@crammerly.app?subject=Crammerly%20Support%20Request&body=Hi%20Crammerly%20Team%2C%0A%0AI%20need%20help%20with%3A%0A%0A";
-                                navigator.clipboard.writeText('support@crammerly.app');
-                                addToast('Email address copied to clipboard!', 'success');
+                                window.open("mailto:support@crammerly.app?subject=Crammerly%20Support%20Request&body=Hi%20Crammerly%20Team%2C%0A%0AI%20need%20help%20with%3A%0A%0A", '_blank');
+                                navigator.clipboard.writeText('support@crammerly.app').then(() => {
+                                    addToast('Email address copied to clipboard!', 'success');
+                                }).catch(() => {
+                                    addToast('Opening email client...', 'info');
+                                });
                             }}
                             className="px-6 py-2.5 bg-brand-text text-brand-bg rounded-xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:scale-105 active:scale-95 transition-all"
                         >

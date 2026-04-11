@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     if (adminOnly) {
         const checkRole = user?.user?.role || user?.role;
         if (checkRole !== 'admin') {
-            return <Navigate to="/workspace" replace />;
+            return <Navigate to="/" replace />;
         }
     }
 

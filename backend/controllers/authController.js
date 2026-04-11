@@ -211,6 +211,7 @@ export const loginUser = async (req, res, next) => {
             res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
             return res.sendSuccess({
                 token: generateAccessToken(user, session._id),
+                refreshToken, // Fallback for 3rd-party cookie blocking
                 user: formatUserPayload(user)
             });
         } else {
@@ -300,6 +301,7 @@ export const googleLogin = async (req, res, next) => {
         res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
         return res.sendSuccess({
             token: generateAccessToken(user, session._id),
+            refreshToken, // Fallback for 3rd-party cookie blocking
             user: formatUserPayload(user)
         });
     } catch (error) {
@@ -312,7 +314,7 @@ export const googleLogin = async (req, res, next) => {
  * @route   POST /api/v1/auth/refresh
  */
 export const refreshAccessToken = async (req, res, next) => {
-    const oldRefreshToken = req.cookies.refreshToken;
+    const oldRefreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.headers['x-refresh-token'];
     if (!oldRefreshToken) {
         const error = new Error('Refresh token missing');
         error.statusCode = 401;
@@ -339,7 +341,8 @@ export const refreshAccessToken = async (req, res, next) => {
 
         res.cookie('refreshToken', newRefreshToken, COOKIE_OPTIONS);
         return res.sendSuccess({
-            token: generateAccessToken(user, session._id)
+            token: generateAccessToken(user, session._id),
+            refreshToken: newRefreshToken // Fallback for 3rd-party cookie blocking
         });
 
     } catch (error) {
@@ -366,7 +369,7 @@ export const refreshAccessToken = async (req, res, next) => {
  */
 export const logoutUser = async (req, res, next) => {
     try {
-        const refreshToken = req.cookies.refreshToken;
+        const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.headers['x-refresh-token'];
         if (refreshToken) {
             const hash = hashToken(refreshToken);
             const session = await Session.findOne({ refreshTokenHash: hash });
@@ -540,7 +543,8 @@ export const updateUserProfile = async (req, res, next) => {
 
         return res.sendSuccess({
             user: formatUserPayload(updatedUser),
-            token: passwordChanged ? generateAccessToken(updatedUser, newSessionId) : undefined
+            token: passwordChanged ? generateAccessToken(updatedUser, newSessionId) : undefined,
+            refreshToken: passwordChanged ? refreshToken : undefined
         });
     } catch (error) {
         if (error.code === 11000 && error.keyPattern && error.keyPattern.username) {

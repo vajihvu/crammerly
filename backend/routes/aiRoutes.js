@@ -6,6 +6,7 @@ import { chatSchema } from '../schemas/ai.schema.js';
 import { logAgentActivity } from '../utils/securityLogger.js';
 import { logAuditEvent } from '../middleware/auditMiddleware.js';
 import config from '../config/index.js';
+import { aiLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
@@ -40,12 +41,15 @@ const SENSITIVE_KEYWORDS = ['password', 'secret', 'API_KEY', 'MONGO_URI', 'JWT_S
  *         content:
  *           application/json:
  *             schema: { $ref: '#/components/schemas/ErrorResponse' }
+ *       429:
+ *         description: Daily quota exceeded
  *       503:
  *         description: AI Service unavailable or misconfigured
  */
 router.post(
     '/chat',
     protect,
+    aiLimiter,
     validate(chatSchema),
     async (req, res, next) => {
         const { message, context = [] } = req.body;

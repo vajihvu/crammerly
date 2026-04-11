@@ -10,12 +10,12 @@ const router = express.Router();
 
 router.use(protect);
 
+router.post('/upload', upload.single('file'), uploadFile);
+
 router.route('/:roomId')
     .get(getMessagesByRoom)
     .post(validate(messageSchema), sendMessage)
     .patch(markAsRead);
-
-router.post('/upload', upload.single('file'), uploadFile);
 
 export default router;
 

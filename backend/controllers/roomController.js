@@ -137,7 +137,7 @@ export const joinRoom = asyncHandler(async (req, res) => {
     const isMember = room.members.some(m => m.user.toString() === req.user._id.toString());
     if (!isMember) {
         // Enforce max member limit
-        const maxMembers = room.maxMembers || 50;
+        const maxMembers = room.maxMembers || 80;
         if (room.members.length >= maxMembers) {
             return res.sendError(`Room is full (max ${maxMembers} members)`, 400, 'ROOM_FULL');
         }

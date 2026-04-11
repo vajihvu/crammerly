@@ -644,7 +644,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
 
   return (
     <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-center justify-center p-4 sm:p-8 overflow-y-auto animate-in fade-in duration-200" onClick={onClose}>
-      <div className="bg-brand-surface w-full max-w-5xl h-[85vh] rounded-[40px] border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 font-inter" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-brand-surface w-full max-w-5xl h-[95vh] sm:h-[85vh] rounded-[32px] sm:rounded-[40px] border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 font-sans" onClick={(e) => e.stopPropagation()}>
 
         <div className="px-3.5 sm:px-8 py-4 sm:py-6 flex items-center justify-between border-b border-brand-border/50 bg-brand-bg/50 backdrop-blur-xl shrink-0 gap-2 sm:gap-4">
           <div className="flex items-center gap-1.5 sm:gap-6 min-w-0">

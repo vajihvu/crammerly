@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { authApi } from '../api';
+import { authApi, usersApi } from '../api';
 import { apiEvents } from '../api/client';
 import { initSocket, disconnectSocket } from '../utils/socket';
 
@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
             }
             try {
                 // Try to get fresh profile data to verify current token/session
-                const response = await authApi.getProfile();
+                const response = await usersApi.getProfile();
                 if (response.success) {
                     updateUser(response.data);
                 }
@@ -139,16 +139,26 @@ export const AuthProvider = ({ children }) => {
     const updateUser = useCallback((data) => {
         setUser(prev => {
             if (!prev) return prev;
+            
+            // CRITICAL: Read latest localStorage to avoid overwriting tokens refreshed by interceptors in the background
+            let latestToken = prev.token;
+            try {
+                const storageData = JSON.parse(localStorage.getItem('userInfo'));
+                if (storageData?.token && storageData.token !== prev.token) {
+                    latestToken = storageData.token;
+                }
+            } catch (e) {
+                console.error('Failed to sync token from storage:', e);
+            }
+
             // Support both { user: ... } and just the user object
             const userData = data?.user || data;
             const next = {
                 ...prev,
+                token: data?.token || latestToken,
                 user: { ...prev.user, ...userData }
             };
-            // If data contains a token (e.g. password change), update it too
-            if (data?.token) {
-                next.token = data.token;
-            }
+
             localStorage.setItem('userInfo', JSON.stringify(next));
             return next;
         });

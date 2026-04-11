@@ -72,7 +72,10 @@ client.interceptors.response.use(
             try {
                 // Queue concurrent 401s behind a single refresh request
                 if (!client._refreshPromise) {
-                    client._refreshPromise = axios.post(`${env.apiUrl}/auth/refresh`, {}, {
+                    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                    client._refreshPromise = axios.post(`${env.apiUrl}/auth/refresh`, {
+                        refreshToken: userInfo.refreshToken
+                    }, {
                         withCredentials: true,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
@@ -87,10 +90,12 @@ client.interceptors.response.use(
 
                 if (data?.success && data.data?.token) {
                     const newToken = data.data.token;
+                    const newRefreshToken = data.data.refreshToken;
                     try {
                         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
                         if (userInfo) {
                             userInfo.token = newToken;
+                            if (newRefreshToken) userInfo.refreshToken = newRefreshToken;
                             localStorage.setItem('userInfo', JSON.stringify(userInfo));
                         }
                     } catch {

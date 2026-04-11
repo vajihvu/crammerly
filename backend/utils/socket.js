@@ -133,7 +133,7 @@ export const initSocket = (server) => {
         // --- WebRTC Signaling Events ---
 
         // 1. Initiate a call
-        socket.on('call:request', ({ toUserId, signalData }) => {
+        socket.on('call:request', ({ toUserId, signalData, type }) => {
             io.to(`user_${toUserId}`).emit('call:incoming', {
                 from: {
                     id: socket.user._id,
@@ -141,9 +141,10 @@ export const initSocket = (server) => {
                     avatar: socket.user.avatar,
                     tag: socket.user.tag
                 },
-                signalData
+                signalData,
+                type
             });
-            logger.info(`📞 Call request from ${socket.user.name} to user ${toUserId}`);
+            logger.info(`📞 Call request from ${socket.user.name} to user ${toUserId} (type: ${type || 'video'})`);
         });
 
         // 2. Accept a call
