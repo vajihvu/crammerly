@@ -1,5 +1,5 @@
 import User from '../models/User.js';
-import { asyncHandler } from '../middleware/asyncHandler.js';
+import asyncHandler from '../utils/asyncHandler.js';
 import { logger } from '../utils/logger.js';
 
 /**
