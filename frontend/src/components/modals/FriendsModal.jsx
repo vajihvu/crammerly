@@ -11,10 +11,11 @@ const AudioMessage = ({ url, isMe }) => {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const audioRef = useRef(null);
 
   const togglePlay = async () => {
-    if (hasError || !url) return;
+    if (hasError || !url || isLoading) return;
     try {
       if (isPlaying) {
         audioRef.current.pause();
@@ -29,7 +30,21 @@ const AudioMessage = ({ url, isMe }) => {
   };
 
   const onLoadedMetadata = () => {
-    if (audioRef.current) setDuration(audioRef.current.duration);
+    setIsLoading(false);
+    if (audioRef.current) {
+      // Handle Infinity duration (common in basic webm recordings)
+      if (isFinite(audioRef.current.duration)) {
+        setDuration(audioRef.current.duration);
+      } else {
+        // Fallback for infinite duration: try to seek to end to force calculation
+        audioRef.current.currentTime = 1e101;
+        audioRef.current.ontimeupdate = () => {
+            audioRef.current.ontimeupdate = onTimeUpdate;
+            setDuration(audioRef.current.duration);
+            audioRef.current.currentTime = 0;
+        };
+      }
+    }
   };
 
   const onTimeUpdate = () => {
@@ -37,39 +52,40 @@ const AudioMessage = ({ url, isMe }) => {
   };
 
   const formatTime = (time) => {
-    if (isNaN(time)) return '0:00';
+    if (isNaN(time) || !isFinite(time)) return '0:00';
     const mins = Math.floor(time / 60);
     const secs = Math.floor(time % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progress = isFinite(duration) && duration > 0 ? (currentTime / duration) * 100 : 0;
 
   if (hasError) {
     return (
       <div className={`flex items-center gap-3 px-4 py-3 ${isMe ? 'bg-white/10' : 'bg-brand-muted/10'} rounded-2xl border border-brand-danger/30`}>
         <X className="text-brand-danger" size={20} />
-        <span className="text-[10px] font-bold text-brand-danger uppercase">Audio Load Error</span>
+        <span className="text-[10px] font-bold text-brand-danger uppercase">Playback Failed</span>
       </div>
     );
   }
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-2 ${isMe ? 'bg-white/20' : 'bg-brand-muted/20'} rounded-2xl min-w-[220px] font-sans`}>
+    <div className={`flex items-center gap-3 px-4 py-2 ${isMe ? 'bg-white/20' : 'bg-brand-muted/20'} rounded-2xl min-w-[220px] font-sans relative overflow-hidden`}>
       <button 
         onClick={togglePlay}
-        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isMe ? 'bg-white text-brand-primary' : 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20'}`}
+        disabled={isLoading}
+        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isLoading ? 'opacity-50' : ''} ${isMe ? 'bg-white text-brand-primary' : 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20'}`}
       >
-        {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} className="ml-0.5" fill="currentColor" />}
+        {isLoading ? <Loader size={16} className="animate-spin" /> : isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} className="ml-0.5" fill="currentColor" />}
       </button>
       
       <div className="flex-1 flex flex-col gap-1.5 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[9px] font-black tracking-tighter tabular-nums opacity-60">
-            {formatTime(currentTime)}
+            {isLoading ? '...' : formatTime(currentTime)}
           </span>
           <span className="text-[9px] font-black tracking-tighter tabular-nums opacity-60">
-            {formatTime(duration)}
+            {isLoading ? '...' : formatTime(duration)}
           </span>
         </div>
         <div className="h-1 bg-white/10 rounded-full overflow-hidden relative">
@@ -84,8 +100,10 @@ const AudioMessage = ({ url, isMe }) => {
       <audio 
         ref={audioRef} 
         src={url} 
+        preload="metadata"
         onLoadedMetadata={onLoadedMetadata}
         onTimeUpdate={onTimeUpdate}
+        onError={() => setHasError(true)}
         onEnded={() => { setIsPlaying(false); setCurrentTime(0); }} 
         onPause={() => setIsPlaying(false)}
         onPlay={() => setIsPlaying(true)}
@@ -345,15 +363,21 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        // Dynamic MIME type detection for better cross-browser compatibility
+        // Dynamic MIME type detection
         const possibleTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
         const mimeType = possibleTypes.find(t => MediaRecorder.isTypeSupported(t)) || 'audio/webm';
         
-        mediaRecorder.current = new MediaRecorder(stream, { mimeType });
+        // Explicit bitrate for better clarity
+        mediaRecorder.current = new MediaRecorder(stream, { 
+          mimeType,
+          audioBitsPerSecond: 128000 
+        });
         audioChunks.current = [];
 
         mediaRecorder.current.ondataavailable = (e) => {
-          if (e.data.size > 0) audioChunks.current.push(e.data);
+          if (e.data && e.data.size > 0) {
+            audioChunks.current.push(e.data);
+          }
         };
 
         mediaRecorder.current.onstop = async () => {
@@ -379,7 +403,8 @@ function FriendsModal({ currentUser, onClose, addToast }) {
           stream.getTracks().forEach(track => track.stop());
         };
 
-        mediaRecorder.current.start();
+        // Use 100ms timeslice to ensure data is pushed frequently
+        mediaRecorder.current.start(100);
         setIsRecording(true);
       } catch (err) {
         console.error('Recording failed:', err);
