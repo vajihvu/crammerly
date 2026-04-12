@@ -22,7 +22,7 @@ export const searchFriends = asyncHandler(async (req, res) => {
                 { username: queryRegex },
                 { name: queryRegex }
             ]
-        }).select('name username avatar_url skills interests isOnline role');
+        }).select('name username avatar_url skills interests isOnline role institution course socials tag');
 
         return res.sendSuccess(users);
     }
@@ -39,13 +39,13 @@ export const searchFriends = asyncHandler(async (req, res) => {
         const fallbackUsers = await User.find({ _id: { $ne: req.user._id } })
             .sort({ createdAt: -1 })
             .limit(6)
-            .select('name username avatar_url skills interests');
+            .select('name username avatar_url skills interests institution course socials tag');
         return res.sendSuccess(fallbackUsers);
     }
 
     // Grab everyone else
     const allUsers = await User.find({ _id: { $ne: req.user._id } })
-        .select('name username avatar_url skills interests');
+        .select('name username avatar_url skills interests institution course socials tag');
 
     // Score them
     const scoredUsers = allUsers.map(u => {
@@ -310,7 +310,7 @@ export const removeFriend = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getFriendsList = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id).populate('friends', 'name username avatar_url isOnline tag');
+    const user = await User.findById(req.user._id).populate('friends', 'name username avatar_url isOnline tag institution course skills interests socials');
     
     // For each friend, find the DM room
     const friendsWithRooms = await Promise.all((user.friends || []).map(async (friend) => {
