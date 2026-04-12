@@ -24,8 +24,9 @@ const createStore = (name) => {
         prefix: `rl:${name}:`,
         sendCommand: async (...args) => {
             try {
-                // redis-js v4+ uses separate arguments for sendCommand
-                return await redisClient.sendCommand(args[0]);
+                // rate-limit-redis passes an array of strings to sendCommand.
+                // node-redis (v4+) sendCommand expects a single array of strings.
+                return await redisClient.sendCommand(args);
             } catch (err) {
                 logger.warn(`Redis store (${name}) failed, falling back to memory: ${err.message}`);
                 throw err;
