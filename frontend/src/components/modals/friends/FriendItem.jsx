@@ -1,9 +1,9 @@
 import React from 'react';
 import { PhoneCall, MessageCircle } from 'lucide-react';
 
-const FriendItem = ({ friend, onChat, onCall }) => (
+const FriendItem = ({ friend, onChat, onCall, onProfile }) => (
     <div
-        onClick={onChat}
+        onClick={() => onProfile && onProfile(friend)}
         className="group bg-brand-card hover:bg-brand-surface p-4 sm:p-5 rounded-[24px] sm:rounded-[28px] flex items-center justify-between transition-all cursor-pointer border border-brand-border/30 hover:border-brand-primary/50 shadow-lg"
     >
         <div className="flex items-center gap-3 sm:gap-5 min-w-0">

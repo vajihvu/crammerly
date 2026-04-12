@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useVideoCall } from '../../context/VideoCallContext';
-import { X, UserPlus, MessageCircle, Video, Paperclip, Smile, Send, Mic, Search, FileText, ArrowLeft, PhoneCall, Sticker, User, Sparkles, Check, TrendingUp, Loader, Bell, UserCheck, ShieldClose, Play, Pause, Headphones } from 'lucide-react';
+import { X, UserPlus, MessageCircle, Video, Paperclip, Smile, Send, Mic, Search, FileText, ArrowLeft, PhoneCall, Sticker, User, Sparkles, Check, TrendingUp, Loader, Bell, UserCheck, ShieldClose, Play, Pause, Headphones, Github, Linkedin, Twitter, Instagram, GraduationCap, Code2, Heart } from 'lucide-react';
 import { FriendListSkeleton } from '../ui/Skeletons';
 import FriendItem from './friends/FriendItem';
 import SuggestionItem from './friends/SuggestionItem';
@@ -8,33 +8,85 @@ import { friendsApi, notificationsApi, messagesApi } from '../../api';
 import { getSocket } from '../../utils/socket';
 const AudioMessage = ({ url, isMe }) => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [hasError, setHasError] = useState(false);
   const audioRef = useRef(null);
 
-  const togglePlay = () => {
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+  const togglePlay = async () => {
+    if (hasError || !url) return;
+    try {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        await audioRef.current.play();
+      }
+    } catch (err) {
+      console.error('Audio playback failed:', err);
+      setHasError(true);
+      setIsPlaying(false);
     }
-    setIsPlaying(!isPlaying);
   };
 
+  const onLoadedMetadata = () => {
+    if (audioRef.current) setDuration(audioRef.current.duration);
+  };
+
+  const onTimeUpdate = () => {
+    if (audioRef.current) setCurrentTime(audioRef.current.currentTime);
+  };
+
+  const formatTime = (time) => {
+    if (isNaN(time)) return '0:00';
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  if (hasError) {
+    return (
+      <div className={`flex items-center gap-3 px-4 py-3 ${isMe ? 'bg-white/10' : 'bg-brand-muted/10'} rounded-2xl border border-brand-danger/30`}>
+        <X className="text-brand-danger" size={20} />
+        <span className="text-[10px] font-bold text-brand-danger uppercase">Audio Load Error</span>
+      </div>
+    );
+  }
+
   return (
-    <div className={`flex items-center gap-3 px-4 py-2 ${isMe ? 'bg-white/20' : 'bg-brand-muted/20'} rounded-2xl min-w-[200px]`}>
+    <div className={`flex items-center gap-3 px-4 py-2 ${isMe ? 'bg-white/20' : 'bg-brand-muted/20'} rounded-2xl min-w-[220px] font-sans`}>
       <button 
         onClick={togglePlay}
-        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isMe ? 'bg-white text-brand-primary' : 'bg-brand-primary text-white'}`}
+        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0 ${isMe ? 'bg-white text-brand-primary' : 'bg-brand-primary text-white shadow-lg shadow-brand-primary/20'}`}
       >
         {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} className="ml-0.5" fill="currentColor" />}
       </button>
-      <div className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden relative">
-        <div className={`absolute inset-y-0 left-0 ${isMe ? 'bg-white' : 'bg-brand-primary'} w-1/3 rounded-full`} />
+      
+      <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[9px] font-black tracking-tighter tabular-nums opacity-60">
+            {formatTime(currentTime)}
+          </span>
+          <span className="text-[9px] font-black tracking-tighter tabular-nums opacity-60">
+            {formatTime(duration)}
+          </span>
+        </div>
+        <div className="h-1 bg-white/10 rounded-full overflow-hidden relative">
+          <div 
+            className={`absolute inset-y-0 left-0 ${isMe ? 'bg-white' : 'bg-brand-primary'} transition-all duration-300 rounded-full`} 
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
-      <Headphones size={14} className="opacity-50" />
+      
+      <Headphones size={14} className="opacity-30 shrink-0" />
       <audio 
         ref={audioRef} 
         src={url} 
-        onEnded={() => setIsPlaying(false)} 
+        onLoadedMetadata={onLoadedMetadata}
+        onTimeUpdate={onTimeUpdate}
+        onEnded={() => { setIsPlaying(false); setCurrentTime(0); }} 
         onPause={() => setIsPlaying(false)}
         onPlay={() => setIsPlaying(true)}
         className="hidden" 
@@ -88,6 +140,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
   const [currentMessage, setCurrentMessage] = useState('');
   const [lastSearchedId, setLastSearchedId] = useState('');
   const [suggestedUsers, setSuggestedUsers] = useState([]);
+  const [profileFriend, setProfileFriend] = useState(null);
 
   // Initial Data Load
   useEffect(() => {
@@ -248,6 +301,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
   const { initiateCall, callState } = useVideoCall();
 
   const openChat = (friend, mode = 'text') => {
+    // If we're in profile view and click message, or from list
     setSelectedFriend(friend);
     if (mode === 'video' || mode === 'voice') {
       initiateCall({
@@ -260,6 +314,11 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     }
     setChatMode(mode);
     setActiveView('chat');
+  };
+
+  const handleShowProfile = (friend) => {
+    setProfileFriend(friend);
+    setActiveView('profile');
   };
 
   const handleSendMessage = async () => {
@@ -285,7 +344,12 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     if (!isRecording) {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder.current = new MediaRecorder(stream);
+        
+        // Dynamic MIME type detection for better cross-browser compatibility
+        const possibleTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+        const mimeType = possibleTypes.find(t => MediaRecorder.isTypeSupported(t)) || 'audio/webm';
+        
+        mediaRecorder.current = new MediaRecorder(stream, { mimeType });
         audioChunks.current = [];
 
         mediaRecorder.current.ondataavailable = (e) => {
@@ -293,7 +357,8 @@ function FriendsModal({ currentUser, onClose, addToast }) {
         };
 
         mediaRecorder.current.onstop = async () => {
-          const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
+          const actualMimeType = mediaRecorder.current.mimeType;
+          const audioBlob = new Blob(audioChunks.current, { type: actualMimeType });
           const reader = new FileReader();
           reader.readAsDataURL(audioBlob);
           reader.onloadend = async () => {
@@ -302,7 +367,11 @@ function FriendsModal({ currentUser, onClose, addToast }) {
               await messagesApi.send(selectedFriend.dmRoomId, {
                 content: 'Voice Message',
                 type: 'voice',
-                fileData: { url: base64Audio, name: 'voice_note.webm', mimeType: 'audio/webm' }
+                fileData: { 
+                  url: base64Audio, 
+                  name: `voice_note.${actualMimeType.split('/')[1].split(';')[0]}`, 
+                  mimeType: actualMimeType 
+                }
               });
               if (addToast) addToast('Voice note sent!', 'success');
             }
@@ -312,8 +381,9 @@ function FriendsModal({ currentUser, onClose, addToast }) {
 
         mediaRecorder.current.start();
         setIsRecording(true);
-      } catch {
-        if (addToast) addToast('Microphone access denied', 'danger');
+      } catch (err) {
+        console.error('Recording failed:', err);
+        if (addToast) addToast('Microphone access denied or recording error', 'danger');
       }
     } else {
       mediaRecorder.current?.stop();
@@ -642,6 +712,140 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     );
   }
 
+  if (activeView === 'profile' && profileFriend) {
+    return (
+      <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-center justify-center p-0 sm:p-8 overflow-hidden animate-in fade-in duration-200" onClick={onClose}>
+        <div className="bg-brand-surface w-full max-w-2xl h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:rounded-[40px] border-0 sm:border border-brand-border/30 shadow-2xl flex flex-col overflow-y-auto custom-scrollbar animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+          
+          {/* Header/Back */}
+          <div className="p-6 flex items-center justify-between sticky top-0 bg-brand-surface/80 backdrop-blur-md z-10">
+            <button onClick={() => setActiveView('list')} className="p-2 hover:bg-brand-muted/20 rounded-full transition-all active:scale-90">
+              <ArrowLeft size={24} className="text-brand-text" />
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-brand-muted/20 rounded-full transition-all">
+              <X size={24} className="text-brand-text-dim" />
+            </button>
+          </div>
+
+          <div className="px-6 sm:px-12 pb-12">
+            {/* Top Info */}
+            <div className="flex flex-col items-center text-center space-y-4 mb-10">
+              <div className="relative">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-brand-bg rounded-[32px] sm:rounded-[40px] flex items-center justify-center border-4 border-brand-border shadow-2xl overflow-hidden group">
+                  {profileFriend.avatar_url ? (
+                    <img src={profileFriend.avatar_url} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                  ) : (
+                    <span className="text-4xl sm:text-5xl font-black text-brand-muted">
+                      {(profileFriend.name || profileFriend.username || '?')[0].toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-2xl border-4 border-brand-surface flex items-center justify-center ${profileFriend.isOnline ? 'bg-brand-success' : 'bg-brand-muted'}`}>
+                   <div className="w-2 h-2 bg-white rounded-full animate-pulse opacity-50"></div>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-brand-text uppercase tracking-tight leading-none mb-2">{profileFriend.name || profileFriend.username}</h2>
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xs font-black text-brand-primary uppercase tracking-[0.2em]">#{profileFriend.tag || '0000'}</span>
+                  <span className="w-1 h-1 bg-brand-border rounded-full"></span>
+                  <span className="text-[10px] font-bold text-brand-text-dim uppercase tracking-widest">{profileFriend.isOnline ? 'Active Now' : 'Currently Offline'}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 pt-4">
+                <button 
+                  onClick={() => openChat(profileFriend)}
+                  className="px-8 py-3 bg-brand-text text-brand-bg rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-lg active:scale-95"
+                >
+                  Message
+                </button>
+                <button 
+                  onClick={() => openChat(profileFriend, 'voice')}
+                  className="w-12 h-12 bg-brand-muted/20 text-brand-text hover:bg-brand-primary hover:text-white rounded-2xl flex items-center justify-center transition-all border border-brand-border"
+                >
+                  <PhoneCall size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Profile Content Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Education */}
+              <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
+                <div className="flex items-center gap-2 text-brand-primary">
+                  <GraduationCap size={18} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Education</span>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-brand-text uppercase leading-tight">{profileFriend.institution || 'No Institution Set'}</p>
+                  <p className="text-[10px] font-bold text-brand-text-dim uppercase mt-1 tracking-widest">{profileFriend.course || 'Course details hidden'}</p>
+                </div>
+              </div>
+
+              {/* Skills */}
+              <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
+                <div className="flex items-center gap-2 text-brand-primary">
+                  <Code2 size={18} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Technical Skills</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {profileFriend.skills?.length > 0 ? profileFriend.skills.map(skill => (
+                    <span key={skill} className="px-2.5 py-1 bg-brand-primary/10 text-brand-primary text-[9px] font-black uppercase tracking-tighter rounded-full border border-brand-primary/20">
+                      {skill}
+                    </span>
+                  )) : <p className="text-[9px] font-bold text-brand-text-dim uppercase">No skills added</p>}
+                </div>
+              </div>
+
+              {/* Interests */}
+              <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
+                <div className="flex items-center gap-2 text-brand-primary">
+                  <Heart size={18} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Interests</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                   {profileFriend.interests?.length > 0 ? profileFriend.interests.map(interest => (
+                    <span key={interest} className="px-2.5 py-1 bg-white/5 text-brand-text text-[9px] font-black uppercase tracking-tighter rounded-full border border-brand-border/40">
+                      {interest}
+                    </span>
+                  )) : <p className="text-[9px] font-bold text-brand-text-dim uppercase">No interests listed</p>}
+                </div>
+              </div>
+
+              {/* Socials */}
+              <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
+                <div className="flex items-center gap-2 text-brand-primary">
+                  <Sparkles size={18} />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Connect</span>
+                </div>
+                <div className="flex gap-3">
+                  {['github', 'linkedin', 'twitter', 'instagram'].map(platform => {
+                    const Icons = { github: Github, linkedin: Linkedin, twitter: Twitter, instagram: Instagram };
+                    const Icon = Icons[platform];
+                    const link = profileFriend.socials?.[platform];
+                    return (
+                      <a 
+                        key={platform}
+                        href={link ? (link.startsWith('http') ? link : `https://${platform}.com/${link}`) : '#'}
+                        target={link ? "_blank" : "_self"}
+                        rel="noopener noreferrer"
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${link ? 'bg-brand-surface text-brand-text hover:bg-brand-primary hover:text-white border-brand-primary/30' : 'bg-brand-surface/30 text-brand-text-dim pointer-events-none opacity-30'} border`}
+                      >
+                        <Icon size={18} />
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-center justify-center p-0 sm:p-8 overflow-hidden animate-in fade-in duration-200" onClick={onClose}>
       <div className="bg-brand-surface w-full max-w-5xl h-[100dvh] sm:h-[85vh] rounded-none sm:rounded-[40px] border-0 sm:border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 font-sans" onClick={(e) => e.stopPropagation()}>
@@ -678,9 +882,15 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                     className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'requests' ? 'bg-brand-text text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text'}`}
                   >
                     Requests
-                    {notifications.filter(n => n.type === 'FRIEND_REQUEST').length > 0 && (
+                    {notifications.filter(n => 
+                      n.type === 'FRIEND_REQUEST' && 
+                      !friends.some(f => (f._id || f.id) === (n.sender?._id || n.sender?.id))
+                    ).length > 0 && (
                       <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary text-white text-[8px] flex items-center justify-center rounded-full border-2 border-brand-bg animate-pulse">
-                        {notifications.filter(n => n.type === 'FRIEND_REQUEST').length}
+                        {notifications.filter(n => 
+                          n.type === 'FRIEND_REQUEST' && 
+                          !friends.some(f => (f._id || f.id) === (n.sender?._id || n.sender?.id))
+                        ).length}
                       </span>
                     )}
                   </button>
@@ -761,6 +971,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                               friend={friend}
                               onChat={() => openChat(friend)}
                               onCall={() => openChat(friend, 'voice')}
+                              onProfile={() => handleShowProfile(friend)}
                             />
                           ))}
                         </div>
@@ -769,14 +980,20 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                   )
                 ) : (
                   /* Requests Tab */
-                  notifications.filter(n => n.type === 'FRIEND_REQUEST').length === 0 ? (
+                  notifications.filter(n => 
+                    n.type === 'FRIEND_REQUEST' && 
+                    !friends.some(f => (f._id || f.id) === (n.sender?._id || n.sender?.id))
+                  ).length === 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] opacity-60">
                       <Bell size={64} className="text-brand-muted mb-4" />
                       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-brand-muted">No Pending Requests</p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {notifications.filter(n => n.type === 'FRIEND_REQUEST').map((notif) => (
+                      {notifications.filter(n => 
+                        n.type === 'FRIEND_REQUEST' && 
+                        !friends.some(f => (f._id || f.id) === (n.sender?._id || n.sender?.id))
+                      ).map((notif) => (
                         <div key={notif.id} className="bg-brand-card border border-brand-border/50 rounded-3xl p-5 flex items-center justify-between shadow-xl animate-in slide-in-from-bottom-2 duration-300">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-brand-bg rounded-full flex items-center justify-center border-2 border-brand-border text-brand-primary text-xl font-black overflow-hidden shadow-premium">
@@ -808,9 +1025,9 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                 )}
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-start pt-6 px-8 bg-brand-surface animate-in fade-in zoom-in-95 duration-500 overflow-y-auto">
+              <div className="flex-1 flex flex-col items-center justify-start pt-4 sm:pt-6 px-4 sm:px-8 bg-brand-surface animate-in fade-in zoom-in-95 duration-500 overflow-y-auto">
                 {searchResults === null ? (
-                  <>
+                  <div className="hidden sm:flex flex-col items-center pt-10">
                     <div className="w-24 h-24 bg-brand-primary/10 rounded-full flex items-center justify-center border border-brand-primary/20 mb-8 shadow-2xl">
                       <UserPlus size={48} className="text-brand-primary" />
                     </div>
@@ -818,17 +1035,21 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                     <p className="text-[11px] font-bold text-brand-text-dim uppercase tracking-[0.2em] max-w-[280px] leading-relaxed text-center">
                       Connect with collaborators by entering their User ID above.
                     </p>
-                  </>
+                  </div>
                 ) : searchResults === 'none' ? (
-                  <div className="text-center py-10">
-                    <div className="w-20 h-20 bg-brand-muted/10 rounded-full flex items-center justify-center border border-brand-border/30 mb-6 mx-auto">
+                  <div className="text-center py-6 sm:py-10">
+                    <div className="hidden sm:flex w-20 h-20 bg-brand-muted/10 rounded-full items-center justify-center border border-brand-border/30 mb-6 mx-auto">
                       <X size={32} className="text-brand-muted" />
                     </div>
                     <h4 className="text-lg font-black text-brand-text uppercase tracking-tight mb-2">ID Not Found</h4>
                     <p className="text-[10px] font-bold text-brand-text-dim uppercase tracking-widest">The User ID "{lastSearchedId}" does not exist.</p>
                   </div>
                 ) : (
-                  <div className="w-full max-w-md space-y-3 animate-in slide-in-from-bottom-2 duration-300">
+                  <div className="w-full max-w-md space-y-3 animate-in slide-in-from-bottom-2 duration-300 pt-2 sm:pt-0">
+                    <div className="flex items-center gap-2 mb-4 sm:hidden">
+                      <Users size={16} className="text-brand-primary" />
+                      <h4 className="text-[11px] font-black uppercase tracking-widest text-brand-text">Search Result</h4>
+                    </div>
                     {Array.isArray(searchResults) && searchResults.map(user => (
                       <div key={user.id} className="bg-brand-card border border-brand-border rounded-[24px] p-4 flex items-center justify-between group/result shadow-xl hover:border-brand-primary/50 transition-all">
                         <div className="flex items-center gap-4">

@@ -39,8 +39,10 @@ export const protect = async (req, res, next) => {
 
         // 1. Global Revocation Check (Token Version)
         // If tokenVersion mismatches, the user reset their password or performed a global logout
-        if (decoded.tokenVersion === undefined || decoded.tokenVersion !== user.tokenVersion) {
-            logger.warn(`SECURITY ALERT: Token version mismatch for user ${user._id} (expected v${user.tokenVersion}, got v${decoded.tokenVersion}). Revoking access.`);
+        // NOTE: Default to 0 for legacy tokens that don't have this field
+        const tokenVer = decoded.tokenVersion ?? 0;
+        if (tokenVer !== user.tokenVersion) {
+            logger.warn(`SECURITY ALERT: Token version mismatch for user ${user._id} (expected v${user.tokenVersion}, got v${tokenVer}). Revoking access.`);
             const err = new Error('Security policy update: Your session has been revoked. Please log in again.');
             err.statusCode = 401;
             err.code = 'AUTH_SESSION_REVOKED';
@@ -49,27 +51,26 @@ export const protect = async (req, res, next) => {
 
         // 2. Individual Session Binding (Session Validation)
         // Access tokens are cryptographically bound to a specific session record
-        if (!decoded.sessionId) {
-            const err = new Error('Security policy violation: Missing session binding.');
-            err.statusCode = 401;
-            err.code = 'AUTH_INVALID_BINDING';
-            return next(err);
-        }
+        // NOTE: Temporarily allow tokens without sessionId for legacy compatibility
+        if (decoded.sessionId) {
+            const { default: Session } = await import('../models/Session.js');
+            const session = await Session.findOne({
+                _id: decoded.sessionId,
+                user: user._id,
+                isValid: true,
+                expiresAt: { $gt: new Date() }
+            });
 
-        const { default: Session } = await import('../models/Session.js');
-        const session = await Session.findOne({
-            _id: decoded.sessionId,
-            user: user._id,
-            isValid: true,
-            expiresAt: { $gt: new Date() }
-        });
-
-        if (!session) {
-            logger.warn(`SECURITY ALERT: Access token tied to invalid or expired session ${decoded.sessionId} for user ${user._id}`);
-            const err = new Error('Your session is no longer valid. Please log in again.');
-            err.statusCode = 401;
-            err.code = 'AUTH_SESSION_INVALID';
-            return next(err);
+            if (!session) {
+                logger.warn(`SECURITY ALERT: Access token tied to invalid or expired session ${decoded.sessionId} for user ${user._id}`);
+                const err = new Error('Your session is no longer valid. Please log in again.');
+                err.statusCode = 401;
+                err.code = 'AUTH_SESSION_INVALID';
+                return next(err);
+            }
+            req.sessionId = decoded.sessionId;
+        } else {
+            logger.info(`LEGACY SESSION: User ${user._id} using token without sessionId binding. Allowing during transition.`);
         }
 
 

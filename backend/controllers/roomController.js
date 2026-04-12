@@ -114,6 +114,7 @@ export const joinRoom = asyncHandler(async (req, res) => {
 
 
     const isCreator = room.creator_id && room.creator_id.toString() === req.user._id.toString();
+    const isMember = room.members.some(m => m.user.toString() === req.user._id.toString());
 
     // Policy: Only creators can join future-scheduled rooms until they become active (today or past)
     const d = new Date();
@@ -124,17 +125,14 @@ export const joinRoom = asyncHandler(async (req, res) => {
         return res.sendError('This room is scheduled for later and is not yet active', 403, 'ROOM_NOT_ACTIVE');
     }
 
-    // Authorization: Private rooms require the correct code
-    if (room.privacy === 'Private' && !isCreator) {
+    // Authorization: Private rooms require the correct code IF NOT already a member/creator
+    if (room.privacy === 'Private' && !isCreator && !isMember) {
         const { code } = req.body;
         if (!code || code.toUpperCase() !== room.code) {
             return res.sendError('Invalid or missing code for this private room', 403, 'AUTH_FORBIDDEN');
         }
     }
 
-
-
-    const isMember = room.members.some(m => m.user.toString() === req.user._id.toString());
     if (!isMember) {
         // Enforce max member limit
         const maxMembers = room.maxMembers || 80;

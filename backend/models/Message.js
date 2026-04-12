@@ -15,7 +15,7 @@ const messageSchema = new mongoose.Schema({
     content: {
         type: String,
         required: true,
-        maxlength: [5000, 'Message content cannot exceed 5000 characters']
+        maxlength: [10000000, 'Message content is too large']
     },
     type: {
         type: String,
@@ -23,7 +23,7 @@ const messageSchema = new mongoose.Schema({
         default: 'text'
     },
     file_data: {
-        url: { type: String, maxlength: 2048 },
+        url: { type: String, maxlength: 5000000 },
         name: { type: String, maxlength: 255 },
         mimeType: { type: String, maxlength: 100 },
         size: { type: Number, max: 25 * 1024 * 1024 }  // 25MB cap

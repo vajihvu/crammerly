@@ -121,6 +121,17 @@ export const sendFriendRequest = asyncHandler(async (req, res) => {
         return res.sendError('Friend request already sent', 400, 'VAL_REQUEST_PENDING');
     }
 
+    // Check if there is an incoming request from the target user
+    const mutualRequest = await FriendRequest.findOne({
+        from: toUserId,
+        to: fromUserId,
+        status: 'pending'
+    });
+
+    if (mutualRequest) {
+        return res.sendError('This user has already sent you a request. Check your requests tab.', 400, 'VAL_MUTUAL_REQUEST');
+    }
+
     const request = await FriendRequest.create({
         from: fromUserId,
         to: toUserId
@@ -190,7 +201,14 @@ export const acceptFriendRequest = asyncHandler(async (req, res) => {
     await userA.save();
     await userB.save();
 
-    // Create Notification for the sender
+    // CLEAR original incoming notification for userB (the one who accepted)
+    await Notification.deleteMany({
+        recipient: userId,
+        type: 'FRIEND_REQUEST',
+        relatedId: request._id
+    });
+
+    // Create Notification for the sender (userA)
     const notification = await Notification.create({
         recipient: request.from,
         sender: request.to,
@@ -250,6 +268,13 @@ export const declineFriendRequest = asyncHandler(async (req, res) => {
 
     request.status = 'declined';
     await request.save();
+
+    // Delete the original notification for the recipient
+    await Notification.deleteMany({
+        recipient: userId,
+        type: 'FRIEND_REQUEST',
+        relatedId: request._id
+    });
 
     return res.sendSuccess({ message: 'Friend request declined' });
 });

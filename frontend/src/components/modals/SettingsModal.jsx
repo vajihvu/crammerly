@@ -281,7 +281,7 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 flex flex-col bg-brand-surface relative">
+                <div className="flex-1 flex flex-col bg-brand-surface relative min-h-0">
                     <button
                         onClick={onClose}
                         className="hidden md:flex absolute top-6 right-6 p-2 text-brand-text-dim hover:text-brand-text bg-brand-bg hover:bg-brand-muted/20 rounded-full transition-all z-50 border border-brand-border/30 shadow-md"
@@ -289,7 +289,7 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                         <X size={18} />
                     </button>
 
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-6 md:p-8 md:pt-14 md:pr-10">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-6 md:p-8 md:pt-14 md:pr-10 min-h-0 pb-12 sm:pb-8">
                         {activeTab === 'general' && (
                             <div className="space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-200">
                                 <section>
@@ -414,7 +414,7 @@ function SettingsModal({ initialTab = 'general', onClose }) {
                         )}
 
                         {activeTab === 'security' && (
-                            <div className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
                                 <section>
                                     <h3 className="text-[10px] md:text-xs font-black text-brand-primary uppercase tracking-[0.2em] mb-4 md:mb-6">Security</h3>
                                     <div className="space-y-3 md:space-y-4">

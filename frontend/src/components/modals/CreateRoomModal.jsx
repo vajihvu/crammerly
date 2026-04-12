@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Plus, X, ChevronDown, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 
-const GENRES = ['IT', 'Law', 'Math', 'Medicine', 'Languages', 'Coding', 'Editing', 'Film Making', 'Design', 'Business', 'Quiet Study', 'Music', 'Game Dev', 'Architecture', 'Marketing', 'Exam Prep', 'Interview Prep', 'Reading', 'Brainstorming', 'Psychology', 'History'];
+const GENRES = ['IT', 'Law', 'Math', 'Medicine', 'Languages', 'Coding', 'Editing', 'Film Making', 'Design', 'Business', 'Quiet Study', 'Music', 'Game Dev', 'Architecture', 'Marketing', 'Exam Prep', 'Interview Prep', 'Reading', 'Brainstorming', 'Psychology', 'History', 'Electronics', 'Mechanical', 'Robotics', 'AI', 'Civil Eng', 'Aerospace', 'Chemical Eng', 'Data Science', 'Cybersecurity', 'VLSI'];
 
 function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
     const [name, setName] = useState('');

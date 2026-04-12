@@ -104,6 +104,12 @@ const userSchema = new mongoose.Schema({
             allowDMs: { type: Boolean, default: false }
         }
     },
+    socials: {
+        github: { type: String, trim: true },
+        linkedin: { type: String, trim: true },
+        twitter: { type: String, trim: true },
+        instagram: { type: String, trim: true }
+    },
 
     tokenVersion: {
         type: Number,

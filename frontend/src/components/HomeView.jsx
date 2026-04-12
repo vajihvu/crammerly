@@ -9,7 +9,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
   const [isGenreDropdownOpen, setIsGenreDropdownOpen] = useState(false);
   const [genreSearch, setGenreSearch] = useState('');
 
-  const genres = ['All', 'IT', 'Law', 'Math', 'Medicine', 'Languages', 'Coding', 'Editing', 'Film Making', 'Design', 'Business', 'Quiet Study', 'Music', 'Game Dev', 'Architecture', 'Marketing', 'Exam Prep', 'Interview Prep', 'Reading', 'Brainstorming', 'Psychology', 'History'];
+  const genres = ['All', 'IT', 'Law', 'Math', 'Medicine', 'Languages', 'Coding', 'Editing', 'Film Making', 'Design', 'Business', 'Quiet Study', 'Music', 'Game Dev', 'Architecture', 'Marketing', 'Exam Prep', 'Interview Prep', 'Reading', 'Brainstorming', 'Psychology', 'History', 'Electronics', 'Mechanical', 'Robotics', 'AI', 'Civil Eng', 'Aerospace', 'Chemical Eng', 'Data Science', 'Cybersecurity', 'VLSI'];
 
   const genreIcons = {
     'All': '✨',
@@ -33,7 +33,17 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
     'Reading': '📚',
     'Brainstorming': '💡',
     'Psychology': '🧠',
-    'History': '⏳'
+    'History': '⏳',
+    'Electronics': '🔌',
+    'Mechanical': '⚙️',
+    'Robotics': '🤖',
+    'AI': '🦾',
+    'Civil Eng': '🏗️',
+    'Aerospace': '🚀',
+    'Chemical Eng': '🧪',
+    'Data Science': '📊',
+    'Cybersecurity': '🛡️',
+    'VLSI': '📟'
   };
 
   const filteredGenres = genres.filter(g => g !== 'All' && g.toLowerCase().includes(genreSearch.toLowerCase()));
