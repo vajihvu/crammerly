@@ -5,36 +5,45 @@ import config from '../config/index.js';
 import { logger } from '../utils/logger.js';
 import { notifyLoginSpike } from '../utils/securityNotifier.js';
 
-let store;
+// Initialize Redis Client once
+let redisClient;
 if (config.redisUrl) {
-    const redisClient = createClient({ url: config.redisUrl });
-    // CRITICAL: Without this, Redis errors crash the Node.js process (unhandled EventEmitter error event)
+    redisClient = createClient({ url: config.redisUrl });
     redisClient.on('error', err => logger.error(`Redis Rate Limit client error: ${err.message}`));
     redisClient.connect().catch(err => logger.error(`Redis Rate Limit Store connection failed: ${err.message}`));
-    store = new RedisStore({
+}
+
+/**
+ * Creates a new RedisStore instance with a unique prefix.
+ * This satisfies the 'one store per limiter' requirement in express-rate-limit v7+.
+ */
+const createStore = (name) => {
+    if (!redisClient) return undefined;
+    
+    return new RedisStore({
+        prefix: `rl:${name}:`,
         sendCommand: async (...args) => {
             try {
-                return await redisClient.sendCommand(args);
+                // redis-js v4+ uses separate arguments for sendCommand
+                return await redisClient.sendCommand(args[0]);
             } catch (err) {
-                // Degrade gracefully — log but re-throw so rate-limit-redis uses in-memory fallback
-                logger.warn(`Redis sendCommand failed (falling back to memory): ${err.message}`);
+                logger.warn(`Redis store (${name}) failed, falling back to memory: ${err.message}`);
                 throw err;
             }
         },
     });
-}
+};
 
 /**
- * High-Fidelity Rate Limiting Suite
- * Balanced to prevent brute-force/abuse while ensuring legitimate usage (mobile background refresh).
+ * Enhanced Login Limiter
+ * Protects against brute-force attacks on auth endpoints.
  */
-
 export const loginLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 100, // Temporarily elevated from 5 to prevent lockout friction during deployment turbulence
+    windowMs: 1 * 60 * 1000, 
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
-    store: store,
+    store: createStore('login'),
     skip: () => config.isTest,
     handler: async (req, res, _next, options) => {
         await notifyLoginSpike(req, req.ip);
@@ -49,12 +58,16 @@ export const loginLimiter = rateLimit({
     }
 });
 
+/**
+ * Background Refresh Limiter
+ * Limits silent token rotations to prevent session flooding.
+ */
 export const refreshLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 20, // Recommended: 20 per minute to allow background mobile refreshes
+    windowMs: 1 * 60 * 1000,
+    max: 20,
     standardHeaders: true,
     legacyHeaders: false,
-    store: store,
+    store: createStore('refresh'),
     skip: () => config.isTest,
     message: {
         success: false,
@@ -65,12 +78,16 @@ export const refreshLimiter = rateLimit({
     }
 });
 
+/**
+ * Global API Limiter
+ * General protection for public/authenticated endpoints.
+ */
 export const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // General protection for API endpoints
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     standardHeaders: true,
     legacyHeaders: false,
-    store: store,
+    store: createStore('api'),
     skip: () => config.isTest,
     message: {
         success: false,
@@ -82,18 +99,24 @@ export const apiLimiter = rateLimit({
 });
 
 /**
- * AI Cost-Exhaustion Protection Limiter
- * DeepSeek/AI credits are expensive. This guard prevents a single actor from 
- * draining the API wallet.
+ * AI Quota Limiter
+ * Cost-exhaustion protection for LLM endpoints.
+ * Limits by user ID if logged in, otherwise falls back to IP.
  */
 export const aiLimiter = rateLimit({
-    windowMs: 24 * 60 * 60 * 1000, // 24 hours
-    max: 5, // Strictly limit to 5 AI requests per day
+    windowMs: 24 * 60 * 60 * 1000,
+    max: 5,
     standardHeaders: true,
     legacyHeaders: false,
-    store: store,
-    keyGenerator: (req) => req.user?._id || req.ip,
-    skip: (req) => config.isTest || (req.user && req.user.role === 'admin'), // Admins are exempt
+    store: createStore('ai'),
+    keyGenerator: (req) => {
+        // use user id if available for highly targeted limiting
+        if (req.user?._id) return req.user._id.toString();
+        // fallback to default IP-based key if no user
+        return req.ip; 
+    },
+    skip: (req) => config.isTest || (req.user && req.user.role === 'admin'),
+    validate: { xForwardedForHeader: false }, // Avoid the IP warning if we trust the environment
     message: {
         success: false,
         error: {
@@ -102,4 +125,5 @@ export const aiLimiter = rateLimit({
         }
     }
 });
+
 
