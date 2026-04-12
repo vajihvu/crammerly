@@ -73,6 +73,14 @@ client.interceptors.response.use(
                 // Queue concurrent 401s behind a single refresh request
                 if (!client._refreshPromise) {
                     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                    
+                    // FAIL FAST: If we don't even have a refresh token, the request is doomed.
+                    // Stop now to avoid infinite 401 loops.
+                    if (!userInfo.refreshToken) {
+                        console.warn('♻️ Refresh aborted: No refresh token found in localStorage.');
+                        throw { response: { status: 401, data: { code: 'AUTH_REQUIRED' } } };
+                    }
+
                     client._refreshPromise = axios.post(`${env.apiUrl}/auth/refresh`, {
                         refreshToken: userInfo.refreshToken
                     }, {

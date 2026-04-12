@@ -142,13 +142,17 @@ export const AuthProvider = ({ children }) => {
             
             // CRITICAL: Read latest localStorage to avoid overwriting tokens refreshed by interceptors in the background
             let latestToken = prev.token;
+            let latestRefreshToken = prev.refreshToken;
             try {
                 const storageData = JSON.parse(localStorage.getItem('userInfo'));
-                if (storageData?.token && storageData.token !== prev.token) {
+                if (storageData?.token) {
                     latestToken = storageData.token;
                 }
+                if (storageData?.refreshToken) {
+                    latestRefreshToken = storageData.refreshToken;
+                }
             } catch (e) {
-                console.error('Failed to sync token from storage:', e);
+                console.error('Failed to sync tokens from storage:', e);
             }
 
             // Support both { user: ... } and just the user object
@@ -156,6 +160,7 @@ export const AuthProvider = ({ children }) => {
             const next = {
                 ...prev,
                 token: data?.token || latestToken,
+                refreshToken: data?.refreshToken || latestRefreshToken,
                 user: { ...prev.user, ...userData }
             };
 

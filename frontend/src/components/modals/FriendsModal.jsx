@@ -647,51 +647,57 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       <div className="bg-brand-surface w-full max-w-5xl h-[100dvh] sm:h-[85vh] rounded-none sm:rounded-[40px] border-0 sm:border border-brand-border shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150 font-sans" onClick={(e) => e.stopPropagation()}>
 
         <div className="px-3.5 sm:px-8 py-4 sm:py-6 flex items-center justify-between border-b border-brand-border/50 bg-brand-bg/50 backdrop-blur-xl shrink-0 gap-2 sm:gap-4">
-          <div className="flex items-center gap-1.5 sm:gap-6 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-6 shrink-0">
             <button onClick={onClose} className="p-1.5 sm:p-2 hover:bg-brand-muted/20 rounded-full transition-all shrink-0">
               <ArrowLeft size={18} className="text-brand-text sm:w-6 sm:h-6" />
             </button>
-            <h2 className="text-[15px] sm:text-2xl font-black text-brand-text tracking-tight uppercase truncate">Friends</h2>
+            <h2 className="hidden xs:block text-[15px] sm:text-2xl font-black text-brand-text tracking-tight uppercase truncate">Friends</h2>
           </div>
           {!showAddFriend && (
-            <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-              <div className="relative group flex-1 xs:flex-none">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-muted group-focus-within:text-brand-primary transition-colors" size={14} />
+            <div className="flex items-center gap-2 sm:gap-4 flex-1 justify-end min-w-0">
+              <div className="relative group flex-1 max-w-[200px] sm:max-w-none">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-muted group-focus-within:text-brand-primary transition-colors" size={14} />
                 <input
                   type="text"
-                  placeholder="Search friends..."
+                  placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-brand-bg border border-brand-border/80 rounded-xl text-[11px] text-brand-text focus:outline-none focus:ring-1 focus:ring-brand-primary/30 focus:border-brand-primary placeholder:text-brand-muted transition-all font-bold w-40 sm:w-64"
+                  className="w-full pl-9 pr-3 py-2 bg-brand-bg border border-brand-border/80 rounded-xl text-[11px] text-brand-text focus:outline-none focus:ring-1 focus:ring-brand-primary/30 focus:border-brand-primary placeholder:text-brand-muted transition-all font-bold sm:w-64"
                 />
               </div>
-          <div className="flex items-center gap-2 sm:gap-6">
-            <div className="flex bg-brand-bg rounded-2xl p-1 border border-brand-border/30">
-              <button
-                onClick={() => setActiveTab('friends')}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'friends' ? 'bg-brand-text text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text'}`}
-              >
-                Friends
-              </button>
-              <button
-                onClick={() => setActiveTab('requests')}
-                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'requests' ? 'bg-brand-text text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text'}`}
-              >
-                Requests
-                {notifications.filter(n => n.type === 'FRIEND_REQUEST').length > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary text-white text-[8px] flex items-center justify-center rounded-full border-2 border-brand-bg animate-pulse">
-                    {notifications.filter(n => n.type === 'FRIEND_REQUEST').length}
-                  </span>
-                )}
-              </button>
-            </div>
-            <button
-              onClick={() => setShowAddFriend(true)}
-              className="text-brand-text font-black text-[9px] sm:text-[11px] uppercase tracking-widest hover:text-brand-primary transition-colors bg-brand-muted/20 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-brand-border shrink-0"
-            >
-              Add Friends
-            </button>
-          </div>
+              <div className="flex items-center gap-2 sm:gap-6 shrink-0">
+                <div className="flex bg-brand-bg rounded-2xl p-1 border border-brand-border/30">
+                  <button
+                    onClick={() => setActiveTab('friends')}
+                    className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'friends' ? 'bg-brand-text text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text'}`}
+                  >
+                    Friends
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('requests')}
+                    className={`px-3 sm:px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all relative ${activeTab === 'requests' ? 'bg-brand-text text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text'}`}
+                  >
+                    Requests
+                    {notifications.filter(n => n.type === 'FRIEND_REQUEST').length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary text-white text-[8px] flex items-center justify-center rounded-full border-2 border-brand-bg animate-pulse">
+                        {notifications.filter(n => n.type === 'FRIEND_REQUEST').length}
+                      </span>
+                    )}
+                  </button>
+                </div>
+                <button
+                  onClick={() => setShowAddFriend(true)}
+                  className="hidden sm:block text-brand-text font-black text-[11px] uppercase tracking-widest hover:text-brand-primary transition-colors bg-brand-muted/20 px-4 py-2 rounded-xl border border-brand-border shrink-0"
+                >
+                  Add Friends
+                </button>
+                <button
+                  onClick={() => setShowAddFriend(true)}
+                  className="sm:hidden p-2 bg-brand-muted/20 text-brand-text rounded-xl border border-brand-border"
+                >
+                  <UserPlus size={16} />
+                </button>
+              </div>
             </div>
           )}
         </div>

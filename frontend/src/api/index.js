@@ -10,6 +10,7 @@ import { messagesApi } from './messages';
 import { sessionsApi } from './sessions';
 import { bugsApi } from './bugs';
 import aiApi from './ai';
+import { adminApi } from './admin';
 import client from './client';
 
 export {
@@ -26,6 +27,7 @@ export {
     sessionsApi,
     bugsApi,
     aiApi,
+    adminApi,
 };
 
 // Default export as a unified object if preferred
@@ -42,6 +44,7 @@ export default {
     sessions: sessionsApi,
     bugs: bugsApi,
     ai: aiApi,
+    admin: adminApi,
     client,
 };
 

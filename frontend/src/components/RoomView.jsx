@@ -12,6 +12,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
   const [isEditing, setIsEditing] = React.useState(false);
   const [editedRoom, setEditedRoom] = React.useState(room || {});
   const [showRoomInfo, setShowRoomInfo] = React.useState(false);
+  const [isMembersExpanded, setIsMembersExpanded] = React.useState(false);
   const [linkCopied, setLinkCopied] = React.useState(false);
   const [addingAdmin, setAddingAdmin] = React.useState(null);
 
@@ -183,28 +184,46 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
       </div>
 
       <div className="bg-brand-surface rounded-2xl p-4 border border-brand-border shrink-0">
-        <h3 className="text-sm font-bold mb-2"><Users size={16} className="inline mr-1.5 text-brand-primary" />Members ({room.members.length})</h3>
-        <div className="space-y-1.5">
-          {(room.members || []).map((member, idx) => (
-            <div key={idx} className="flex items-center gap-2 p-1.5 bg-brand-bg/50 rounded-lg border border-brand-border/30">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-sm transition-transform hover:scale-110 ${idx % 3 === 0 ? 'bg-brand-primary' : idx % 3 === 1 ? 'bg-brand-secondary' : 'bg-brand-tertiary'}`}>
-                {(member.name || '?')[0].toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-xs text-brand-text truncate">{member.name}</p>
-                <p className="text-[10px] text-brand-text-dim">{member.progress?.length || 0} tasks</p>
-              </div>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {member.isAdmin && <span className="text-[9px] bg-brand-primary text-white px-1.5 py-0.5 rounded font-black tracking-wider uppercase border border-brand-primary">Admin</span>}
-                {member.id === currentUser.id && <span className="text-[10px] bg-brand-muted/40 text-brand-text px-1.5 py-0.5 rounded border border-brand-border">You</span>}
-                {isOwner && member.id !== currentUser.id && (
-                  <button onClick={() => handleToggleAdmin(member.id)} title={member.isAdmin ? "Remove Admin" : "Make Admin"} className={`p-1 rounded transition-all ${member.isAdmin ? 'text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20' : 'text-brand-muted hover:text-brand-primary hover:bg-brand-primary/10'}`}>
-                    <Shield size={14} className={addingAdmin === member.id ? "animate-pulse" : ""} />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+        <button 
+          onClick={() => setIsMembersExpanded(!isMembersExpanded)}
+          className="w-full flex items-center justify-between group"
+        >
+          <h3 className="text-sm font-bold flex items-center gap-1.5 transition-colors group-hover:text-brand-primary">
+            <Users size={16} className="text-brand-primary" />
+            Members ({room.members.length})
+          </h3>
+          <ChevronDown 
+            size={18} 
+            className={`text-brand-text-dim transition-transform duration-300 ${isMembersExpanded ? 'rotate-180' : ''}`} 
+          />
+        </button>
+
+        <div className={`overflow-hidden transition-all duration-300 ${isMembersExpanded ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
+          <div className="space-y-1.5">
+            {(room.members || []).map((member, idx) => {
+              const isAdmin = member.isAdmin || member.id === room.creator_id;
+              return (
+                <div key={idx} className="flex items-center gap-2 p-1.5 bg-brand-bg/50 rounded-lg border border-brand-border/30">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-sm transition-transform hover:scale-110 ${idx % 3 === 0 ? 'bg-brand-primary' : idx % 3 === 1 ? 'bg-brand-secondary' : 'bg-brand-tertiary'}`}>
+                    {(member.name || '?')[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-xs text-brand-text truncate">{member.name}</p>
+                    <p className="text-[10px] text-brand-text-dim">{member.progress?.length || 0} tasks</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {isAdmin && <span className="text-[9px] bg-brand-primary text-white px-1.5 py-0.5 rounded font-black tracking-wider uppercase border border-brand-primary">Admin</span>}
+                    {member.id === currentUser.id && <span className="text-[10px] bg-brand-muted/40 text-brand-text px-1.5 py-0.5 rounded border border-brand-border">You</span>}
+                    {isOwner && member.id !== currentUser.id && (
+                      <button onClick={() => handleToggleAdmin(member.id)} title={isAdmin ? "Remove Admin" : "Make Admin"} className={`p-1 rounded transition-all ${isAdmin ? 'text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20' : 'text-brand-muted hover:text-brand-primary hover:bg-brand-primary/10'}`}>
+                        <Shield size={14} className={addingAdmin === member.id ? "animate-pulse" : ""} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </>
