@@ -117,13 +117,15 @@ app.use(helmet({
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "https://plausible.io"],
             styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            imgSrc: ["'self'", "data:", "https://*.sentry.io", "https://images.unsplash.com", "https://*.googleusercontent.com"],
+            imgSrc: ["'self'", "data:", "blob:", "https://*.sentry.io", "https://images.unsplash.com", "https://*.googleusercontent.com", "https://*.onrender.com"],
             connectSrc: ["'self'", ...config.clientUrls, "https://*.sentry.io", "https://plausible.io"],
             fontSrc: ["'self'", "https://fonts.gstatic.com"],
             objectSrc: ["'none'"],
             upgradeInsecureRequests: [],
         }
     },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginEmbedderPolicy: false,
     frameguard: { action: "deny" },
     hsts: {
         maxAge: 31536000,
