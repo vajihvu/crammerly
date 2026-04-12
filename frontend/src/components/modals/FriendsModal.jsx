@@ -163,6 +163,9 @@ function FriendsModal({ currentUser, onClose, addToast }) {
   // Initial Data Load
   useEffect(() => {
     const loadData = async () => {
+      // Guard: Don't load if user already logged out or session dead
+      if (!currentUser) return;
+      
       try {
         setLoadingFriends(true);
         const [friendsData, notificationsData, suggestionsData] = await Promise.all([
@@ -184,7 +187,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       }
     };
     loadData();
-  }, [addToast]);
+  }, [addToast, currentUser]);
 
   // Socket Listeners
   useEffect(() => {

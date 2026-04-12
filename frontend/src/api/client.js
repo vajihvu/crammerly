@@ -67,15 +67,19 @@ client.interceptors.response.use(
 
         // 1. Handle Token Refresh (401)
         if (error.response?.status === 401 && !originalRequest._retry) {
+            // FAIL FAST: If session is already marked dead, don't even try to refresh.
+            if (client._sessionDead) {
+                return Promise.reject(error);
+            }
+
             originalRequest._retry = true;
 
             try {
                 // Queue concurrent 401s behind a single refresh request
                 if (!client._refreshPromise) {
-                    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+                    const userInfoString = localStorage.getItem('userInfo');
+                    const userInfo = JSON.parse(userInfoString || '{}');
                     
-                    // FAIL FAST: If we don't even have a refresh token, the request is doomed.
-                    // Stop now to avoid infinite 401 loops.
                     if (!userInfo.refreshToken) {
                         console.warn('♻️ Refresh aborted: No refresh token found in localStorage.');
                         throw { response: { status: 401, data: { code: 'AUTH_REQUIRED' } } };
@@ -135,16 +139,17 @@ client.interceptors.response.use(
                     // Only emit UNAUTHORIZED for definitive server rejections (expired/revoked session)
                     if (!client._sessionDead) {
                         client._sessionDead = true;
-                        console.warn('♻️ Session expired: Token refresh failed. Redirecting to login.');
+                        console.warn('♻️ Session expired: Token refresh failed. Cleaning up session.');
+                        
+                        // FAIL SAFE: Clear everything immediately to stop the loop
+                        delete client.defaults.headers.common['Authorization'];
+                        localStorage.removeItem('userInfo');
+                        
                         emit(apiEvents.UNAUTHORIZED);
                     }
                 } else if (status === 403) {
-                    // 403 Forbidden may be due to CSRF or specific resource permissions. 
-                    // Don't kill the whole session, just let the request fail.
                     console.warn(`🔒 Refresh blocked: Forbidden (403). Possible CSRF or permission issue. Session preserved.`);
                 } else {
-                    // Network errors, 500s, etc. shouldn't trigger a global logout! 
-                    // Let the individual request fail instead of killing the whole session.
                     console.warn(`⚠️ Refresh failed with non-auth error (${status || 'Network'}). Session preserved.`);
                 }
                 return Promise.reject(refreshError);
