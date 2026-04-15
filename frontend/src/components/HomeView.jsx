@@ -327,7 +327,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                         <div className="flex -space-x-2">
                           {[1, 2, 3].map(i => <div key={i} className={`w-7 h-7 rounded-full border-2 border-brand-surface bg-brand-card flex items-center justify-center text-[10px] font-black text-brand-secondary shadow-sm ${i === 2 ? 'bg-brand-bg' : i === 3 ? 'bg-brand-surface' : ''}`}>{room.name[0]}</div>)}
                         </div>
-                        <span className="text-xs font-black text-brand-text-dim ml-1 uppercase tracking-tighter font-sans">{Array.isArray(room.members) ? room.members.length : 0} / 20</span>
+                        <span className="text-xs font-black text-brand-text-dim ml-1 uppercase tracking-tighter font-sans">{Array.isArray(room.members) ? room.members.length : 0} / 80</span>
                       </div>
                       {(!(room.scheduleDate || room.schedule_date) || (room.scheduleDate || room.schedule_date) <= today || room.creator_id === currentUser.id) && (
                         <button className="px-6 py-2.5 bg-brand-primary hover:bg-brand-primary/90 text-brand-bg rounded-xl text-[10px] font-[1000] uppercase tracking-widest shadow-accent transition-all group-hover:scale-105 font-sans">Join Room</button>
