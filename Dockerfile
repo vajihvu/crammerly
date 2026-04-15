@@ -1,4 +1,4 @@
-# Stage 1: Dependency Resolver (Cache Bust: 2026-02-17 00:10)
+# Stage 1: Dependency Resolver (Cache Bust: 2026-04-15 21:23)
 FROM node:22-alpine AS deps
 LABEL maintainer="crammerly-dev"
 WORKDIR /app
