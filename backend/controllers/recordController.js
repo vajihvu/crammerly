@@ -2,40 +2,13 @@ import Record from '../models/Record.js';
 import asyncHandler from '../utils/asyncHandler.js';
 
 /**
- * @desc    Get all user records with cursor-based pagination
+ * @desc    Get all user records
  * @route   GET /api/v1/records
  * @access  Private
  */
 export const getRecords = asyncHandler(async (req, res) => {
-    const limit = Math.min(parseInt(req.query.limit) || 10, 100);
-    const query = { userId: req.user._id };
-    const { tags, cursor } = req.query;
-
-    if (tags) {
-        query.tags = { $in: tags.split(',') };
-    }
-
-    if (cursor) {
-        const cursorDate = new Date(cursor);
-        if (isNaN(cursorDate.getTime())) {
-            return res.sendError('Invalid cursor value', 400, 'VAL_INVALID_CURSOR');
-        }
-        query.createdAt = { $lt: cursorDate };
-    }
-
-    const records = await Record.find(query)
-        .sort({ createdAt: -1 })
-        .limit(limit)
-        .lean();
-
-    const hasMore = records.length === limit;
-    const nextCursor = hasMore ? records[records.length - 1].createdAt : null;
-
-    return res.sendSuccess({
-        records,
-        nextCursor,
-        hasMore
-    }, 200, records.length === 0 && !cursor ? "Your study feed is empty. Start a focus session or create a manual record to begin!" : undefined);
+    const studyRecords = await Record.find({ userId: req.user._id });
+    return res.sendSuccess(studyRecords);
 });
 
 /**
@@ -45,22 +18,15 @@ export const getRecords = asyncHandler(async (req, res) => {
  */
 export const createRecord = asyncHandler(async (req, res) => {
     const { title, content, status, tags } = req.body;
-
-    const cleanTags = Array.isArray(tags)
-        ? tags.map(t => t.trim()).filter(t => t !== '')
-        : [];
-
-    const record = await Record.create({
+    const studyRecord = await Record.create({
         userId: req.user._id,
         title,
         content,
         status: status || 'draft',
-        tags: cleanTags,
+        tags: Array.isArray(tags) ? tags : []
     });
-
-    return res.sendSuccess(record, 201);
+    return res.sendSuccess(studyRecord, 201);
 });
-
 
 /**
  * @desc    Get single record
@@ -73,11 +39,7 @@ export const getRecordById = asyncHandler(async (req, res, _next) => {
     if (record) {
         return res.sendSuccess(record);
     } else {
-
-        const error = new Error('Record not found');
-        error.statusCode = 404;
-        error.code = 'RES_NOT_FOUND';
-        throw error;
+        return res.sendError('Record not found', 404, 'RES_NOT_FOUND');
     }
 });
 
@@ -102,11 +64,7 @@ export const updateRecord = asyncHandler(async (req, res) => {
         const updatedRecord = await record.save();
         return res.sendSuccess(updatedRecord);
     } else {
-
-        const error = new Error('Record not found');
-        error.statusCode = 404;
-        error.code = 'RES_NOT_FOUND';
-        throw error;
+        return res.sendError('Record not found', 404, 'RES_NOT_FOUND');
     }
 });
 
@@ -116,16 +74,10 @@ export const updateRecord = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const deleteRecord = asyncHandler(async (req, res) => {
-    const record = await Record.findOne({ _id: req.params.id, userId: req.user._id });
-
-    if (record) {
-        await record.deleteOne();
-        return res.sendSuccess({ message: 'Record removed' });
-    } else {
-
-        const error = new Error('Record not found');
-        error.statusCode = 404;
-        error.code = 'RES_NOT_FOUND';
-        throw error;
+    const studyRecord = await Record.findOne({ _id: req.params.id, userId: req.user._id });
+    if (!studyRecord) {
+        return res.sendError('Record not found', 404, 'RES_NOT_FOUND');
     }
+    await studyRecord.deleteOne();
+    return res.sendSuccess({ message: 'Record removed successfully' });
 });

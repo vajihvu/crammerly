@@ -123,6 +123,7 @@ export const initSocket = (server) => {
                 sender_id: socket.user._id,
                 senderName: socket.user.name,
                 senderTag: socket.user.tag || '0000',
+                content: sanitized,
                 text: sanitized,
                 type: type || 'text',
                 fileData: fileData || null,

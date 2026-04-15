@@ -328,7 +328,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       initiateCall({
         id: friend._id || friend.id,
         name: friend.name,
-        avatar: friend.avatar_url || friend.avatar,
+        avatar: friend.avatar,
         tag: friend.tag
       });
       return;
@@ -596,7 +596,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                 onClick={() => initiateCall({ 
                   id: selectedFriend._id || selectedFriend.id, 
                   name: selectedFriend.name, 
-                  avatar: selectedFriend.avatar_url || selectedFriend.avatar,
+                  avatar: selectedFriend.avatar,
                   tag: selectedFriend.tag 
                 }, 'voice')} 
                 disabled={callState !== 'idle'}
@@ -608,7 +608,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                 onClick={() => initiateCall({ 
                   id: selectedFriend._id || selectedFriend.id, 
                   name: selectedFriend.name, 
-                  avatar: selectedFriend.avatar_url || selectedFriend.avatar,
+                  avatar: selectedFriend.avatar,
                   tag: selectedFriend.tag 
                 })} 
                 disabled={callState !== 'idle'}
@@ -760,8 +760,8 @@ function FriendsModal({ currentUser, onClose, addToast }) {
             <div className="flex flex-col items-center text-center space-y-4 mb-10">
               <div className="relative">
                 <div className="w-24 h-24 sm:w-32 sm:h-32 bg-brand-bg rounded-[32px] sm:rounded-[40px] flex items-center justify-center border-4 border-brand-border shadow-2xl overflow-hidden group">
-                  {profileFriend.avatar_url ? (
-                    <img src={profileFriend.avatar_url} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                  {profileFriend.avatar ? (
+                    <img src={profileFriend.avatar} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                   ) : (
                     <span className="text-4xl sm:text-5xl font-black text-brand-muted">
                       {(profileFriend.name || profileFriend.username || '?')[0].toUpperCase()}
@@ -1025,7 +1025,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                         <div key={notif.id} className="bg-brand-card border border-brand-border/50 rounded-3xl p-5 flex items-center justify-between shadow-xl animate-in slide-in-from-bottom-2 duration-300">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-brand-bg rounded-full flex items-center justify-center border-2 border-brand-border text-brand-primary text-xl font-black overflow-hidden shadow-premium">
-                              {notif.sender?.avatar_url ? <img src={notif.sender.avatar_url} className="w-full h-full object-cover" /> : (notif.sender?.name || '?')[0].toUpperCase()}
+                              {notif.sender?.avatar ? <img src={notif.sender.avatar} className="w-full h-full object-cover" /> : (notif.sender?.name || '?')[0].toUpperCase()}
                             </div>
                             <div>
                               <h4 className="text-sm font-black text-brand-text uppercase tracking-tight">{notif.sender?.name || 'Unknown User'}</h4>
@@ -1082,7 +1082,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                       <div key={user.id} className="bg-brand-card border border-brand-border rounded-[24px] p-4 flex items-center justify-between group/result shadow-xl hover:border-brand-primary/50 transition-all">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-brand-bg rounded-full flex items-center justify-center border border-brand-border text-xl font-black text-brand-text shadow-lg overflow-hidden">
-                            {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : (user.full_name || user.username || '?')[0].toUpperCase()}
+                            {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : (user.full_name || user.username || '?')[0].toUpperCase()}
                           </div>
                           <div className="min-w-0">
                             <h3 className="text-base font-black text-brand-text uppercase tracking-tight leading-none mb-1 group-hover:text-brand-primary transition-colors">{user.full_name || user.username}</h3>

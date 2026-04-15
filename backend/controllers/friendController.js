@@ -1,7 +1,7 @@
-import asyncHandler from '../utils/asyncHandler.js';
 import User from '../models/User.js';
 import FriendRequest from '../models/FriendRequest.js';
 import Notification from '../models/Notification.js';
+import asyncHandler from '../utils/asyncHandler.js';
 import Room from '../models/Room.js';
 import { emitToUser } from '../utils/socket.js';
 
@@ -13,7 +13,6 @@ import { emitToUser } from '../utils/socket.js';
 export const searchFriends = asyncHandler(async (req, res) => {
     const { q } = req.query;
 
-    // 1. Standard Query Search (Find by Username or Name)
     if (q) {
         const queryRegex = new RegExp(q, 'i');
         const users = await User.find({
@@ -22,56 +21,43 @@ export const searchFriends = asyncHandler(async (req, res) => {
                 { username: queryRegex },
                 { name: queryRegex }
             ]
-        }).select('name username avatar_url skills interests isOnline role institution course socials tag');
+        }).select('name username avatar skills interests isOnline role institution course socials tag');
 
         return res.sendSuccess(users);
     }
 
-    // 2. No Query -> "Suggested For You" Recommendation Algorithm
-    // Fetch the active user's skills and interests
     const currentUser = await User.findById(req.user._id).select('skills interests');
     const mySkills = new Set((currentUser.skills || []).map(s => s.toLowerCase()));
     const myInterests = new Set((currentUser.interests || []).map(i => i.toLowerCase()));
 
-    // If the user has zero skills or interests, fail gracefully and return a random sampling or empty
     if (mySkills.size === 0 && myInterests.size === 0) {
-        // Fallback: Just return 6 recent users to avoid empty screens if they skipped onboarding
         const fallbackUsers = await User.find({ _id: { $ne: req.user._id } })
             .sort({ createdAt: -1 })
             .limit(6)
-            .select('name username avatar_url skills interests institution course socials tag');
+            .select('name username avatar skills interests institution course socials tag');
         return res.sendSuccess(fallbackUsers);
     }
 
-    // Grab everyone else
     const allUsers = await User.find({ _id: { $ne: req.user._id } })
-        .select('name username avatar_url skills interests institution course socials tag');
+        .select('name username avatar skills interests institution course socials tag');
 
-    // Score them
     const scoredUsers = allUsers.map(u => {
         let score = 0;
-        
-        // Match skills
         (u.skills || []).forEach(skill => {
-            if (mySkills.has(skill.toLowerCase())) score += 1.5; // Slight heavier weight on skills
+            if (mySkills.has(skill.toLowerCase())) score += 1.5;
         });
-
-        // Match interests
         (u.interests || []).forEach(interest => {
             if (myInterests.has(interest.toLowerCase())) score += 1.0;
         });
-
         return { user: u, score };
     });
 
-    // Filter out 0 scores, then sort descending, then grab top 10
     const suggestions = scoredUsers
         .filter(entry => entry.score > 0)
         .sort((a, b) => b.score - a.score)
         .slice(0, 10)
         .map(entry => entry.user);
 
-    // Provide some randomness if the suggestions list is too short
     if (suggestions.length < 6) {
         const needed = 6 - suggestions.length;
         const suggestionIds = suggestions.map(s => s._id.toString());
@@ -79,11 +65,23 @@ export const searchFriends = asyncHandler(async (req, res) => {
             .filter(u => !suggestionIds.includes(u._id.toString()))
             .sort(() => 0.5 - Math.random())
             .slice(0, needed);
-        
         suggestions.push(...backfills);
     }
 
     return res.sendSuccess(suggestions);
+});
+
+/**
+ * @desc    Get pending friend requests
+ * @route   GET /api/v1/friends/requests
+ * @access  Private
+ */
+export const getFriendRequests = asyncHandler(async (req, res) => {
+    const requests = await FriendRequest.find({
+        receiver: req.user._id,
+        status: 'pending'
+    }).populate('sender', 'name username avatar tag');
+    return res.sendSuccess(requests);
 });
 
 /**
@@ -104,13 +102,11 @@ export const sendFriendRequest = asyncHandler(async (req, res) => {
         return res.sendError('User not found', 404, 'RES_NOT_FOUND');
     }
 
-    // Check if already friends
     const sender = await User.findById(fromUserId);
     if (sender.friends.includes(toUserId)) {
         return res.sendError('You are already friends', 400, 'VAL_ALREADY_FRIENDS');
     }
 
-    // Check if already pending
     const existingRequest = await FriendRequest.findOne({
         from: fromUserId,
         to: toUserId,
@@ -121,7 +117,6 @@ export const sendFriendRequest = asyncHandler(async (req, res) => {
         return res.sendError('Friend request already sent', 400, 'VAL_REQUEST_PENDING');
     }
 
-    // Check if there is an incoming request from the target user
     const mutualRequest = await FriendRequest.findOne({
         from: toUserId,
         to: fromUserId,
@@ -137,7 +132,6 @@ export const sendFriendRequest = asyncHandler(async (req, res) => {
         to: toUserId
     });
 
-    // Create Notification
     const notification = await Notification.create({
         recipient: toUserId,
         sender: fromUserId,
@@ -146,7 +140,6 @@ export const sendFriendRequest = asyncHandler(async (req, res) => {
         relatedId: request._id
     });
 
-    // Emit Socket Event
     emitToUser(toUserId, 'new_notification', {
         id: notification._id,
         type: 'FRIEND_REQUEST',
@@ -154,7 +147,7 @@ export const sendFriendRequest = asyncHandler(async (req, res) => {
             id: sender._id,
             name: sender.name,
             username: sender.username,
-            avatar_url: sender.avatar_url,
+            avatar: sender.avatar,
             tag: sender.tag
         },
         content: notification.content,
@@ -187,11 +180,9 @@ export const acceptFriendRequest = asyncHandler(async (req, res) => {
         return res.sendError('Request already handled', 400, 'VAL_ALREADY_HANDLED');
     }
 
-    // Update Request
     request.status = 'accepted';
     await request.save();
 
-    // Add to friends lists
     const userA = await User.findById(request.from);
     const userB = await User.findById(request.to);
 
@@ -201,14 +192,12 @@ export const acceptFriendRequest = asyncHandler(async (req, res) => {
     await userA.save();
     await userB.save();
 
-    // CLEAR original incoming notification for userB (the one who accepted)
     await Notification.deleteMany({
         recipient: userId,
         type: 'FRIEND_REQUEST',
         relatedId: request._id
     });
 
-    // Create Notification for the sender (userA)
     const notification = await Notification.create({
         recipient: request.from,
         sender: request.to,
@@ -217,7 +206,6 @@ export const acceptFriendRequest = asyncHandler(async (req, res) => {
         relatedId: request._id
     });
 
-    // Emit Socket Event
     emitToUser(request.from, 'new_notification', {
         id: notification._id,
         type: 'FRIEND_ACCEPT',
@@ -225,14 +213,13 @@ export const acceptFriendRequest = asyncHandler(async (req, res) => {
             id: userB._id,
             name: userB.name,
             username: userB.username,
-            avatar_url: userB.avatar_url,
+            avatar: userB.avatar,
             tag: userB.tag
         },
         content: notification.content,
         timestamp: notification.createdAt
     });
 
-    // Automatically create a DM Room
     const dmRoom = await Room.create({
         name: `DM: ${userA.name} & ${userB.name}`,
         creator_id: userA._id,
@@ -269,7 +256,6 @@ export const declineFriendRequest = asyncHandler(async (req, res) => {
     request.status = 'declined';
     await request.save();
 
-    // Delete the original notification for the recipient
     await Notification.deleteMany({
         recipient: userId,
         type: 'FRIEND_REQUEST',
@@ -310,9 +296,8 @@ export const removeFriend = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const getFriendsList = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id).populate('friends', 'name username avatar_url isOnline tag institution course skills interests socials');
+    const user = await User.findById(req.user._id).populate('friends', 'name username avatar isOnline tag institution course skills interests socials');
     
-    // For each friend, find the DM room
     const friendsWithRooms = await Promise.all((user.friends || []).map(async (friend) => {
         const dmRoom = await Room.findOne({
             roomType: 'DM',
@@ -327,4 +312,5 @@ export const getFriendsList = asyncHandler(async (req, res) => {
 
     return res.sendSuccess(friendsWithRooms);
 });
+
 

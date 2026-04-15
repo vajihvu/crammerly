@@ -13,5 +13,5 @@ export const userProfileSchema = z.object({
         linkedin: z.string().url().or(z.literal("")).optional(),
     }).optional(),
     banner_color: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/).optional(),
-    avatar_url: z.string().url().or(z.literal("")).optional(),
+    avatarUrl: z.string().url().or(z.literal("")).optional(),
 });

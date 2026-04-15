@@ -49,6 +49,7 @@ export const getAllRooms = asyncHandler(async (req, res) => {
         members: room.members.map(m => ({
             id: m.user?._id,
             name: m.user?.name || 'Anonymous',
+            avatar: m.user?.avatar || null,
             isAdmin: m.isAdmin || false,
             progress: m.progress || []
         }))

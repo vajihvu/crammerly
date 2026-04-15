@@ -7,10 +7,10 @@ import asyncHandler from '../utils/asyncHandler.js';
  * @access  Private
  */
 export const getNotifications = asyncHandler(async (req, res) => {
-    const notifications = await Notification.find({ recipient: req.user._id })
-        .populate('sender', 'name username avatar_url tag')
+    const notifications = await Notification.find({ user: req.user._id })
+        .populate('sender', 'name avatar')
         .sort({ createdAt: -1 })
-        .limit(50);
+        .limit(20);
 
     return res.sendSuccess(notifications);
 });
@@ -20,20 +20,16 @@ export const getNotifications = asyncHandler(async (req, res) => {
  * @route   PUT /api/v1/notifications/:id/read
  * @access  Private
  */
-export const markRead = asyncHandler(async (req, res) => {
-    const notification = await Notification.findById(req.params.id);
+export const markAsRead = asyncHandler(async (req, res) => {
+    const notification = await Notification.findOne({ _id: req.params.id, user: req.user._id });
     if (!notification) {
         return res.sendError('Notification not found', 404, 'RES_NOT_FOUND');
-    }
-
-    if (notification.recipient.toString() !== req.user._id.toString()) {
-        return res.sendError('Unauthorized', 403, 'AUTH_FORBIDDEN');
     }
 
     notification.isRead = true;
     await notification.save();
 
-    return res.sendSuccess({ message: 'Notification marked as read' });
+    return res.sendSuccess(notification);
 });
 
 /**

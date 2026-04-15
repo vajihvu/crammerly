@@ -44,8 +44,7 @@ export const endSession = asyncHandler(async (req, res) => {
     });
 
     if (!session) {
-        res.status(404);
-        throw new Error('Session not found');
+        return res.sendError('Session not found', 404, 'RES_NOT_FOUND');
     }
 
     session.endTime = new Date();

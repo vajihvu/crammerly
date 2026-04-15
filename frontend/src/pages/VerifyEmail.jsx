@@ -15,10 +15,10 @@ const VerifyEmail = () => {
                 const response = await authApi.verifyEmail(token);
                 if (response.success) {
                     setStatus('success');
-                    setMessage(response.message || 'Email verified successfully!');
+                    setMessage(response.data?.message || response.message || 'Email verified successfully!');
                 } else {
                     setStatus('error');
-                    setMessage(response.message || 'Verification failed.');
+                    setMessage(response.data?.message || response.message || 'Verification failed.');
                 }
             } catch (err) {
                 setStatus('error');

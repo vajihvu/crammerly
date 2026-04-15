@@ -15,7 +15,7 @@ const SuggestionItem = ({
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 bg-brand-card rounded-full flex items-center justify-center text-sm font-black text-brand-primary border border-brand-border/80 shrink-0 group-hover:scale-110 transition-transform shadow-premium overflow-hidden">
-                    {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : (user.name || user.username || '?')[0].toUpperCase()}
+                    {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : (user.name || user.username || '?')[0].toUpperCase()}
                 </div>
 
                 <div className="min-w-0">

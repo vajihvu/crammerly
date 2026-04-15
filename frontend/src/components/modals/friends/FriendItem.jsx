@@ -9,8 +9,8 @@ const FriendItem = ({ friend, onChat, onCall, onProfile }) => (
         <div className="flex items-center gap-3 sm:gap-5 min-w-0">
             <div className="relative">
                 <div className="w-12 h-12 sm:w-14 sm:h-14 bg-brand-bg rounded-full flex items-center justify-center overflow-hidden border-2 border-brand-border group-hover:border-brand-primary/50 transition-all">
-                    {friend.avatar_url ? (
-                        <img src={friend.avatar_url} alt="" className="w-full h-full object-cover" />
+                    {friend.avatar ? (
+                        <img src={friend.avatar} alt="" className="w-full h-full object-cover" />
                     ) : (
                         <span className="text-lg sm:text-xl font-black text-brand-muted group-hover:text-brand-primary">
                             {(friend.name || friend.username || '?')[0].toUpperCase()}

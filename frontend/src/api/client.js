@@ -91,7 +91,6 @@ client.interceptors.response.use(
                         withCredentials: true,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRF-Token': 'XMLHttpRequest'
                         }
                     }).finally(() => {
                         client._refreshPromise = null;

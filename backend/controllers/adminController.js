@@ -26,14 +26,10 @@ export const getUsers = asyncHandler(async (req, res) => {
         .skip(skip)
         .limit(limit);
 
-    res.status(200).json({
-        success: true,
-        data: users,
-        pagination: {
-            page,
-            pages: Math.ceil(total / limit),
-            total
-        }
+    return res.sendSuccess(users, 200, undefined, {
+        page,
+        pages: Math.ceil(total / limit),
+        total
     });
 });
 
@@ -69,11 +65,7 @@ export const toggleUserStatus = asyncHandler(async (req, res) => {
 
     logger.info(`Moderation: Admin ${req.user.email} ${isActive ? 'reactivated' : 'deactivated'} user ${user.email}`);
 
-    res.status(200).json({
-        success: true,
-        message: `User ${isActive ? 'reactivated' : 'deactivated'} successfully`,
-        data: user
-    });
+    return res.sendSuccess(user, 200, `User ${isActive ? 'reactivated' : 'deactivated'} successfully`);
 });
 
 /**
@@ -112,9 +104,5 @@ export const updateUserRole = asyncHandler(async (req, res) => {
 
     logger.info(`Moderation: Admin ${req.user.email} updated role of ${user.email} to ${role}`);
 
-    res.status(200).json({
-        success: true,
-        message: `User role updated to ${role} successfully`,
-        data: user
-    });
+    return res.sendSuccess(user, 200, `User role updated to ${role} successfully`);
 });

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { getSocket } from '../utils/socket';
 import { useUI } from './UIContext';
+import { useAuth } from './AuthContext';
 
 const VideoCallContext = createContext();
 
@@ -13,6 +14,7 @@ const ICE_SERVERS = {
 
 export const VideoCallProvider = ({ children }) => {
     const { addToast } = useUI();
+    const { user } = useAuth();
     const [callState, setCallState] = useState('idle'); // idle, outgoing, incoming, active
     const [callType, setCallType] = useState('video'); // video, voice
     const [remoteUser, setRemoteUser] = useState(null);
@@ -25,6 +27,12 @@ export const VideoCallProvider = ({ children }) => {
     const socket = useRef(null);
     const pendingCandidates = useRef([]);
     const incomingSignal = useRef(null); // Store offer/candidates if they arrive early
+    const localStreamRef = useRef(null);
+    const callStateRef = useRef(callState);
+
+    // Keep refs in sync with state
+    useEffect(() => { localStreamRef.current = localStream; }, [localStream]);
+    useEffect(() => { callStateRef.current = callState; }, [callState]);
 
     // Cleanup WebRTC
     const cleanupCall = useCallback(() => {
@@ -35,10 +43,9 @@ export const VideoCallProvider = ({ children }) => {
             peerConnection.current.close();
             peerConnection.current = null;
         }
-        if (localStream) {
-            localStream.getTracks().forEach(track => {
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => {
                 track.stop();
-                localStream.removeTrack(track);
             });
             setLocalStream(null);
         }
@@ -47,7 +54,7 @@ export const VideoCallProvider = ({ children }) => {
         setRemoteUser(null);
         pendingCandidates.current = [];
         incomingSignal.current = null;
-    }, [localStream]);
+    }, []);
 
     // Initialize Media
     const startLocalStream = async (type = 'video') => {
@@ -97,7 +104,7 @@ export const VideoCallProvider = ({ children }) => {
     // --- Signaling Handlers ---
 
     const handleIncomingCall = useCallback(async ({ from, signalData, type = 'video' }) => {
-        if (callState !== 'idle') {
+        if (callStateRef.current !== 'idle') {
             getSocket()?.emit('call:decline', { toUserId: from.id });
             return;
         }
@@ -105,7 +112,7 @@ export const VideoCallProvider = ({ children }) => {
         setCallType(type);
         setCallState('incoming');
         incomingSignal.current = signalData; 
-    }, [callState]);
+    }, []);
 
     const addIceCandidate = async (pc, candidate) => {
         try {
@@ -178,7 +185,7 @@ export const VideoCallProvider = ({ children }) => {
             s.off('call:signal', handleSignal);
             s.off('call:ended', handleCallEnded);
         };
-    }, [handleIncomingCall, handleCallAccepted, handleCallDeclined, handleSignal, handleCallEnded]);
+    }, [user?.token, handleIncomingCall, handleCallAccepted, handleCallDeclined, handleSignal, handleCallEnded]);
 
     // --- Public API ---
 
@@ -250,14 +257,14 @@ export const VideoCallProvider = ({ children }) => {
 
     const toggleMute = () => {
         if (localStream) {
-            localStream.getAudioTracks().forEach(track => track.enabled = isMuted);
+            localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
             setIsMuted(!isMuted);
         }
     };
 
     const toggleCamera = () => {
         if (localStream) {
-            localStream.getVideoTracks().forEach(track => track.enabled = isCamOff);
+            localStream.getVideoTracks().forEach(track => track.enabled = !isCamOff);
             setIsCamOff(!isCamOff);
         }
     };
