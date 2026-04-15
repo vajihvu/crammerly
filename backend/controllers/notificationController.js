@@ -20,7 +20,7 @@ export const getNotifications = asyncHandler(async (req, res) => {
  * @route   PUT /api/v1/notifications/:id/read
  * @access  Private
  */
-export const markAsRead = asyncHandler(async (req, res) => {
+export const markRead = asyncHandler(async (req, res) => {
     const notification = await Notification.findOne({ _id: req.params.id, user: req.user._id });
     if (!notification) {
         return res.sendError('Notification not found', 404, 'RES_NOT_FOUND');
