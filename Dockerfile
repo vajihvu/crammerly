@@ -1,10 +1,11 @@
-# Stage 1: Dependency Resolver (Cache Bust: 2026-04-15 21:23)
+# Stage 1: Dependency Resolver (Cache Bust: 2026-04-15 21:32)
 FROM node:22-alpine AS deps
 LABEL maintainer="crammerly-dev"
 WORKDIR /app
 
-# Upgrade OS packages to avoid Trivy vulnerabilities
-RUN apk upgrade --no-cache
+# Upgrade OS packages and force patched musl from edge repository
+RUN apk upgrade --no-cache && \
+    apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main musl musl-utils
 
 # Copy package files for workspace
 COPY package*.json ./
@@ -18,8 +19,9 @@ RUN npm ci --workspace=backend --omit=dev --ignore-scripts
 FROM node:22-alpine AS runner
 WORKDIR /app
 
-# Upgrade OS packages to avoid Trivy vulnerabilities
-RUN apk upgrade --no-cache
+# Upgrade OS packages and force patched musl from edge repository
+RUN apk upgrade --no-cache && \
+    apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/main musl musl-utils
 
 # Create a system user for the application
 RUN addgroup -S app && adduser -S app -G app
