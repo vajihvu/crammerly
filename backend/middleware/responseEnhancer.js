@@ -30,7 +30,7 @@ export const responseEnhancer = (req, res, next) => {
      * @param {number} statusCode - HTTP status code (default 400)
      * @param {string} code - Internal error code
      */
-    res.sendError = (message, statusCode = 400, code = 'API_ERROR') => {
+    res.sendError = (message, statusCode = 400, code = 'API_ERROR', customMeta = {}) => {
         return res.status(statusCode).json({
             success: false,
             error: {
@@ -41,7 +41,8 @@ export const responseEnhancer = (req, res, next) => {
                 timestamp: new Date().toISOString(),
                 path: req.originalUrl,
                 version: 'v1',
-                requestId: req.requestId
+                requestId: req.requestId,
+                ...customMeta
             }
         });
     };

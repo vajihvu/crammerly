@@ -204,8 +204,8 @@ export const loginUser = asyncHandler(async (req, res) => {
         await logAuditEvent({ req, event: 'AUTH_LOGIN', status: 'FAILURE', metadata: { email, reason: 'PASSWORD_MISMATCH' } });
 
         // Hint for frontend if captcha might be needed next time
-        const meta = user.loginAttempts + 1 >= 3 ? { requiresCaptcha: true } : undefined;
-        return res.sendError('Invalid email or password', 401, 'AUTH_INVALID', (meta ? { meta } : undefined));
+        const meta = user.loginAttempts + 1 >= 3 ? { requiresCaptcha: true } : {};
+        return res.sendError('Invalid email or password', 401, 'AUTH_INVALID', meta);
     }
 });
 
