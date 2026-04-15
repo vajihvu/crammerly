@@ -16,7 +16,8 @@ function ProfileModal({ currentUser = {}, onClose, onUpdateProfile }) {
     socialLinks: {},
     institution: '',
     course: '',
-    ...currentUser
+    ...currentUser,
+    avatar: currentUser?.avatar || ''
   });
   const [newInterest, setNewInterest] = useState('');
   const [newSkill, setNewSkill] = useState('');
@@ -81,7 +82,7 @@ function ProfileModal({ currentUser = {}, onClose, onUpdateProfile }) {
             if (file) {
               const reader = new FileReader();
               reader.onload = (event) => {
-                setFormData({ ...formData, avatarUrl: event.target.result });
+                setFormData({ ...formData, avatar: event.target.result });
               };
               reader.readAsDataURL(file);
             }
@@ -123,8 +124,8 @@ function ProfileModal({ currentUser = {}, onClose, onUpdateProfile }) {
                     className={`w-24 h-24 sm:w-28 sm:h-28 rounded-3xl flex items-center justify-center text-xl sm:text-2xl font-bold shadow-lg shrink-0 relative overflow-hidden group/pfp bg-brand-surface ${isEditing ? 'cursor-pointer' : ''}`}
                     onClick={() => isEditing && fileInputRef.current.click()}
                   >
-                    {formData?.avatarUrl ? (
-                      <img src={formData.avatarUrl} alt="PFP" className="w-full h-full object-cover" />
+                    {formData?.avatar ? (
+                      <img src={formData.avatar} alt="PFP" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-brand-primary/10 flex items-center justify-center text-brand-primary">
                         {(formData?.name || formData?.email || 'U')[0].toUpperCase()}

@@ -106,8 +106,8 @@ function MenuSidebar({
 
           <div className="flex flex-col gap-3">
             <div className="w-14 h-14 bg-brand-muted rounded-full flex items-center justify-center text-xl font-black text-brand-text shadow-xl border-2 border-brand-surface overflow-hidden">
-              {currentUser?.avatarUrl ? (
-                <img src={currentUser.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+              {currentUser?.avatar ? (
+                <img src={currentUser.avatar} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 (currentUser?.name || currentUser?.username || '?')[0].toUpperCase()
               )}

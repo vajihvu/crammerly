@@ -568,8 +568,12 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                 <ArrowLeft size={20} className="text-brand-text sm:w-[22px]" />
               </button>
               <div className="relative shrink-0">
-                <div className="w-10 h-10 sm:w-11 sm:h-11 bg-brand-muted rounded-full flex items-center justify-center font-black text-brand-text shadow-lg text-sm sm:text-base">
-                  {selectedFriend.avatar}
+                <div className="w-10 h-10 sm:w-11 sm:h-11 bg-brand-muted rounded-full flex items-center justify-center font-black text-brand-text shadow-lg text-sm sm:text-base overflow-hidden border border-brand-border/50">
+                  {selectedFriend.avatar && selectedFriend.avatar.startsWith('data:image') || selectedFriend.avatar?.startsWith('http') ? (
+                    <img src={selectedFriend.avatar} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="opacity-80">{(selectedFriend.name || selectedFriend.username || '?')[0].toUpperCase()}</span>
+                  )}
                 </div>
                 <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 sm:w-3.5 sm:h-3.5 border-2 sm:border-4 border-brand-bg rounded-full ${selectedFriend.status === 'online' ? 'bg-brand-success' :
                   selectedFriend.status === 'do not disturb' ? 'bg-brand-danger' :
