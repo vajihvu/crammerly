@@ -39,10 +39,11 @@ export const protect = async (req, res, next) => {
 
         // 1. Global Revocation Check (Token Version)
         // If tokenVersion mismatches, the user reset their password or performed a global logout
-        // NOTE: Default to 0 for legacy tokens that don't have this field
+        // NOTE: Default to 0 for legacy support or missing fields
         const tokenVer = decoded.tokenVersion ?? 0;
-        if (tokenVer !== user.tokenVersion) {
-            logger.warn(`SECURITY ALERT: Token version mismatch for user ${user._id} (expected v${user.tokenVersion}, got v${tokenVer}). Revoking access.`);
+        const userVer = user.tokenVersion ?? 0;
+        if (tokenVer !== userVer) {
+            logger.warn(`SECURITY ALERT: Token version mismatch for user ${user._id} (expected v${userVer}, got v${tokenVer}). Revoking access.`);
             const err = new Error('Security policy update: Your session has been revoked. Please log in again.');
             err.statusCode = 401;
             err.code = 'AUTH_SESSION_REVOKED';

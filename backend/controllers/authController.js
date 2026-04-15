@@ -222,7 +222,7 @@ export const googleLogin = asyncHandler(async (req, res) => {
     const payload = ticket.getPayload();
     const { sub, email, name, picture } = payload;
 
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ email }).select('+tokenVersion');
 
     if (!user) {
         user = await User.create({
@@ -283,7 +283,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 
         const hash = hashToken(newRefreshToken);
         const session = await Session.findOne({ refreshTokenHash: hash });
-        const user = await User.findById(session.user);
+        const user = await User.findById(session.user).select('+tokenVersion');
         if (!user) throw new Error('User not found');
 
         await logAuditEvent({ req, user: session.user, event: 'AUTH_REFRESH', status: 'SUCCESS' });
@@ -311,56 +311,48 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
  * @desc    Logout user & revoke session
  * @route   POST /api/v1/auth/logout
  */
-export const logoutUser = async (req, res, next) => {
-    try {
-        const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.headers['x-refresh-token'];
-        if (refreshToken) {
-            const hash = hashToken(refreshToken);
-            const session = await Session.findOne({ refreshTokenHash: hash });
+export const logoutUser = asyncHandler(async (req, res) => {
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken || req.headers['x-refresh-token'];
+    if (refreshToken) {
+        const hash = hashToken(refreshToken);
+        const session = await Session.findOne({ refreshTokenHash: hash });
 
-            if (session) {
-                session.isValid = false;
-                session.revokedAt = new Date();
-                await session.save();
-            }
-
-            await logAuditEvent({ req, event: 'AUTH_LOGOUT', status: 'SUCCESS' });
+        if (session) {
+            session.isValid = false;
+            session.revokedAt = new Date();
+            await session.save();
         }
 
-        res.clearCookie('refreshToken', COOKIE_OPTIONS);
-        return res.sendSuccess({ message: 'Logged out' });
-    } catch (error) {
-        next(error);
+        await logAuditEvent({ req, event: 'AUTH_LOGOUT', status: 'SUCCESS' });
     }
-};
+
+    res.clearCookie('refreshToken', COOKIE_OPTIONS);
+    return res.sendSuccess({ message: 'Logged out' });
+});
 
 /**
  * @desc    Logout all devices
  * @route   POST /api/v1/auth/logout-all
  */
-export const logoutAllDevices = async (req, res, next) => {
-    try {
-        // Increment tokenVersion to revoke all current access tokens
-        await User.findByIdAndUpdate(req.user._id, { $inc: { tokenVersion: 1 } });
+export const logoutAllDevices = asyncHandler(async (req, res) => {
+    // Increment tokenVersion to revoke all current access tokens
+    await User.findByIdAndUpdate(req.user._id, { $inc: { tokenVersion: 1 } });
 
-        await Session.updateMany(
-            { user: req.user._id, isValid: true },
-            { isValid: false, revokedAt: new Date() }
-        );
+    await Session.updateMany(
+        { user: req.user._id, isValid: true },
+        { isValid: false, revokedAt: new Date() }
+    );
 
-        await logAuditEvent({ req, user: req.user._id, event: 'AUTH_LOGOUT_ALL', status: 'SUCCESS' });
-        res.clearCookie('refreshToken', COOKIE_OPTIONS);
-        return res.sendSuccess({ message: 'Logged out from all devices' });
-    } catch (error) {
-        next(error);
-    }
-};
+    await logAuditEvent({ req, user: req.user._id, event: 'AUTH_LOGOUT_ALL', status: 'SUCCESS' });
+    res.clearCookie('refreshToken', COOKIE_OPTIONS);
+    return res.sendSuccess({ message: 'Logged out from all devices' });
+});
 
 
 
-export const getUserProfile = async (req, res) => {
+export const getUserProfile = asyncHandler(async (req, res) => {
     return res.sendSuccess(formatUserPayload(req.user));
-};
+});
 
 export const updateUserProfile = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).select('+password +previousPasswords +tokenVersion');
@@ -527,80 +519,63 @@ export const completeOnboarding = asyncHandler(async (req, res) => {
  * @route   GET /api/v1/auth/sessions
  * @access  Private
  */
-export const getUserSessions = async (req, res, next) => {
-    try {
-        const sessions = await Session.find({
-            user: req.user._id,
-            isValid: true,
-            expiresAt: { $gt: new Date() }
-        }).sort({ lastUsedAt: -1 }).lean();
+export const getUserSessions = asyncHandler(async (req, res) => {
+    const sessions = await Session.find({
+        user: req.user._id,
+        isValid: true,
+        expiresAt: { $gt: new Date() }
+    }).sort({ lastUsedAt: -1 }).lean();
 
-        // Need hashToken to identify current session from cookie
-        const { hashToken } = await import('../utils/tokenService.js');
-
-        // Identify current session by matching the refresh token hash if cookie exists
-        let currentSessionHash = null;
-        if (req.cookies.refreshToken) {
-            currentSessionHash = hashToken(req.cookies.refreshToken);
-        }
-
-        const formattedSessions = sessions.map(s => ({
-            id: s._id,
-            deviceName: s.deviceName,
-            ipAddress: s.ipAddress,
-            userAgent: s.userAgent,
-            lastUsedAt: s.lastUsedAt,
-            isCurrent: s.refreshTokenHash === currentSessionHash
-        }));
-
-        return res.sendSuccess(formattedSessions);
-    } catch (error) {
-        next(error);
+    // Identify current session by matching the refresh token hash if cookie exists
+    let currentSessionHash = null;
+    if (req.cookies.refreshToken) {
+        currentSessionHash = hashToken(req.cookies.refreshToken);
     }
-};
+
+    const formattedSessions = sessions.map(s => ({
+        id: s._id,
+        deviceName: s.deviceName,
+        ipAddress: s.ipAddress,
+        userAgent: s.userAgent,
+        lastUsedAt: s.lastUsedAt,
+        isCurrent: s.refreshTokenHash === currentSessionHash
+    }));
+
+    return res.sendSuccess(formattedSessions);
+});
 
 /**
  * @desc    Revoke a specific session
  * @route   DELETE /api/v1/auth/sessions/:id
  * @access  Private
  */
-export const revokeSession = async (req, res, next) => {
-    try {
-        const session = await Session.findById(req.params.id);
+export const revokeSession = asyncHandler(async (req, res) => {
+    const session = await Session.findById(req.params.id);
 
-        if (!session) {
-            const error = new Error('Session record not found.');
-            error.statusCode = 404;
-            error.code = 'RES_NOT_FOUND';
-            throw error;
-        }
-
-        // Ownership Check: Only the owner can revoke their own device sessions
-        if (session.user.toString() !== req.user._id.toString()) {
-            logger.warn(`SECURITY ALERT: User ${req.user._id} attempted to revoke session ${session._id} belonging to user ${session.user}`);
-            const error = new Error('Access Denied: You do not have permission to revoke this session.');
-            error.statusCode = 403;
-            error.code = 'AUTH_FORBIDDEN';
-            throw error;
-        }
-
-        session.isValid = false;
-        session.revokedAt = new Date();
-        await session.save();
-
-        await logAuditEvent({
-            req,
-            user: req.user._id,
-            event: 'AUTH_SESSION_REVOKE',
-            status: 'SUCCESS',
-            metadata: { sessionId: session._id, device: session.deviceName }
-        });
-
-        return res.sendSuccess({ message: 'Session revoked successfully' });
-    } catch (error) {
-        next(error);
+    if (!session) {
+        return res.sendError('Session record not found.', 404, 'RES_NOT_FOUND');
     }
-};
+
+    // Ownership Check: Only the owner can revoke their own device sessions
+    if (session.user.toString() !== req.user._id.toString()) {
+        logger.warn(`SECURITY ALERT: User ${req.user._id} attempted to revoke session ${session._id} belonging to user ${session.user}`);
+        return res.sendError('Access Denied: You do not have permission to revoke this session.', 403, 'AUTH_FORBIDDEN');
+    }
+
+    session.isValid = false;
+    session.revokedAt = new Date();
+    await session.save();
+
+    await logAuditEvent({
+        req,
+        user: req.user._id,
+        event: 'AUTH_SESSION_REVOKE',
+        status: 'SUCCESS',
+        metadata: { sessionId: session._id, device: session.deviceName }
+    });
+
+    return res.sendSuccess({ message: 'Session revoked successfully' });
+});
 
 /**
  * @desc    Verify email using token
