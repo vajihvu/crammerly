@@ -76,9 +76,14 @@ export const validateEnv = () => {
         }
 
         console.error('❌ Environment Validation Failed. Missing or invalid variables:');
-        result.error.errors.forEach(err => {
-            console.error(`   - ${err.path.join('.')}: ${err.message}`);
-        });
+        const errors = result.error?.issues || result.error?.errors || [];
+        if (errors.length > 0) {
+            errors.forEach(err => {
+                console.error(`   - ${err.path?.join('.') || 'root'}: ${err.message}`);
+            });
+        } else {
+            console.error(result.error);
+        }
         process.exit(1);
     }
 
