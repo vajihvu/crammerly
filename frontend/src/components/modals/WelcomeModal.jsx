@@ -5,27 +5,27 @@ function WelcomeModal({ onClose }) {
     return (
         <div className="fixed inset-0 bg-brand-bg/90 backdrop-blur-2xl flex items-center justify-center p-4 z-[300] animate-in fade-in duration-500" onClick={onClose}>
             <div
-                className="bg-brand-surface rounded-[40px] p-8 sm:p-12 max-w-2xl w-full border border-brand-border/40 shadow-[0_32px_80px_-16px_rgba(0,0,0,0.5)] relative overflow-hidden animate-in zoom-in-95 duration-500 font-sans"
+                className="bg-brand-surface rounded-[32px] p-6 sm:p-8 max-w-xl w-full border border-brand-border/40 shadow-[0_32px_80px_-16px_rgba(0,0,0,0.5)] relative overflow-hidden animate-in zoom-in-95 duration-500 font-sans"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Background Accents */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-brand-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-secondary/5 rounded-full blur-3xl -ml-32 -mb-32"></div>
+                <div className="absolute top-0 right-0 w-48 h-48 bg-brand-primary/5 rounded-full blur-3xl -mr-24 -mt-24"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-secondary/5 rounded-full blur-3xl -ml-24 -mb-24"></div>
 
                 <div className="relative z-10 flex flex-col items-center text-center">
-                    <div className="w-20 h-20 bg-brand-primary/10 rounded-3xl flex items-center justify-center mb-8 rotate-12 group hover:rotate-0 transition-transform duration-500 border border-brand-primary/20">
-                        <Sparkles size={40} className="text-brand-primary" />
+                    <div className="w-14 h-14 bg-brand-primary/10 rounded-2xl flex items-center justify-center mb-5 rotate-12 group hover:rotate-0 transition-transform duration-500 border border-brand-primary/20">
+                        <Sparkles size={28} className="text-brand-primary" />
                     </div>
 
-                    <h2 className="text-3xl sm:text-5xl font-[1000] text-brand-text tracking-tighter uppercase mb-4 leading-none">
+                    <h2 className="text-2xl sm:text-4xl font-[1000] text-brand-text tracking-tighter uppercase mb-2 leading-none">
                         Welcome to <span className="text-brand-primary">Crammerly</span>
                     </h2>
 
-                    <p className="text-sm sm:text-lg text-brand-text-dim font-bold max-w-md mb-12 uppercase tracking-widest opacity-60">
+                    <p className="text-xs sm:text-sm text-brand-text-dim font-bold max-w-md mb-8 uppercase tracking-widest opacity-60">
                         Your Ultimate Collaborative Study Hub
                     </p>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full text-left mb-12">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full text-left mb-8">
                         {[
                             {
                                 icon: BookOpen,
@@ -56,9 +56,9 @@ function WelcomeModal({ onClose }) {
                                 bg: 'bg-brand-success/10'
                             }
                         ].map((feature, i) => (
-                            <div key={i} className="flex gap-4 p-5 bg-brand-bg/40 rounded-3xl border border-brand-border/20 group hover:border-brand-primary/40 transition-all duration-300">
-                                <div className={`w-12 h-12 ${feature.bg} rounded-2xl flex items-center justify-center shrink-0 border border-white/5`}>
-                                    <feature.icon className={`${feature.color}`} size={24} />
+                            <div key={i} className="flex gap-3 p-4 bg-brand-bg/40 rounded-2xl border border-brand-border/20 group hover:border-brand-primary/40 transition-all duration-300">
+                                <div className={`w-10 h-10 ${feature.bg} rounded-xl flex items-center justify-center shrink-0 border border-white/5`}>
+                                    <feature.icon className={`${feature.color}`} size={20} />
                                 </div>
                                 <div>
                                     <h4 className="text-brand-text font-black uppercase text-xs tracking-wider mb-1 group-hover:text-brand-primary transition-colors">{feature.title}</h4>
