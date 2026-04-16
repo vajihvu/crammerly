@@ -9,7 +9,6 @@ A real-time collaborative study platform where students create virtual study roo
 | **Study Rooms** | Create public/private rooms with up to 80 concurrent members |
 | **Real-Time Chat** | Instant messaging with read receipts via WebSockets |
 | **Video Calls** | Peer-to-peer video/audio calls using WebRTC |
-| **Focus Timer** | Built-in Pomodoro-style focus sessions with stats tracking |
 | **Social** | Friend system with requests, suggestions, and DMs |
 | **Notebooks** | Personal journal entries and study notes |
 | **Todo Lists** | Task management integrated into your study flow |
