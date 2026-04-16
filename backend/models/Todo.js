@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const todoSchema = new mongoose.Schema({
-    user_id: {
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
@@ -22,7 +22,7 @@ const todoSchema = new mongoose.Schema({
 });
 
 // Compound index for optimized lookup and retrieval by date
-todoSchema.index({ user_id: 1, createdAt: -1 });
+todoSchema.index({ userId: 1, createdAt: -1 });
 
 const Todo = mongoose.model('Todo', todoSchema);
 export default Todo;

@@ -69,14 +69,14 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
     const matchesGenre = activeGenre === 'All' || topic.toLowerCase().includes(activeGenre.toLowerCase());
     if (!matchesGenre) return false;
 
-    const roomScheduleDate = room.scheduleDate || room.schedule_date || null;
+    const roomScheduleDate = room.scheduleDate || null;
 
     if (activeStatus === 'Active Now') {
       // Show rooms with no schedule, or whose scheduled date has arrived (today or past)
       return !roomScheduleDate || roomScheduleDate <= today;
     }
     if (activeStatus === 'My Rooms') {
-      const isCreator = room.creator_id === currentUser.id;
+      const isCreator = room.creatorId === currentUser.id;
       const isMember = Array.isArray(room.members) && room.members.some(m => (m.id === currentUser.id || m.profile_id === currentUser.id));
       return isCreator || isMember;
     }
@@ -300,10 +300,10 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                     <div className="flex justify-between items-start mb-6 relative">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 mb-1">
-                          {activeStatus === 'Scheduled' || (room.scheduleDate || room.schedule_date) > today ? (
+                          {activeStatus === 'Scheduled' || (room.scheduleDate) > today ? (
                             <>
                               <span className="w-2 h-2 rounded-full bg-brand-primary"></span>
-                              <span className="text-[10px] font-black text-brand-primary uppercase tracking-widest font-sans">Scheduled: {room.scheduleDate || room.schedule_date}</span>
+                              <span className="text-[10px] font-black text-brand-primary uppercase tracking-widest font-sans">Scheduled: {room.scheduleDate}</span>
                             </>
                           ) : (
                             <>
@@ -314,8 +314,8 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                         </div>
                         <h3 className="text-xl font-bold text-brand-text group-hover:text-brand-primary transition-colors font-sans">{room.name}</h3>
                       </div>
-                      <button onClick={(e) => onDeleteRoom(room, e)} className="p-2 hover:bg-brand-danger/20 rounded-xl transition-all relative z-10" title={room.creator_id === currentUser.id ? "Delete Room" : "Hide Room"}>
-                        {room.creator_id === currentUser.id ? <Trash2 size={18} className="text-brand-danger" /> : <EyeOff size={18} className="text-brand-muted" />}
+                      <button onClick={(e) => onDeleteRoom(room, e)} className="p-2 hover:bg-brand-danger/20 rounded-xl transition-all relative z-10" title={room.creatorId === currentUser.id ? "Delete Room" : "Hide Room"}>
+                        {room.creatorId === currentUser.id ? <Trash2 size={18} className="text-brand-danger" /> : <EyeOff size={18} className="text-brand-muted" />}
                       </button>
                     </div>
                     <div className="space-y-4 relative">
@@ -333,7 +333,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                         </div>
                         <span className="text-xs font-black text-brand-text-dim ml-1 uppercase tracking-tighter font-sans">{Array.isArray(room.members) ? room.members.length : 0} / 80</span>
                       </div>
-                      {(!(room.scheduleDate || room.schedule_date) || (room.scheduleDate || room.schedule_date) <= today || room.creator_id === currentUser.id) && (
+                      {(!(room.scheduleDate) || (room.scheduleDate) <= today || room.creatorId === currentUser.id) && (
                         <button className="px-6 py-2.5 bg-brand-primary hover:bg-brand-primary/90 text-brand-bg rounded-xl text-[10px] font-[1000] uppercase tracking-widest shadow-accent transition-all group-hover:scale-105 font-sans">Join Room</button>
                       )}
                     </div>

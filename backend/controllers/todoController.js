@@ -7,7 +7,7 @@ import asyncHandler from '../utils/asyncHandler.js';
  * @access  Private
  */
 export const getTodos = asyncHandler(async (req, res) => {
-    const todos = await Todo.find({ user_id: req.user._id });
+    const todos = await Todo.find({ userId: req.user._id });
     return res.sendSuccess(todos, 200, todos.length === 0 ? "You haven't added any tasks yet. Stay productive and add your first one!" : undefined);
 });
 
@@ -19,12 +19,12 @@ export const getTodos = asyncHandler(async (req, res) => {
 export const createTodo = asyncHandler(async (req, res) => {
     const { text } = req.body;
     // Enforce per-user limit to prevent resource abuse
-    const count = await Todo.countDocuments({ user_id: req.user._id });
+    const count = await Todo.countDocuments({ userId: req.user._id });
     if (count >= 500) {
         return res.sendError('Todo limit reached (500 max). Please remove some existing todos.', 400, 'RESOURCE_LIMIT');
     }
     const todo = await Todo.create({
-        user_id: req.user._id,
+        userId: req.user._id,
         text,
         completed: false
     });
@@ -37,7 +37,7 @@ export const createTodo = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const toggleTodo = asyncHandler(async (req, res) => {
-    const todo = await Todo.findOne({ _id: req.params.id, user_id: req.user._id });
+    const todo = await Todo.findOne({ _id: req.params.id, userId: req.user._id });
     if (todo) {
         todo.completed = !todo.completed;
         const updatedTodo = await todo.save();
@@ -53,7 +53,7 @@ export const toggleTodo = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const deleteTodo = asyncHandler(async (req, res) => {
-    const todo = await Todo.findOne({ _id: req.params.id, user_id: req.user._id });
+    const todo = await Todo.findOne({ _id: req.params.id, userId: req.user._id });
     if (todo) {
         await todo.deleteOne();
         return res.sendSuccess({ message: 'Todo removed' });

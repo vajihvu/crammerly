@@ -200,7 +200,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
 
       const handleNewMessage = (msg) => {
         // Find which friend this message belongs to
-        const friend = friends.find(f => f.dmRoomId === msg.room_id) || (selectedFriend?.dmRoomId === msg.room_id ? selectedFriend : null);
+        const friend = friends.find(f => f.dmRoomId === msg.roomId) || (selectedFriend?.dmRoomId === msg.roomId ? selectedFriend : null);
         
         if (friend) {
           const friendId = friend._id || friend.id;
@@ -209,7 +209,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
           // Map to frontend message format
           const formattedMsg = {
             ...msg,
-            sender: String(msg.sender_id) === String(currentUserId) ? 'me' : 'them',
+            sender: String(msg.senderId) === String(currentUserId) ? 'me' : 'them',
             time: new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           };
 
@@ -225,14 +225,14 @@ function FriendsModal({ currentUser, onClose, addToast }) {
           });
 
           // If we are currently looking at this chat, mark it as read
-          if (selectedFriend && selectedFriend.dmRoomId === msg.room_id && activeView === 'chat') {
-            messagesApi.markAsRead(msg.room_id).catch(() => {});
+          if (selectedFriend && selectedFriend.dmRoomId === msg.roomId && activeView === 'chat') {
+            messagesApi.markAsRead(msg.roomId).catch(() => {});
           }
         }
       };
 
-      const handleMessagesRead = ({ room_id, reader_id }) => {
-        const friend = friends.find(f => f.dmRoomId === room_id) || (selectedFriend?.dmRoomId === room_id ? selectedFriend : null);
+      const handleMessagesRead = ({ roomId, reader_id }) => {
+        const friend = friends.find(f => f.dmRoomId === roomId) || (selectedFriend?.dmRoomId === roomId ? selectedFriend : null);
         if (friend) {
           const friendId = friend._id || friend.id;
           const currentUserId = currentUser?._id || currentUser?.id;
@@ -279,7 +279,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
           const currentUserId = currentUser?._id || currentUser?.id;
           const formattedMessages = (response?.messages || []).map(msg => ({
             ...msg,
-            sender: String(msg.sender_id) === String(currentUserId) ? 'me' : 'them',
+            sender: String(msg.senderId) === String(currentUserId) ? 'me' : 'them',
             time: new Date(msg.timestamp || msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }));
 

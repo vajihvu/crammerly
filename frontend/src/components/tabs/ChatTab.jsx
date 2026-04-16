@@ -289,10 +289,10 @@ function ChatTab({ room, currentUser, addToast }) {
           filteredMessages.map(msg => (
             <div
               key={msg.id}
-              className={`flex ${msg.sender_id === currentUser.id ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${msg.senderId === currentUser.id ? 'justify-end' : 'justify-start'}`}
             >
-              <div className={`max-w-[70%] ${msg.sender_id === currentUser.id ? 'bg-brand-primary text-brand-bg shadow-accent' : 'bg-brand-surface border border-brand-border text-brand-text'} rounded-2xl p-4 shadow-sm`}>
-                {msg.sender_id !== currentUser.id && (
+              <div className={`max-w-[70%] ${msg.senderId === currentUser.id ? 'bg-brand-primary text-brand-bg shadow-accent' : 'bg-brand-surface border border-brand-border text-brand-text'} rounded-2xl p-4 shadow-sm`}>
+                {msg.senderId !== currentUser.id && (
                   <p className="text-xs mb-1 font-black uppercase tracking-widest italic">
                     <span className="text-brand-secondary">{msg.senderName}</span>
                     <span className="text-brand-muted ml-1 opacity-50">#{msg.senderTag || '0000'}</span>
@@ -327,12 +327,12 @@ function ChatTab({ room, currentUser, addToast }) {
                 )}
 
                 {msg.type === 'voice' ? (
-                  <AudioMessage url={msg.fileData?.url} isMe={msg.sender_id === currentUser.id} />
+                  <AudioMessage url={msg.fileData?.url} isMe={msg.senderId === currentUser.id} />
                 ) : (msg.type === 'text' || msg.type === 'file') ? (
                   <MessageContent text={msg.text} />
                 ) : null}
 
-                <p className={`text-[10px] font-black mt-2 uppercase tracking-widest ${msg.sender_id === currentUser.id ? 'text-brand-bg/60' : 'text-brand-text-dim/50'}`}>
+                <p className={`text-[10px] font-black mt-2 uppercase tracking-widest ${msg.senderId === currentUser.id ? 'text-brand-bg/60' : 'text-brand-text-dim/50'}`}>
                   {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
                 </p>
               </div>

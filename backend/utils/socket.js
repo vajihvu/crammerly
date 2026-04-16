@@ -176,7 +176,83 @@ export const initSocket = (server) => {
             logger.info(`📴 Call ended by ${socket.user.name}`);
         });
 
+        // --- Room Video (Mesh WebRTC) Events ---
+
+        // Track active video participants per room: Map<roomId, Set<{ id, name, avatar, socketId }>>
+        if (!io._videoRooms) io._videoRooms = new Map();
+
+        // Join room video call
+        socket.on('room:video:join', ({ roomId }) => {
+            if (!roomId) return;
+            if (!io._videoRooms.has(roomId)) io._videoRooms.set(roomId, new Map());
+            const videoRoom = io._videoRooms.get(roomId);
+
+            // Cap at 6 participants
+            if (videoRoom.size >= 6 && !videoRoom.has(socket.user._id.toString())) {
+                socket.emit('room:video:full');
+                return;
+            }
+
+            const userInfo = {
+                id: socket.user._id.toString(),
+                name: socket.user.name,
+                avatar: socket.user.avatar || null,
+                socketId: socket.id
+            };
+            videoRoom.set(socket.user._id.toString(), userInfo);
+
+            // Send existing peers list to the joiner
+            const existingPeers = [];
+            videoRoom.forEach((peer) => {
+                if (peer.id !== userInfo.id) existingPeers.push(peer);
+            });
+            socket.emit('room:video:peers', { peers: existingPeers });
+
+            // Notify existing participants that a new peer joined
+            socket.to(roomId).emit('room:video:peer-joined', { peer: userInfo });
+
+            // Ensure the socket is in the socket.io room for broadcasts
+            socket.join(roomId);
+            logger.info(`🎥 ${socket.user.name} joined video in room ${roomId} (${videoRoom.size} participants)`);
+        });
+
+        // Leave room video call
+        socket.on('room:video:leave', ({ roomId }) => {
+            if (!roomId) return;
+            const videoRoom = io._videoRooms?.get(roomId);
+            if (videoRoom) {
+                videoRoom.delete(socket.user._id.toString());
+                if (videoRoom.size === 0) io._videoRooms.delete(roomId);
+            }
+            socket.to(roomId).emit('room:video:peer-left', { peerId: socket.user._id.toString() });
+            logger.info(`🎥 ${socket.user.name} left video in room ${roomId}`);
+        });
+
+        // Relay WebRTC signal (offer/answer/ICE) to a specific peer in the room
+        socket.on('room:video:signal', ({ roomId, toUserId, signalData }) => {
+            if (!toUserId || !signalData) return;
+            const videoRoom = io._videoRooms?.get(roomId);
+            if (!videoRoom) return;
+            const targetPeer = videoRoom.get(toUserId);
+            if (targetPeer) {
+                io.to(targetPeer.socketId).emit('room:video:signal', {
+                    fromUserId: socket.user._id.toString(),
+                    signalData
+                });
+            }
+        });
+
         socket.on('disconnect', () => {
+            // Clean up video rooms on disconnect
+            if (io._videoRooms) {
+                io._videoRooms.forEach((videoRoom, roomId) => {
+                    if (videoRoom.has(socket.user._id.toString())) {
+                        videoRoom.delete(socket.user._id.toString());
+                        socket.to(roomId).emit('room:video:peer-left', { peerId: socket.user._id.toString() });
+                        if (videoRoom.size === 0) io._videoRooms.delete(roomId);
+                    }
+                });
+            }
             logger.info(`🔌 User disconnected: ${socket.id}`);
         });
     });

@@ -24,7 +24,7 @@ export const getMessagesByRoom = asyncHandler(async (req, res) => {
         return res.sendError('You must be a member of this room to view messages', 403, 'AUTH_FORBIDDEN');
     }
 
-    const query = { room_id: roomId };
+    const query = { roomId: roomId };
     if (cursor) {
         const cursorDate = new Date(cursor);
         if (isNaN(cursorDate.getTime())) {
@@ -34,7 +34,7 @@ export const getMessagesByRoom = asyncHandler(async (req, res) => {
     }
 
     const messages = await Message.find(query)
-        .populate('sender_id', 'name tag avatar')
+        .populate('senderId', 'name tag avatar')
         .sort({ createdAt: -1 })
         .limit(limit);
 
@@ -43,13 +43,13 @@ export const getMessagesByRoom = asyncHandler(async (req, res) => {
 
     const formattedMessages = messages.map(m => ({
         id: m._id,
-        sender_id: m.sender_id?._id,
-        senderName: m.sender_id?.name || 'Unknown',
-        senderTag: m.sender_id?.tag || '0000',
+        senderId: m.senderId?._id,
+        senderName: m.senderId?.name || 'Unknown',
+        senderTag: m.senderId?.tag || '0000',
         text: m.content,
         type: m.type,
         fileData: m.file_data,
-        isRead: m.sender_id?._id?.toString() === req.user._id.toString() ? (m.readBy?.length > 0) : true,
+        isRead: m.senderId?._id?.toString() === req.user._id.toString() ? (m.readBy?.length > 0) : true,
         timestamp: m.createdAt
     }));
 
@@ -86,20 +86,20 @@ export const sendMessage = asyncHandler(async (req, res) => {
 
 
     const message = await Message.create({
-        room_id: roomId,
-        sender_id: req.user._id,
+        roomId: roomId,
+        senderId: req.user._id,
         content,
         type: type || 'text',
         file_data: fileData
     });
 
-    const populated = await message.populate('sender_id', 'name tag avatar');
+    const populated = await message.populate('senderId', 'name tag avatar');
 
     const formatted = {
         id: populated._id,
-        sender_id: populated.sender_id._id,
-        senderName: populated.sender_id.name,
-        senderTag: populated.sender_id.tag,
+        senderId: populated.senderId._id,
+        senderName: populated.senderId.name,
+        senderTag: populated.senderId.tag,
         text: populated.content,
         type: populated.type,
         fileData: populated.file_data,
@@ -139,12 +139,12 @@ export const markAsRead = asyncHandler(async (req, res) => {
     // Update all messages in this room that weren't sent by the user and haven't been read by them yet
     const result = await Message.updateMany(
         {
-            room_id: roomId,
-            sender_id: { $ne: userId },
-            'readBy.user_id': { $ne: userId }
+            roomId: roomId,
+            senderId: { $ne: userId },
+            'readBy.userId': { $ne: userId }
         },
         {
-            $push: { readBy: { user_id: userId, readAt: new Date() } }
+            $push: { readBy: { userId: userId, readAt: new Date() } }
         }
     );
 
@@ -152,7 +152,7 @@ export const markAsRead = asyncHandler(async (req, res) => {
     if (result.modifiedCount > 0) {
         import('../utils/socket.js').then(({ emitToRoom }) => {
             emitToRoom(roomId, 'messages_read', {
-                room_id: roomId,
+                roomId: roomId,
                 reader_id: userId,
                 readAt: new Date()
             });

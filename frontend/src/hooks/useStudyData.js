@@ -55,7 +55,7 @@ export function useStudyData({ authUser, currentUser, addToast, openConfirm, ski
             }
         };
         bootstrap();
-    }, [authUser, addToast]);
+    }, [authUser, addToast, skip]);
 
     // ── Refresh study stats ──
     const refreshStats = async () => {

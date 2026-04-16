@@ -7,8 +7,8 @@ import asyncHandler from '../utils/asyncHandler.js';
  * @access  Private
  */
 export const getNotifications = asyncHandler(async (req, res) => {
-    const notifications = await Notification.find({ user: req.user._id })
-        .populate('sender', 'name avatar')
+    const notifications = await Notification.find({ to: req.user._id })
+        .populate('from', 'name avatar')
         .sort({ createdAt: -1 })
         .limit(20);
 
@@ -21,7 +21,7 @@ export const getNotifications = asyncHandler(async (req, res) => {
  * @access  Private
  */
 export const markRead = asyncHandler(async (req, res) => {
-    const notification = await Notification.findOne({ _id: req.params.id, user: req.user._id });
+    const notification = await Notification.findOne({ _id: req.params.id, to: req.user._id });
     if (!notification) {
         return res.sendError('Notification not found', 404, 'RES_NOT_FOUND');
     }
@@ -39,7 +39,7 @@ export const markRead = asyncHandler(async (req, res) => {
  */
 export const markAllRead = asyncHandler(async (req, res) => {
     await Notification.updateMany(
-        { recipient: req.user._id, isRead: false },
+        { to: req.user._id, isRead: false },
         { isRead: true }
     );
 

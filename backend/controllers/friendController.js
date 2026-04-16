@@ -78,9 +78,9 @@ export const searchFriends = asyncHandler(async (req, res) => {
  */
 export const getFriendRequests = asyncHandler(async (req, res) => {
     const requests = await FriendRequest.find({
-        receiver: req.user._id,
+        to: req.user._id,
         status: 'pending'
-    }).populate('sender', 'name username avatar tag');
+    }).populate('from', 'name username avatar tag');
     return res.sendSuccess(requests);
 });
 
@@ -133,8 +133,8 @@ export const sendFriendRequest = asyncHandler(async (req, res) => {
     });
 
     const notification = await Notification.create({
-        recipient: toUserId,
-        sender: fromUserId,
+        to: toUserId,
+        from: fromUserId,
         type: 'FRIEND_REQUEST',
         content: `${sender.name} sent you a friend request`,
         relatedId: request._id
@@ -193,14 +193,14 @@ export const acceptFriendRequest = asyncHandler(async (req, res) => {
     await userB.save();
 
     await Notification.deleteMany({
-        recipient: userId,
+        to: userId,
         type: 'FRIEND_REQUEST',
         relatedId: request._id
     });
 
     const notification = await Notification.create({
-        recipient: request.from,
-        sender: request.to,
+        to: request.from,
+        from: request.to,
         type: 'FRIEND_ACCEPT',
         content: `${userB.name} accepted your friend request`,
         relatedId: request._id
@@ -222,7 +222,7 @@ export const acceptFriendRequest = asyncHandler(async (req, res) => {
 
     const dmRoom = await Room.create({
         name: `DM: ${userA.name} & ${userB.name}`,
-        creator_id: userA._id,
+        creatorId: userA._id,
         isDM: true,
         roomType: 'DM',
         privacy: 'Private',
@@ -257,7 +257,7 @@ export const declineFriendRequest = asyncHandler(async (req, res) => {
     await request.save();
 
     await Notification.deleteMany({
-        recipient: userId,
+        to: userId,
         type: 'FRIEND_REQUEST',
         relatedId: request._id
     });

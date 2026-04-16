@@ -487,7 +487,7 @@ export const getOnboardingState = asyncHandler(async (req, res) => {
     }
 
     const [todoCount, recordCount] = await Promise.all([
-        Todo.countDocuments({ user_id: user._id }),
+        Todo.countDocuments({ userId: user._id }),
         Record.countDocuments({ userId: user._id })
     ]);
 
@@ -712,7 +712,7 @@ export const deleteAccount = asyncHandler(async (req, res) => {
         Session.deleteMany({ user: userId }),
         Todo.deleteMany({ userId }),
         StudySession.deleteMany({ userId }),
-        Message.deleteMany({ sender_id: userId }),
+        Message.deleteMany({ senderId: userId }),
         AuditLog.deleteMany({ user: userId }),
     ]);
 

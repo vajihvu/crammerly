@@ -31,7 +31,7 @@ export const getAllRooms = asyncHandler(async (req, res) => {
     }
 
     const rooms = await Room.find(query)
-        .populate('creator_id', 'name avatar')
+        .populate('creatorId', 'name avatar')
         .populate('members.user', 'name avatar')
         .sort({ createdAt: -1 })
         .limit(limit);
@@ -42,10 +42,10 @@ export const getAllRooms = asyncHandler(async (req, res) => {
         task: room.task,
         topic: room.topic,
         privacy: room.privacy,
-        code: (room.privacy === 'Public' || room.creator_id?.toString() === req.user._id.toString() || room.members.some(m => m.user?._id?.toString() === req.user._id.toString())) ? room.code : undefined,
-        creator_id: room.creator_id?._id,
-        scheduleDate: room.schedule_date,
-        scheduleTime: room.schedule_time,
+        code: (room.privacy === 'Public' || room.creatorId?.toString() === req.user._id.toString() || room.members.some(m => m.user?._id?.toString() === req.user._id.toString())) ? room.code : undefined,
+        creatorId: room.creatorId?._id,
+        scheduleDate: room.scheduleDate,
+        scheduleTime: room.scheduleTime,
         members: room.members.map(m => ({
             id: m.user?._id,
             name: m.user?.name || 'Anonymous',
@@ -76,9 +76,9 @@ export const createRoom = asyncHandler(async (req, res) => {
         task,
         topic,
         privacy,
-        schedule_date: scheduleDate,
-        schedule_time: scheduleTime,
-        creator_id: req.user._id,
+        scheduleDate: scheduleDate,
+        scheduleTime: scheduleTime,
+        creatorId: req.user._id,
         members: [{ user: req.user._id, progress: [] }]
     });
 
@@ -89,9 +89,9 @@ export const createRoom = asyncHandler(async (req, res) => {
         topic: room.topic,
         privacy: room.privacy,
         code: room.code,
-        creator_id: room.creator_id,
-        scheduleDate: room.schedule_date,
-        scheduleTime: room.schedule_time,
+        creatorId: room.creatorId,
+        scheduleDate: room.scheduleDate,
+        scheduleTime: room.scheduleTime,
         members: room.members.map(m => ({
             id: m.user,
             name: req.user.name || 'Anonymous', // Current user's name
@@ -114,13 +114,13 @@ export const joinRoom = asyncHandler(async (req, res) => {
     }
 
 
-    const isCreator = room.creator_id && room.creator_id.toString() === req.user._id.toString();
+    const isCreator = room.creatorId && room.creatorId.toString() === req.user._id.toString();
     const isMember = room.members.some(m => m.user.toString() === req.user._id.toString());
 
     // Policy: Only creators can join future-scheduled rooms until they become active (today or past)
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const roomScheduleDate = room.schedule_date || null;
+    const roomScheduleDate = room.scheduleDate || null;
     
     if (roomScheduleDate && roomScheduleDate > today && !isCreator) {
         return res.sendError('This room is scheduled for later and is not yet active', 403, 'ROOM_NOT_ACTIVE');
@@ -204,7 +204,7 @@ export const deleteRoom = asyncHandler(async (req, res) => {
         return res.sendError('Room not found', 404, 'RES_NOT_FOUND');
     }
 
-    if (room.creator_id.toString() !== req.user._id.toString()) {
+    if (room.creatorId.toString() !== req.user._id.toString()) {
         return res.sendError('Not authorized', 403, 'AUTH_FORBIDDEN');
     }
 
@@ -237,7 +237,7 @@ export const leaveRoom = asyncHandler(async (req, res) => {
     }
 
     // Owner cannot leave — they must delete instead
-    if (room.creator_id.toString() === req.user._id.toString()) {
+    if (room.creatorId.toString() === req.user._id.toString()) {
         return res.sendError('Room owner cannot leave. Delete the room instead.', 400, 'ROOM_OWNER_LEAVE');
     }
 
@@ -315,7 +315,7 @@ export const toggleRoomAdmin = asyncHandler(async (req, res) => {
     }
 
     // Only room creator can assign admins
-    if (room.creator_id.toString() !== req.user._id.toString()) {
+    if (room.creatorId.toString() !== req.user._id.toString()) {
         return res.sendError('Only the room owner can assign admins', 403, 'AUTH_FORBIDDEN');
     }
 
@@ -324,7 +324,7 @@ export const toggleRoomAdmin = asyncHandler(async (req, res) => {
         return res.sendError('User is not a member of this room', 404, 'RES_NOT_FOUND');
     }
 
-    if (room.members[memberIndex].user.toString() === room.creator_id.toString()) {
+    if (room.members[memberIndex].user.toString() === room.creatorId.toString()) {
         return res.sendError('Room owner always has owner privileges', 400, 'VAL_INVALID_INPUT');
     }
 

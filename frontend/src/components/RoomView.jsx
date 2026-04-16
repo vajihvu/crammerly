@@ -19,7 +19,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
   if (!room || !room.members) return null;
 
   const currentMember = (room.members || []).find(m => (m.id || m.profile_id) === currentUser.id);
-  const isOwner = room.creator_id === currentUser.id;
+  const isOwner = room.creatorId === currentUser.id;
 
   const handleToggleAdmin = async (memberId) => {
     setAddingAdmin(memberId);
@@ -201,7 +201,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
         <div className={`overflow-hidden transition-all duration-300 ${isMembersExpanded ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
           <div className="space-y-1.5">
             {(room.members || []).map((member, idx) => {
-              const isAdmin = member.isAdmin || member.id === room.creator_id;
+              const isAdmin = member.isAdmin || member.id === room.creatorId;
               return (
                 <div key={idx} className="flex items-center gap-2 p-1.5 bg-brand-bg/50 rounded-lg border border-brand-border/30">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-sm transition-transform hover:scale-110 ${idx % 3 === 0 ? 'bg-brand-primary' : idx % 3 === 1 ? 'bg-brand-secondary' : 'bg-brand-tertiary'}`}>
@@ -286,7 +286,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
 
           <div className="flex-1 min-h-0 overflow-hidden">
             {activeTab === 'chat' && <ChatTab room={room} currentUser={currentUser} addToast={addToast} />}
-            {activeTab === 'video' && <VideoTab room={room} onUpdateRoom={onUpdateRoom} />}
+            {activeTab === 'video' && <VideoTab room={room} currentUser={currentUser} addToast={addToast} onUpdateRoom={onUpdateRoom} />}
             {activeTab === 'ai' && <AITutorTab room={room} />}
             {activeTab === 'progress' && <ProgressTab room={room} currentUser={currentUser} currentMember={currentMember} onMarkProgress={onMarkProgress} />}
           </div>

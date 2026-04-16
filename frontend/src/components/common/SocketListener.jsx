@@ -18,7 +18,7 @@ function SocketListener() {
 
         const handleNewMessage = (msg) => {
             // Don't show toast if it's from current user (shouldn't happen on this event)
-            if (msg.sender_id === user.user?._id || msg.sender_id === user._id) return;
+            if (msg.senderId === user.user?._id || msg.senderId === user._id) return;
             
             addToast(`New message from ${msg.senderName || 'a friend'}`, 'info');
         };

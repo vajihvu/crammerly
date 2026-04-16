@@ -142,7 +142,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
                 socket.off('room_capacity_updated', handleRoomCapacityUpdated);
             };
         }
-    }, [loadRooms, authUser, addToast]); // currentRoom handled by Ref to avoid loop
+    }, [loadRooms, authUser, addToast, skip]); // currentRoom handled by Ref to avoid loop
 
     // ── Create room (requires auth) ──
     const createRoom = async (roomName, task, topic, privacy, scheduleDate, scheduleTime) => {
@@ -241,7 +241,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
     // ── Delete room (owner) or Leave room (member) ──
     const deleteRoom = async (room, e) => {
         if (e) { e.stopPropagation(); e.preventDefault(); }
-        const isOwner = room.creator_id === currentUser.id;
+        const isOwner = room.creatorId === currentUser.id;
         if (isOwner) {
             openConfirm({
                 title: 'Delete Room',

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { bugsApi, adminApi } from '../api';
 import { ShieldCheck, AlertCircle, Loader2, ArrowLeft, Image as ImageIcon, ChevronRight, ChevronLeft, CheckCircle2, ChevronDown, Lock, Users, Search, UserMinus, UserCheck, ShieldAlert, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -14,11 +14,7 @@ function AdminDashboard() {
     const [userSearchTerm, setUserSearchTerm] = useState('');
     const navigate = useNavigate();
 
-    useEffect(() => {
-        fetchData(1);
-    }, [activeTab]);
-
-    const fetchData = async (page) => {
+    const fetchData = useCallback(async (page) => {
         setLoading(true);
         setError(null);
         try {
@@ -40,7 +36,11 @@ function AdminDashboard() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [activeTab, userSearchTerm]);
+
+    useEffect(() => {
+        fetchData(1);
+    }, [fetchData]);
 
     const handleUserSearch = (e) => {
         e.preventDefault();

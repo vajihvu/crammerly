@@ -1,13 +1,13 @@
 import mongoose from 'mongoose';
 
 const notificationSchema = new mongoose.Schema({
-    recipient: {
+    to: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
         index: true
     },
-    sender: {
+    from: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true

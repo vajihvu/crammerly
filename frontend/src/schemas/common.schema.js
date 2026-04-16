@@ -21,17 +21,17 @@ export const roomSchema = z.object({
     task: z.string().min(1, "Goal is required"),
     privacy: z.enum(['Public', 'Private']).default('Public'),
     code: z.string().length(6).optional(),
-    creator_id: idSchema.optional(),
+    creatorId: idSchema.optional(),
 });
 
 export const messageSchema = z.object({
     content: z.string().min(1, "Message cannot be empty").max(1000),
     type: z.enum(['text', 'file', 'image', 'sticker']).default('text'),
-    sender_id: idSchema.optional(),
+    senderId: idSchema.optional(),
 });
 
 export const friendshipSchema = z.object({
-    user_id: idSchema,
-    friend_id: idSchema,
+    userId: idSchema,
+    friendId: idSchema,
     status: z.enum(['pending', 'accepted', 'blocked']).default('pending'),
 });

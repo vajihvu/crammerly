@@ -40,16 +40,16 @@ const roomSchema = new mongoose.Schema({
         uppercase: true,
         index: { unique: true, sparse: true }
     },
-    creator_id: {
+    creatorId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
     members: [roomMemberSchema],
-    schedule_date: {
+    scheduleDate: {
         type: String
     },
-    schedule_time: {
+    scheduleTime: {
         type: String
     },
     maxMembers: {
