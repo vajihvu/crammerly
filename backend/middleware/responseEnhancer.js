@@ -9,11 +9,12 @@ export const responseEnhancer = (req, res, next) => {
      * @param {Object} data - The payload to send
      * @param {number} statusCode - HTTP status code (default 200)
      */
-    res.sendSuccess = (data, statusCode = 200, message = undefined) => {
+    res.sendSuccess = (data, statusCode = 200, message = undefined, pagination = undefined) => {
         return res.status(statusCode).json({
             success: true,
             data,
             message,
+            pagination,
             meta: {
                 timestamp: new Date().toISOString(),
                 path: req.originalUrl,

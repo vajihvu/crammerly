@@ -119,7 +119,7 @@ export default function Crammerly() {
     currentRoom, setCurrentRoom, isInRoom, setIsInRoom,
     createRoom, joinRoom, joinRoomByCode, leaveRoom: leaveRoomBase, deleteRoom,
     markProgress, updateRoom
-  } = useRooms({ authUser, currentUser, addToast, openConfirm });
+  } = useRooms({ authUser, currentUser, addToast, openConfirm, skip: isAuthLoading });
 
   const {
     todos, addTodo, toggleTodo, deleteTodo,
@@ -127,7 +127,7 @@ export default function Crammerly() {
     studyNotes, addStudyNote, deleteStudyNote,
     friends, setFriends,
     refreshStats
-  } = useStudyData({ authUser, currentUser, addToast, openConfirm });
+  } = useStudyData({ authUser, currentUser, addToast, openConfirm, skip: isAuthLoading });
 
   const { focusSession, startFocusSession, endFocusSession } = useFocusSession({ addToast, onStatsRefresh: refreshStats });
 

@@ -6,7 +6,7 @@ import { getSocket } from '../utils/socket';
 /**
  * Manages all room state: loading, CRUD, join, leave, and real-time socket updates.
  */
-export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
+export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = false }) {
     const [rooms, setRooms] = useState([]);
     const [loadingRooms, setLoadingRooms] = useState(true);
     const [roomsError, setRoomsError] = useState(null);
@@ -44,6 +44,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
 
     // ── Initial fetch + socket listeners ──
     useEffect(() => {
+        if (skip) return;
         // Reuse loadRooms — no duplicate fetch
         loadRooms();
 

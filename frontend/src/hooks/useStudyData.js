@@ -6,7 +6,7 @@ import { todosApi, studyApi, friendsApi } from '../api';
  * Manages study-related data: todos, journal entries, study notes, friends, and study stats.
  * Bootstraps all data on auth.
  */
-export function useStudyData({ authUser, currentUser, addToast, openConfirm }) {
+export function useStudyData({ authUser, currentUser, addToast, openConfirm, skip = false }) {
     const [todos, setTodos] = useState([]);
     const [journalEntries, setJournalEntries] = useState([]);
     const [studyNotes, setStudyNotes] = useState([]);
@@ -15,7 +15,7 @@ export function useStudyData({ authUser, currentUser, addToast, openConfirm }) {
 
     // ── Bootstrap all data on auth ──
     useEffect(() => {
-        if (!authUser) return;
+        if (!authUser || skip) return;
 
         const bootstrap = async () => {
             const userId = authUser._id || authUser.id;

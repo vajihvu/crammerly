@@ -1,1 +1,0 @@
-{"success":false,"error":{"code":"SEC_CSRF_MISSING","http":403,"message":"Security Violation: CSRF Protection header missing or invalid (X-Requested-With: XMLHttpRequest required)","groupHash":"ef72411d","stack":null},"meta":{"timestamp":"2026-04-04T09:39:29.256Z","path":"/api/v1/auth/register","requestId":"333f0ea9-7132-4fbd-a308-94c2758db062"}}

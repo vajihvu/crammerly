@@ -26,13 +26,13 @@ function AdminDashboard() {
                 const res = await bugsApi.getBugReports(page, 20);
                 if (res.success && res.data) {
                     setBugs(res.data);
-                    setPagination(res.pagination);
+                    if (res.pagination) setPagination(res.pagination);
                 }
             } else {
                 const res = await adminApi.getUsers(page, 20, userSearchTerm);
                 if (res.success && res.data) {
                     setUsers(res.data);
-                    setPagination(res.pagination);
+                    if (res.pagination) setPagination(res.pagination);
                 }
             }
         } catch (err) {
@@ -121,7 +121,7 @@ function AdminDashboard() {
                             {activeTab === 'bugs' ? 'Bug Reports' : 'User Management'}
                         </h1>
                         <p className="text-[9px] sm:text-xs font-bold text-brand-text-dim uppercase tracking-widest">
-                            {pagination.total} {activeTab === 'bugs' ? 'Tickets Logged' : 'Accounts Registered'}
+                            {pagination?.total || 0} {activeTab === 'bugs' ? 'Tickets Logged' : 'Accounts Registered'}
                         </p>
                     </div>
 

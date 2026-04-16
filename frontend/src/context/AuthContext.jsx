@@ -42,6 +42,8 @@ export const AuthProvider = ({ children }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run once on mount
 
+    const sessionVerified = !loading;
+
     const logout = useCallback(async (skipServerLogOut = false) => {
         localStorage.removeItem('userInfo');
         setUser(null);
@@ -67,12 +69,18 @@ export const AuthProvider = ({ children }) => {
     }, [logout]);
 
     useEffect(() => {
+        if (!sessionVerified) return;
+
         if (user?.token) {
-            initSocket(user.token);
+            const socket = initSocket(user.token);
+            // If token changed but socket is already there, update the auth object for potential reconnects
+            if (socket.auth && socket.auth.token !== user.token) {
+                socket.auth.token = user.token;
+            }
         } else {
             disconnectSocket();
         }
-    }, [user?.token]);
+    }, [user?.token, sessionVerified]);
 
     const login = async (email, password) => {
         try {

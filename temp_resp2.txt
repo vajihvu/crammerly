@@ -1,1 +1,0 @@
-{"success":false,"error":{"message":"CAPTCHA verification failed","code":"CAPTCHA_INVALID"},"meta":{"timestamp":"2026-04-04T09:41:21.927Z","path":"/api/v1/auth/register","version":"v1","requestId":"3c6f170d-26a4-4c45-a558-5e4c55d91493"}}
