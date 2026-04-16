@@ -118,16 +118,27 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm }) {
                 }
             };
 
+            const handleRoomCapacityUpdated = ({ roomId, members }) => {
+                setRooms(prev => Array.isArray(prev) ? prev.map(r => {
+                    if (r.id === roomId) {
+                        return { ...r, members: members };
+                    }
+                    return r;
+                }) : []);
+            };
+
             socket.on('member_joined', handleMemberJoined);
             socket.on('progress_updated', handleProgressUpdated);
             socket.on('room_deleted', handleRoomDeleted);
             socket.on('member_left', handleMemberLeft);
+            socket.on('room_capacity_updated', handleRoomCapacityUpdated);
 
             return () => {
                 socket.off('member_joined', handleMemberJoined);
                 socket.off('progress_updated', handleProgressUpdated);
                 socket.off('room_deleted', handleRoomDeleted);
                 socket.off('member_left', handleMemberLeft);
+                socket.off('room_capacity_updated', handleRoomCapacityUpdated);
             };
         }
     }, [loadRooms, authUser, addToast]); // currentRoom handled by Ref to avoid loop

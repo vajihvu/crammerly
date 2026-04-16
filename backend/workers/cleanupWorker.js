@@ -1,7 +1,10 @@
 import { Worker } from 'bullmq';
 import config from '../config/index.js';
 import Session from '../models/Session.js';
+import Room from '../models/Room.js';
+import Message from '../models/Message.js';
 import { logger } from '../utils/logger.js';
+import { broadcastGlobal } from '../utils/socket.js';
 
 let worker;
 
@@ -28,6 +31,56 @@ if (config.redisUrl) {
             });
 
             return { deletedCount: result.deletedCount, suspiciousCount: suspicious.length };
+        }
+
+        if (job.name === 'ROOM_CLEANUP') {
+            logger.info('Running background stale room cleanup...');
+            const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+            
+            // Find active rooms that are empty and older than 15 mins. (Skip strictly scheduled future rooms)
+            const d = new Date();
+            const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            
+            const staleRooms = await Room.find({
+                members: { $size: 0 },
+                createdAt: { $lt: fifteenMinutesAgo },
+                $or: [
+                    { schedule_date: { $exists: false } }, // Not scheduled
+                    { schedule_date: null },
+                    { schedule_date: { $lte: today } } // Scheduled for today or past
+                ]
+            });
+
+            if (staleRooms.length === 0) return { deletedCount: 0 };
+
+            logger.info(`Found ${staleRooms.length} stale rooms to clean up.`);
+
+            let count = 0;
+            for (const room of staleRooms) {
+                // Delete associated messages
+                await Message.deleteMany({ room_id: room._id });
+                
+                // Track details for sockets
+                const roomId = room._id.toString();
+                const roomName = room.name;
+                
+                // Delete the room
+                await room.deleteOne();
+
+                // Broadcast deletion globally to update all dashboards
+                try {
+                    broadcastGlobal('room_deleted', {
+                        roomId: roomId,
+                        roomName: roomName,
+                        deletedBy: 'System Cleanup'
+                    });
+                } catch (e) {
+                     logger.warn(`Failed to broadcast room deletion for room ${roomId}: ${e.message}`);
+                }
+                count++;
+            }
+
+            return { deletedCount: count };
         }
     }, { connection });
 

@@ -135,19 +135,31 @@ export const joinRoom = asyncHandler(async (req, res) => {
     }
 
     if (!isMember) {
-        // Enforce max member limit
         const maxMembers = room.maxMembers || 80;
-        if (room.members.length >= maxMembers) {
-            return res.sendError(`Room is full (max ${maxMembers} members)`, 400, 'ROOM_FULL');
+
+        // Atomic update to handle high concurrency joining
+        const updatedRoom = await Room.findOneAndUpdate(
+            {
+                _id: room._id,
+                $expr: { $lt: [{ $size: "$members" }, maxMembers] }
+            },
+            { $push: { members: { user: req.user._id, progress: [] } } },
+            { new: true }
+        );
+
+        if (!updatedRoom) {
+            return res.sendError(`Room is full (max ${maxMembers} members) or could not be joined due to high traffic`, 400, 'ROOM_FULL');
         }
-        room.members.push({ user: req.user._id, progress: [] });
-        await room.save();
 
         // Notify others
-        import('../utils/socket.js').then(({ emitToRoom }) => {
+        import('../utils/socket.js').then(({ emitToRoom, broadcastGlobal }) => {
             emitToRoom(req.params.id, 'member_joined', {
                 id: req.user._id,
                 name: req.user.name
+            });
+            broadcastGlobal('room_capacity_updated', {
+                roomId: req.params.id,
+                members: updatedRoom.members
             });
         });
     }
@@ -229,19 +241,25 @@ export const leaveRoom = asyncHandler(async (req, res) => {
         return res.sendError('Room owner cannot leave. Delete the room instead.', 400, 'ROOM_OWNER_LEAVE');
     }
 
-    const memberIndex = room.members.findIndex(m => m.user.toString() === req.user._id.toString());
-    if (memberIndex === -1) {
-        return res.sendError('You are not a member of this room', 400, 'NOT_MEMBER');
+    const updatedRoom = await Room.findOneAndUpdate(
+        { _id: req.params.id, "members.user": req.user._id },
+        { $pull: { members: { user: req.user._id } } },
+        { new: true }
+    );
+
+    if (!updatedRoom) {
+         return res.sendError('You are not a member of this room', 400, 'NOT_MEMBER');
     }
 
-    room.members.splice(memberIndex, 1);
-    await room.save();
-
     // Notify remaining members
-    import('../utils/socket.js').then(({ emitToRoom }) => {
+    import('../utils/socket.js').then(({ emitToRoom, broadcastGlobal }) => {
         emitToRoom(req.params.id, 'member_left', {
             id: req.user._id,
             name: req.user.name
+        });
+        broadcastGlobal('room_capacity_updated', {
+            roomId: req.params.id,
+            members: updatedRoom.members
         });
     });
 

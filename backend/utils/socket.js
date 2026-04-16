@@ -208,3 +208,12 @@ export const emitToUser = (userId, event, data) => {
         io.to(`user_${userId}`).emit(event, data);
     }
 };
+
+/**
+ * Emit to all connected clients globally
+ */
+export const broadcastGlobal = (event, data) => {
+    if (io) {
+        io.emit(event, data);
+    }
+};

@@ -19,6 +19,13 @@ export const initBackgroundJobs = async () => {
             }
         });
 
+        // 2. Stale Room Cleanup - Every 15 minutes
+        await cleanupQueue.add('ROOM_CLEANUP', {}, {
+            repeat: {
+                pattern: '*/15 * * * *' // Every 15 minutes
+            }
+        });
+
         logger.info('⏰ Recurring background jobs scheduled');
     } catch (error) {
         logger.error('Failed to schedule background jobs:', { error: error.message });

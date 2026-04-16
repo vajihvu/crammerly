@@ -127,4 +127,24 @@ export const aiLimiter = rateLimit({
     }
 });
 
+/**
+ * Room Action Limiter
+ * Protects against brute-force room creation and join code guessing.
+ */
+export const roomActionLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 20, // 20 requests per 10 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
+    store: createStore('room_action'),
+    skip: () => config.isTest,
+    message: {
+        success: false,
+        error: {
+            code: 'ROOM_ACTION_LIMIT',
+            message: 'Too many room creations or join attempts. Please wait 10 minutes.'
+        }
+    }
+});
+
 

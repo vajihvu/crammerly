@@ -40,7 +40,7 @@ export const initSocket = (token) => {
 
     socket = io(baseURL, {
         auth: { token },
-        transports: ['websocket', 'polling'],
+        transports: ['polling', 'websocket'], // Start with polling to prevent Render drop errors, upgrade silently
         reconnection: true,
         reconnectionAttempts: 10,
         reconnectionDelay: 1000,

@@ -74,9 +74,14 @@ const roomSchema = new mongoose.Schema({
 // Generate code for private rooms
 roomSchema.pre('save', async function () {
     if (this.privacy === 'Private' && !this.code) {
-        this.code = crypto.randomBytes(3).toString('hex').toUpperCase();
+        // High entropy 8-character secure code
+        this.code = crypto.randomBytes(4).toString('hex').toUpperCase();
     }
 });
+
+// Indexes for high-performance scalable queries
+roomSchema.index({ topic: 1, privacy: 1, createdAt: -1 });
+roomSchema.index({ 'members.user': 1 }); // For User's Rooms dashboard queries
 
 const Room = mongoose.model('Room', roomSchema);
 export default Room;

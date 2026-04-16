@@ -314,7 +314,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                         </div>
                         <h3 className="text-xl font-bold text-brand-text group-hover:text-brand-primary transition-colors font-sans">{room.name}</h3>
                       </div>
-                      <button onClick={(e) => onDeleteRoom(room, e)} className="p-2 hover:bg-brand-danger/20 rounded-xl transition-all relative z-10">
+                      <button onClick={(e) => onDeleteRoom(room, e)} className="p-2 hover:bg-brand-danger/20 rounded-xl transition-all relative z-10" title={room.creator_id === currentUser.id ? "Delete Room" : "Hide Room"}>
                         {room.creator_id === currentUser.id ? <Trash2 size={18} className="text-brand-danger" /> : <EyeOff size={18} className="text-brand-muted" />}
                       </button>
                     </div>
@@ -325,7 +325,11 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                       </div>
                       <div className="flex justify-between items-center pt-4 border-t border-brand-border/50">
                         <div className="flex -space-x-2">
-                          {[1, 2, 3].map(i => <div key={i} className={`w-7 h-7 rounded-full border-2 border-brand-surface bg-brand-card flex items-center justify-center text-[10px] font-black text-brand-secondary shadow-sm ${i === 2 ? 'bg-brand-bg' : i === 3 ? 'bg-brand-surface' : ''}`}>{room.name[0]}</div>)}
+                          {(Array.isArray(room.members) ? room.members.slice(0, 3) : []).map((m, i) => (
+                              <div key={i} className={`w-7 h-7 rounded-full border-2 border-brand-surface bg-brand-card flex items-center justify-center text-[10px] font-black text-brand-secondary shadow-sm ${i === 1 ? 'bg-brand-bg' : i === 2 ? 'bg-brand-surface' : ''}`}>
+                                  {m.avatar ? <img src={m.avatar} alt="Avatar" className="w-full h-full rounded-full object-cover" /> : (m.name || room.name)[0].toUpperCase()}
+                              </div>
+                          ))}
                         </div>
                         <span className="text-xs font-black text-brand-text-dim ml-1 uppercase tracking-tighter font-sans">{Array.isArray(room.members) ? room.members.length : 0} / 80</span>
                       </div>
