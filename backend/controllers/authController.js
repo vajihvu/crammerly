@@ -41,6 +41,7 @@ export const formatUserPayload = (user) => ({
     bio: user.bio || undefined,
     settings: user.settings || undefined,
     isOnboarded: user.isOnboarded || false,
+    isOnline: user.isOnline || false,
     isActive: user.isActive,
     role: user.role
 });

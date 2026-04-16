@@ -45,9 +45,9 @@ if (config.redisUrl) {
                 members: { $size: 0 },
                 createdAt: { $lt: fifteenMinutesAgo },
                 $or: [
-                    { schedule_date: { $exists: false } }, // Not scheduled
-                    { schedule_date: null },
-                    { schedule_date: { $lte: today } } // Scheduled for today or past
+                    { scheduleDate: { $exists: false } }, // Not scheduled
+                    { scheduleDate: null },
+                    { scheduleDate: { $lte: today } } // Scheduled for today or past
                 ]
             });
 
@@ -58,7 +58,7 @@ if (config.redisUrl) {
             let count = 0;
             for (const room of staleRooms) {
                 // Delete associated messages
-                await Message.deleteMany({ room_id: room._id });
+                await Message.deleteMany({ roomId: room._id });
                 
                 // Track details for sockets
                 const roomId = room._id.toString();

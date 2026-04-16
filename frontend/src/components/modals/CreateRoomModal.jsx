@@ -40,7 +40,7 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
         <>
             <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[100]" aria-hidden="true"></div>
             <div className="fixed inset-0 flex items-center justify-center p-4 z-[200]" onClick={onClose}>
-                <div className="bg-brand-surface rounded-[24px] w-full max-w-sm border border-brand-border/30 shadow-2xl animate-in zoom-in-95 duration-500 relative overflow-hidden font-sans flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-brand-surface rounded-[24px] w-full max-w-sm border border-brand-border/30 shadow-2xl animate-in zoom-in-95 duration-500 relative font-sans flex flex-col" onClick={(e) => e.stopPropagation()}>
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary/40 via-brand-text/10 to-brand-primary/40"></div>
 
                     {/* Header */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { usersApi } from '../api/users';
 import { useUI } from '../context/UIContext';
 import { useAuth } from '../context/AuthContext';
@@ -18,6 +18,12 @@ const Onboarding = () => {
     const [skills, setSkills] = useState([]);
     const [interestInput, setInterestInput] = useState('');
     const [skillInput, setSkillInput] = useState('');
+
+    // Redirect if user has already completed onboarding
+    const isOnboarded = user?.user?.isOnboarded ?? user?.isOnboarded;
+    if (isOnboarded) {
+        return <Navigate to="/" replace />;
+    }
 
     const addTag = (type) => {
         if (type === 'interest' && interestInput.trim()) {

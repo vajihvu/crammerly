@@ -46,7 +46,7 @@ if (typeof window !== 'undefined' && !window.storage) {
 
 export default function Crammerly() {
   const { user: authUser, loading: isAuthLoading, logout: handleAuthLogout, updateUser: handleUpdateUser } = useAuth();
-  const { addToast } = useUI();
+  const { addToast, unreadMessagesCount } = useUI();
   const { modals, openModal, closeModal, toggleModal, setFloatingPanel, resetModals, isAnyModalOpen, openConfirm, closeConfirm } = useModals();
 
   // ── Local UI state ──
@@ -305,6 +305,7 @@ export default function Crammerly() {
         openModal={openModal}
         closeModal={closeModal}
         unreadCount={(notifications || []).filter(n => !n.read).length}
+        unreadMessagesCount={unreadMessagesCount}
         notifications={notifications}
         markNotificationAsRead={markNotificationAsRead}
         clearAllNotifications={clearAllNotifications}
@@ -369,6 +370,7 @@ export default function Crammerly() {
               currentUser={currentUser}
               theme={theme}
               setTheme={setTheme}
+              unreadMessagesCount={unreadMessagesCount}
               handleSignOut={handleAuthLogout}
             />
           )}

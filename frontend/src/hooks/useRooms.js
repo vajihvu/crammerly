@@ -242,6 +242,8 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
     const deleteRoom = async (room, e) => {
         if (e) { e.stopPropagation(); e.preventDefault(); }
         const isOwner = room.creatorId === currentUser.id;
+        const isMember = Array.isArray(room.members) && room.members.some(m => (m.id === currentUser.id || m.profile_id === currentUser.id));
+
         if (isOwner) {
             openConfirm({
                 title: 'Delete Room',
@@ -260,7 +262,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
                 type: 'danger',
                 confirmText: 'Delete Room'
             });
-        } else {
+        } else if (isMember) {
             openConfirm({
                 title: 'Leave Room',
                 message: `Are you sure you want to leave "${room.name}"?`,
@@ -270,7 +272,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
                         if (currentRoom?.id === room.id) leaveRoom();
                         setRooms(prev => prev.map(r => {
                             if (r.id === room.id) {
-                                return { ...r, members: r.members.filter(m => m.id !== currentUser.id) };
+                                return { ...r, members: r.members.filter(m => m.id !== currentUser.id && m.profile_id !== currentUser.id) };
                             }
                             return r;
                         }));
@@ -282,6 +284,17 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
                 },
                 type: 'warning',
                 confirmText: 'Leave Room'
+            });
+        } else {
+            openConfirm({
+                title: 'Hide Room',
+                message: `Are you sure you want to hide "${room.name}"? This room will be removed from your current view.`,
+                onConfirm: async () => {
+                    setRooms(prev => prev.filter(r => r.id !== room.id));
+                    addToast('Room hidden', 'info');
+                },
+                type: 'info',
+                confirmText: 'Hide Room'
             });
         }
     };

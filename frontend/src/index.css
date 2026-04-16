@@ -121,7 +121,7 @@ html.dark {
 
 .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
-    margin: 2px 0;
+    margin: 8px 0; /* Dodges rounded corners */
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {

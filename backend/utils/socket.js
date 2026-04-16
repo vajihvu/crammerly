@@ -65,8 +65,17 @@ export const initSocket = (server) => {
         }
     });
 
-    io.on('connection', (socket) => {
+    io.on('connection', async (socket) => {
         logger.info(`🔌 User connected: ${socket.user.name} (${socket.id})`);
+
+        // Update online status in DB
+        try {
+            await User.findByIdAndUpdate(socket.user._id, { isOnline: true });
+            // Broadcast to all to update friends list/profiles in realtime
+            io.emit('user_status_change', { userId: socket.user._id, isOnline: true });
+        } catch (err) {
+            logger.error(`Failed to update online status for ${socket.user._id}: ${err.message}`);
+        }
 
         // Join private user room for direct notifications
         socket.join(`user_${socket.user._id}`);
@@ -106,11 +115,11 @@ export const initSocket = (server) => {
             try {
                 const { default: Message } = await import('../models/Message.js');
                 const saved = await Message.create({
-                    room_id: roomId,
-                    sender_id: socket.user._id,
+                    roomId: roomId,
+                    senderId: socket.user._id,
                     content: sanitized,
                     type: type || 'text',
-                    file_data: fileData || undefined
+                    fileData: fileData || undefined
                 });
                 messageId = saved._id;
             } catch (err) {
@@ -120,7 +129,8 @@ export const initSocket = (server) => {
 
             socket.to(roomId).emit('new_message', {
                 id: messageId,
-                sender_id: socket.user._id,
+                roomId: roomId,
+                senderId: socket.user._id,
                 senderName: socket.user.name,
                 senderTag: socket.user.tag || '0000',
                 content: sanitized,
@@ -242,7 +252,19 @@ export const initSocket = (server) => {
             }
         });
 
-        socket.on('disconnect', () => {
+        socket.on('disconnect', async () => {
+            // Update online status in DB
+            try {
+                // Check if user has other active connections before marking offline
+                const activeConnections = await io.in(`user_${socket.user._id}`).fetchSockets();
+                if (activeConnections.length === 0) {
+                    await User.findByIdAndUpdate(socket.user._id, { isOnline: false });
+                    io.emit('user_status_change', { userId: socket.user._id, isOnline: false });
+                }
+            } catch (err) {
+                logger.error(`Failed to update offline status for ${socket.user._id}: ${err.message}`);
+            }
+
             // Clean up video rooms on disconnect
             if (io._videoRooms) {
                 io._videoRooms.forEach((videoRoom, roomId) => {

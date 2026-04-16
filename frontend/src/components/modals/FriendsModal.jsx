@@ -126,13 +126,20 @@ const MessageContent = ({ text }) => {
   return <p className="font-medium leading-relaxed text-left">{text}</p>;
 };
 
-function FriendsModal({ currentUser, onClose, addToast }) {
+import { useUI } from '../../context/UIContext';
 
+function FriendsModal({ currentUser, onClose, addToast }) {
+  const { resetUnreadMessages } = useUI();
   const [activeView, setActiveView] = useState('list'); // 'list' or 'chat'
   const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'requests'
   const [friends, setFriends] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loadingFriends, setLoadingFriends] = useState(true);
+
+  useEffect(() => {
+    // Clear global unread message indicator when opening Friends modal
+    resetUnreadMessages();
+  }, [resetUnreadMessages]);
 
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [chatMode, setChatMode] = useState('text');
@@ -151,6 +158,65 @@ function FriendsModal({ currentUser, onClose, addToast }) {
   const [emojiPickerTab, setEmojiPickerTab] = useState('emoji');
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [newFriendName, setNewFriendName] = useState('');
+
+  // GIF & Media State
+  const [gifSearch, setGifSearch] = useState('');
+  const [gifs, setGifs] = useState([]);
+  const [isLoadingGifs, setIsLoadingGifs] = useState(false);
+
+  const EMOJI_DATA = {
+    "Smileys": ["😊", "😂", "🤣", "❤️", "😍", "🥰", "😎", "🤩", "🤔", "🙄", "🤨", "😐", "😑", "😶", "😏", "😒", "🙄", "😬", "🤥", "😌", "😔", "😪", "🤤", "😴", "😷", "🤒", "🤕", "🤢", "🤮", "🤧", "🥵", "🥶", "🥴", "😵", "🤯", "🤠", "🥳", "😎", "🤓", "🧐"],
+    "Gestures": ["👍", "👎", "👊", "✊", "🤛", "🤜", "🤞", "✌️", "🤟", "🤘", "👌", "👈", "👉", "👆", "👇", "✋", "🤚", "🖐️", "🖖", "👋", "🤙", "💪", "🖕", "✍️", "🙏", "💍", "💄", "👣"],
+    "Nature": ["🐱", "🐶", "🐯", "🦁", "🐮", "🐷", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐒", "🐔", "🐧", "🐦", "🐤", "🦆", "🦅", "🦉", "🦇", "🐺", "🐗", "🐴", "🦄", "🐝", "🐛", "🦋", "🐌", "🐞", "🐜", "🦗", "🕷️", "🦂", "🐢", "🐍", "🦎", "🦖", "🦕", "🐙"],
+    "Food": ["🍏", "🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🍈", "🍒", "🍑", "🥭", "🍍", "🥥", "🥝", "🍅", "🍆", "🥑", "🥦", "🥬", "🥒", "🌽", "🥕", "🥔", "🍠", "🥐", "🍞", "🥖", "🥨", "🥯", "🧀", "🥚", "🍳", "🥓", "🥩", "🥞", "🍖", "🍗", "🍔"],
+    "Activities": ["⚽", "🏀", "🏈", "⚾", "🥎", "🎾", "🏐", "🏉", "🎱", "🏓", "🏸", "🏒", "🏑", "🏏", "🎯", "⛳", "🏹", "🎣", "🥊", "🥋", "⛸️", "🎿", "🛷", "🛹", "🚴", "🚵", "🏆", "🥇", "🥈", "🥉", "🏅", "🎖️", "🎫", "🎟️", "🎭", "🎨", "🎬", "🎤", "🎧", "🎷"]
+  };
+  const [activeEmojiCategory, setActiveEmojiCategory] = useState("Smileys");
+
+  // Fetch GIFs from Giphy
+  useEffect(() => {
+    if (emojiPickerTab !== 'gif') return;
+
+    // No search — show trending
+    if (!gifSearch.trim()) {
+      let cancelled = false;
+      setIsLoadingGifs(true);
+      (async () => {
+        try {
+          const res = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=cw6S767E6c91sVfF50A9499824fF9&limit=20&rating=g`);
+          const data = await res.json();
+          if (!cancelled) setGifs(data.data || []);
+        } finally {
+          if (!cancelled) setIsLoadingGifs(false);
+        }
+      })();
+      return () => { cancelled = true; };
+    }
+
+    // Debounced search
+    setIsLoadingGifs(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=cw6S767E6c91sVfF50A9499824fF9&q=${gifSearch}&limit=20&offset=0&rating=g&lang=en`);
+        const data = await res.json();
+        setGifs(data.data || []);
+      } finally {
+        setIsLoadingGifs(false);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [gifSearch, emojiPickerTab]);
+
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    if (activeView === 'chat') {
+      // Use requestAnimationFrame to ensure DOM is updated before scrolling
+      requestAnimationFrame(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
+  }, [chatHistory, activeView, chatMode, selectedFriend]);
   const [pendingRequests, setPendingRequests] = useState(new Set());
   const [isSearching, setIsSearching] = useState(false);
   const [sentMessages, setSentMessages] = useState({});
@@ -231,13 +297,13 @@ function FriendsModal({ currentUser, onClose, addToast }) {
         }
       };
 
-      const handleMessagesRead = ({ roomId, reader_id }) => {
+      const handleMessagesRead = ({ roomId, readerId }) => {
         const friend = friends.find(f => f.dmRoomId === roomId) || (selectedFriend?.dmRoomId === roomId ? selectedFriend : null);
         if (friend) {
           const friendId = friend._id || friend.id;
           const currentUserId = currentUser?._id || currentUser?.id;
           
-          if (String(reader_id) !== String(currentUserId)) {
+          if (String(readerId) !== String(currentUserId)) {
             setChatHistory(prev => ({
               ...prev,
               [friendId]: (prev[friendId] || []).map(m => m.sender === 'me' ? { ...m, isRead: true } : m)
@@ -246,14 +312,26 @@ function FriendsModal({ currentUser, onClose, addToast }) {
         }
       };
 
+      const handleStatusChange = ({ userId, isOnline }) => {
+        setFriends(prev => prev.map(f => (f._id === userId || f.id === userId) ? { ...f, isOnline } : f));
+        setSelectedFriend(prev => {
+          if (prev && (prev._id === userId || prev.id === userId)) {
+            return { ...prev, isOnline };
+          }
+          return prev;
+        });
+      };
+
       socket.on('new_notification', handleNewNotification);
       socket.on('new_message', handleNewMessage);
       socket.on('messages_read', handleMessagesRead);
+      socket.on('user_status_change', handleStatusChange);
 
       return () => {
         socket.off('new_notification', handleNewNotification);
         socket.off('new_message', handleNewMessage);
         socket.off('messages_read', handleMessagesRead);
+        socket.off('user_status_change', handleStatusChange);
       };
     }
   }, [selectedFriend, friends, currentUser, activeView, addToast]);
@@ -356,6 +434,55 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       if (addToast) addToast('Failed to send message', 'danger');
     }
   };
+
+  const sendGif = async (gif) => {
+    if (!selectedFriend || !selectedFriend.dmRoomId) return;
+    const gifUrl = gif.images.fixed_height.url;
+    
+    try {
+      await messagesApi.send(selectedFriend.dmRoomId, { 
+        type: 'gif',
+        fileData: { 
+          url: gifUrl, 
+          name: 'GIF',
+          size: 0 
+        }
+      });
+      setShowEmojiPicker(false);
+      setGifSearch('');
+    } catch {
+      if (addToast) addToast('Failed to send GIF', 'danger');
+    }
+  };
+
+  const sendSticker = async (stickerUrl) => {
+    if (!selectedFriend || !selectedFriend.dmRoomId) return;
+    
+    try {
+      await messagesApi.send(selectedFriend.dmRoomId, { 
+        type: 'sticker',
+        fileData: { 
+          url: stickerUrl, 
+          name: 'Sticker',
+          size: 0
+        }
+      });
+      setShowEmojiPicker(false);
+    } catch {
+      if (addToast) addToast('Failed to send sticker', 'danger');
+    }
+  };
+
+  const STICKERS = [
+    "https://fonts.gstatic.com/s/e/notoemoji/latest/1f600/512.gif",
+    "https://fonts.gstatic.com/s/e/notoemoji/latest/1f602/512.gif",
+    "https://fonts.gstatic.com/s/e/notoemoji/latest/1f60d/512.gif",
+    "https://fonts.gstatic.com/s/e/notoemoji/latest/1f929/512.gif",
+    "https://fonts.gstatic.com/s/e/notoemoji/latest/1f92a/512.gif",
+    "https://fonts.gstatic.com/s/e/notoemoji/latest/1f917/512.gif",
+    "https://fonts.gstatic.com/s/e/notoemoji/latest/1f914/512.gif",
+    "https://fonts.gstatic.com/s/e/notoemoji/latest/1f643/512.gif"
+  ];
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') handleSendMessage();
@@ -551,7 +678,6 @@ function FriendsModal({ currentUser, onClose, addToast }) {
 
 
 
-  const emojis = ['😊', '😂', '🔥', '🚀', '✨', '👍', '🙏', '🎬', '📸', '❤️', '😎', '🎉'];
 
   if (activeView === 'chat' && selectedFriend) {
     const friendId = selectedFriend._id || selectedFriend.id;
@@ -634,15 +760,16 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                   {currentChat.map((msg) => (
                     <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[85%] ${msg.sender === 'me' ? 'text-right' : ''}`}>
-                        <div className={`p-4 rounded-[24px] shadow-lg border border-brand-border/50 ${msg.sender === 'me'
-                          ? 'bg-brand-primary text-white rounded-tr-none'
-                          : 'bg-brand-surface text-brand-text rounded-tl-none'
+                        <div className={`${msg.type === 'sticker' ? 'p-0' : 'p-4 rounded-[24px] shadow-lg border border-brand-border/50'} ${msg.sender === 'me'
+                          ? (msg.type === 'sticker' ? '' : 'bg-brand-primary text-white rounded-tr-none')
+                          : (msg.type === 'sticker' ? '' : 'bg-brand-surface text-brand-text rounded-tl-none')
                           }`}>
                           {msg.type === 'voice' ? (
                             <AudioMessage url={msg.fileData?.url} isMe={msg.sender === 'me'} />
-                          ) : (
+                          ) : msg.type === 'text' ? (
                             <MessageContent text={msg.content || msg.text} />
-                          )}
+                          ) : null}
+                          
                           {msg.type === 'file' && (
                             <a 
                               href={msg.fileData?.url} 
@@ -661,12 +788,13 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                               </div>
                             </a>
                           )}
-                          {msg.type === 'image' && msg.fileData?.url && (
-                             <div className="mt-2 rounded-xl overflow-hidden border border-white/10">
+
+                          {['image', 'gif', 'sticker'].includes(msg.type) && msg.fileData?.url && (
+                             <div className={`${msg.type === 'sticker' ? 'bg-transparent' : 'mt-2 rounded-xl overflow-hidden border border-white/10 shadow-inner'}`}>
                                <img 
                                  src={msg.fileData.url} 
                                  alt={msg.fileData.name} 
-                                 className="max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity"
+                                 className={`${msg.type === 'sticker' ? 'w-32 h-32' : 'max-w-full h-auto'} cursor-pointer hover:scale-105 transition-transform duration-300`}
                                  onClick={() => window.open(msg.fileData.url, '_blank')}
                                />
                              </div>
@@ -683,25 +811,81 @@ function FriendsModal({ currentUser, onClose, addToast }) {
 
                 {/* Tabbed Picker Overlay */}
                 {showEmojiPicker && (
-                  <div className="absolute bottom-24 left-6 right-6 bg-brand-surface border border-brand-border rounded-3xl z-50 animate-in slide-in-from-bottom-4 shadow-2xl overflow-hidden flex flex-col h-64">
-                    <div className="flex border-b border-brand-border/50 bg-brand-muted/10">
+                  <div className="absolute bottom-24 left-6 right-6 bg-brand-surface border border-brand-border rounded-3xl z-50 animate-in slide-in-from-bottom-4 shadow-2xl overflow-hidden flex flex-col h-80">
+                    <div className="flex border-b border-brand-border/50 bg-brand-muted/10 shrink-0">
                       <button onClick={() => setEmojiPickerTab('emoji')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${emojiPickerTab === 'emoji' ? 'text-brand-text bg-brand-muted/20' : 'text-brand-text-dim hover:text-brand-text'}`}>Emojis</button>
                       <button onClick={() => setEmojiPickerTab('sticker')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${emojiPickerTab === 'sticker' ? 'text-brand-text bg-brand-muted/20' : 'text-brand-text-dim hover:text-brand-text'}`}>Stickers</button>
                       <button onClick={() => setEmojiPickerTab('gif')} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${emojiPickerTab === 'gif' ? 'text-brand-text bg-brand-muted/20' : 'text-brand-text-dim hover:text-brand-text'}`}>GIFs</button>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+
+                    <div className="flex-1 overflow-y-auto custom-scrollbar">
                       {emojiPickerTab === 'emoji' && (
-                        <div className="grid grid-cols-6 gap-3">
-                          {emojis.map(e => <button key={e} onClick={() => addEmoji(e)} className="text-2xl hover:scale-125 transition-transform p-1">{e}</button>)}
+                        <div className="flex flex-col h-full"> 
+                          {/* Categories */}
+                          <div className="flex gap-2 p-3 border-b border-brand-border/30 overflow-x-auto scrollbar-hide shrink-0">
+                            {Object.keys(EMOJI_DATA).map(cat => (
+                              <button 
+                                key={cat} 
+                                onClick={() => setActiveEmojiCategory(cat)}
+                                className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeEmojiCategory === cat ? 'bg-brand-primary text-white shadow-lg' : 'bg-brand-muted/10 text-brand-text-dim hover:text-brand-text'}`}
+                              >
+                                {cat}
+                              </button>
+                            ))}
+                          </div>
+                          {/* Grid */}
+                          <div className="grid grid-cols-6 gap-3 p-4">
+                            {EMOJI_DATA[activeEmojiCategory].map(e => (
+                              <button key={e} onClick={() => { addEmoji(e); setShowEmojiPicker(false); }} className="text-2xl hover:scale-125 transition-transform p-1">
+                                {e}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
+
                       {emojiPickerTab === 'sticker' && (
-                        <div className="grid grid-cols-4 gap-4">
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                            <button key={i} className="aspect-square bg-brand-muted/10 rounded-xl flex items-center justify-center hover:bg-brand-muted/20 transition-all border border-brand-border/30 group">
-                              <Sticker size={32} className="text-brand-primary group-hover:scale-110 transition-transform" />
+                        <div className="grid grid-cols-3 gap-4 p-4">
+                          {STICKERS.map((s, i) => (
+                            <button 
+                              key={i} 
+                              onClick={() => sendSticker(s)}
+                              className="aspect-square bg-brand-muted/5 rounded-2xl flex items-center justify-center hover:bg-brand-muted/10 transition-all border border-brand-border/30 group overflow-hidden"
+                            >
+                              <img src={s} alt="sticker" className="w-16 h-16 group-hover:scale-110 transition-transform" />
                             </button>
                           ))}
+                        </div>
+                      )}
+
+                      {emojiPickerTab === 'gif' && (
+                        <div className="flex flex-col h-full">
+                          <div className="p-3 border-b border-brand-border/30 sticky top-0 bg-brand-surface shrink-0">
+                            <div className="relative group">
+                              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text-dim group-focus-within:text-brand-primary" size={14} />
+                              <input 
+                                type="text"
+                                placeholder="Search GIPHY..."
+                                value={gifSearch}
+                                onChange={(e) => setGifSearch(e.target.value)}
+                                className="w-full pl-9 pr-3 py-2 bg-brand-bg/50 border border-brand-border/50 rounded-xl text-[11px] text-brand-text focus:outline-none focus:ring-1 focus:ring-brand-primary"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 p-2">
+                            {isLoadingGifs ? (
+                              <div className="col-span-2 flex flex-col items-center justify-center py-12 space-y-3 opacity-50">
+                                <Loader className="animate-spin text-brand-primary" size={24} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Searching GIPHY...</span>
+                              </div>
+                            ) : (
+                              gifs.map(g => (
+                                <button key={g.id} onClick={() => sendGif(g)} className="aspect-video bg-brand-muted/5 rounded-xl overflow-hidden hover:opacity-80 transition-opacity">
+                                  <img src={g.images.fixed_height.url} alt="gif" className="w-full h-full object-cover" />
+                                </button>
+                              ))
+                            )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -736,8 +920,6 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                 </div>
               </div>
             )}
-
-            {/* Legacy calling UI removed - handled by global CallModal */}
           </div>
         </div>
       </div>
@@ -747,128 +929,130 @@ function FriendsModal({ currentUser, onClose, addToast }) {
   if (activeView === 'profile' && profileFriend) {
     return (
       <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[150] flex items-center justify-center p-0 sm:p-8 overflow-hidden animate-in fade-in duration-200" onClick={onClose}>
-        <div className="bg-brand-surface w-full max-w-2xl h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:rounded-[40px] border-0 sm:border border-brand-border/30 shadow-2xl flex flex-col overflow-y-auto custom-scrollbar animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-brand-surface w-full max-w-2xl h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:rounded-[40px] border-0 sm:border border-brand-border/30 shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
           
-          {/* Header/Back */}
-          <div className="p-6 flex items-center justify-between sticky top-0 bg-brand-surface/80 backdrop-blur-md z-10">
-            <button onClick={() => setActiveView('list')} className="p-2 hover:bg-brand-muted/20 rounded-full transition-all active:scale-90">
-              <ArrowLeft size={24} className="text-brand-text" />
-            </button>
-            <button onClick={onClose} className="p-2 hover:bg-brand-muted/20 rounded-full transition-all">
-              <X size={24} className="text-brand-text-dim" />
-            </button>
-          </div>
-
-          <div className="px-6 sm:px-12 pb-12">
-            {/* Top Info */}
-            <div className="flex flex-col items-center text-center space-y-4 mb-10">
-              <div className="relative">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-brand-bg rounded-[32px] sm:rounded-[40px] flex items-center justify-center border-4 border-brand-border shadow-2xl overflow-hidden group">
-                  {profileFriend.avatar ? (
-                    <img src={profileFriend.avatar} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
-                  ) : (
-                    <span className="text-4xl sm:text-5xl font-black text-brand-muted">
-                      {(profileFriend.name || profileFriend.username || '?')[0].toUpperCase()}
-                    </span>
-                  )}
-                </div>
-                <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-2xl border-4 border-brand-surface flex items-center justify-center ${profileFriend.isOnline ? 'bg-brand-success' : 'bg-brand-muted'}`}>
-                   <div className="w-2 h-2 bg-white rounded-full animate-pulse opacity-50"></div>
-                </div>
-              </div>
-
-              <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-brand-text uppercase tracking-tight leading-none mb-2">{profileFriend.name || profileFriend.username}</h2>
-                <div className="flex items-center justify-center gap-2">
-                  <span className="text-xs font-black text-brand-primary uppercase tracking-[0.2em]">#{profileFriend.tag || '0000'}</span>
-                  <span className="w-1 h-1 bg-brand-border rounded-full"></span>
-                  <span className="text-[10px] font-bold text-brand-text-dim uppercase tracking-widest">{profileFriend.isOnline ? 'Active Now' : 'Currently Offline'}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 pt-4">
-                <button 
-                  onClick={() => openChat(profileFriend)}
-                  className="px-8 py-3 bg-brand-text text-brand-bg rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-lg active:scale-95"
-                >
-                  Message
-                </button>
-                <button 
-                  onClick={() => openChat(profileFriend, 'voice')}
-                  className="w-12 h-12 bg-brand-muted/20 text-brand-text hover:bg-brand-primary hover:text-white rounded-2xl flex items-center justify-center transition-all border border-brand-border"
-                >
-                  <PhoneCall size={18} />
-                </button>
-              </div>
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {/* Header/Back */}
+            <div className="p-6 flex items-center justify-between sticky top-0 bg-brand-surface/80 backdrop-blur-md z-10">
+              <button onClick={() => setActiveView('list')} className="p-2 hover:bg-brand-muted/20 rounded-full transition-all active:scale-90">
+                <ArrowLeft size={24} className="text-brand-text" />
+              </button>
+              <button onClick={onClose} className="p-2 hover:bg-brand-muted/20 rounded-full transition-all">
+                <X size={24} className="text-brand-text-dim" />
+              </button>
             </div>
 
-            {/* Profile Content Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Education */}
-              <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
-                <div className="flex items-center gap-2 text-brand-primary">
-                  <GraduationCap size={18} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Education</span>
+            <div className="px-6 sm:px-12 pb-12">
+              {/* Top Info */}
+              <div className="flex flex-col items-center text-center space-y-4 mb-10">
+                <div className="relative">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 bg-brand-bg rounded-[32px] sm:rounded-[40px] flex items-center justify-center border-4 border-brand-border shadow-2xl overflow-hidden group">
+                    {profileFriend.avatar ? (
+                      <img src={profileFriend.avatar} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                    ) : (
+                      <span className="text-4xl sm:text-5xl font-black text-brand-muted">
+                        {(profileFriend.name || profileFriend.username || '?')[0].toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <div className={`absolute -bottom-2 -right-2 w-8 h-8 rounded-2xl border-4 border-brand-surface flex items-center justify-center ${profileFriend.isOnline ? 'bg-brand-success' : 'bg-brand-muted'}`}>
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse opacity-50"></div>
+                  </div>
                 </div>
+
                 <div>
-                  <p className="text-sm font-black text-brand-text uppercase leading-tight">{profileFriend.institution || 'No Institution Set'}</p>
-                  <p className="text-[10px] font-bold text-brand-text-dim uppercase mt-1 tracking-widest">{profileFriend.course || 'Course details hidden'}</p>
+                  <h2 className="text-2xl sm:text-3xl font-black text-brand-text uppercase tracking-tight leading-none mb-2">{profileFriend.name || profileFriend.username}</h2>
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-xs font-black text-brand-primary uppercase tracking-[0.2em]">#{profileFriend.tag || '0000'}</span>
+                    <span className="w-1 h-1 bg-brand-border rounded-full"></span>
+                    <span className="text-[10px] font-bold text-brand-text-dim uppercase tracking-widest">{profileFriend.isOnline ? 'Active Now' : 'Currently Offline'}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 pt-4">
+                  <button 
+                    onClick={() => openChat(profileFriend)}
+                    className="px-8 py-3 bg-brand-text text-brand-bg rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-lg active:scale-95"
+                  >
+                    Message
+                  </button>
+                  <button 
+                    onClick={() => openChat(profileFriend, 'voice')}
+                    className="w-12 h-12 bg-brand-muted/20 text-brand-text hover:bg-brand-primary hover:text-white rounded-2xl flex items-center justify-center transition-all border border-brand-border"
+                  >
+                    <PhoneCall size={18} />
+                  </button>
                 </div>
               </div>
 
-              {/* Skills */}
-              <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
-                <div className="flex items-center gap-2 text-brand-primary">
-                  <Code2 size={18} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Technical Skills</span>
+              {/* Profile Content Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Education */}
+                <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
+                  <div className="flex items-center gap-2 text-brand-primary">
+                    <GraduationCap size={18} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Education</span>
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-brand-text uppercase leading-tight">{profileFriend.institution || 'No Institution Set'}</p>
+                    <p className="text-[10px] font-bold text-brand-text-dim uppercase mt-1 tracking-widest">{profileFriend.course || 'Course details hidden'}</p>
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {profileFriend.skills?.length > 0 ? profileFriend.skills.map(skill => (
-                    <span key={skill} className="px-2.5 py-1 bg-brand-primary/10 text-brand-primary text-[9px] font-black uppercase tracking-tighter rounded-full border border-brand-primary/20">
-                      {skill}
-                    </span>
-                  )) : <p className="text-[9px] font-bold text-brand-text-dim uppercase">No skills added</p>}
-                </div>
-              </div>
 
-              {/* Interests */}
-              <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
-                <div className="flex items-center gap-2 text-brand-primary">
-                  <Heart size={18} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Interests</span>
+                {/* Skills */}
+                <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
+                  <div className="flex items-center gap-2 text-brand-primary">
+                    <Code2 size={18} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Technical Skills</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profileFriend.skills?.length > 0 ? profileFriend.skills.map(skill => (
+                      <span key={skill} className="px-2.5 py-1 bg-brand-primary/10 text-brand-primary text-[9px] font-black uppercase tracking-tighter rounded-full border border-brand-primary/20">
+                        {skill}
+                      </span>
+                    )) : <p className="text-[9px] font-bold text-brand-text-dim uppercase">No skills added</p>}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                   {profileFriend.interests?.length > 0 ? profileFriend.interests.map(interest => (
-                    <span key={interest} className="px-2.5 py-1 bg-white/5 text-brand-text text-[9px] font-black uppercase tracking-tighter rounded-full border border-brand-border/40">
-                      {interest}
-                    </span>
-                  )) : <p className="text-[9px] font-bold text-brand-text-dim uppercase">No interests listed</p>}
-                </div>
-              </div>
 
-              {/* Socials */}
-              <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
-                <div className="flex items-center gap-2 text-brand-primary">
-                  <Sparkles size={18} />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Connect</span>
+                {/* Interests */}
+                <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
+                  <div className="flex items-center gap-2 text-brand-primary">
+                    <Heart size={18} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Interests</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profileFriend.interests?.length > 0 ? profileFriend.interests.map(interest => (
+                      <span key={interest} className="px-2.5 py-1 bg-white/5 text-brand-text text-[9px] font-black uppercase tracking-tighter rounded-full border border-brand-border/40">
+                        {interest}
+                      </span>
+                    )) : <p className="text-[9px] font-bold text-brand-text-dim uppercase">No interests listed</p>}
+                  </div>
                 </div>
-                <div className="flex gap-3">
-                  {['github', 'linkedin', 'twitter', 'instagram'].map(platform => {
-                    const Icons = { github: Github, linkedin: Linkedin, twitter: Twitter, instagram: Instagram };
-                    const Icon = Icons[platform];
-                    const link = profileFriend.socials?.[platform];
-                    return (
-                      <a 
-                        key={platform}
-                        href={link ? (link.startsWith('http') ? link : `https://${platform}.com/${link}`) : '#'}
-                        target={link ? "_blank" : "_self"}
-                        rel="noopener noreferrer"
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${link ? 'bg-brand-surface text-brand-text hover:bg-brand-primary hover:text-white border-brand-primary/30' : 'bg-brand-surface/30 text-brand-text-dim pointer-events-none opacity-30'} border`}
-                      >
-                        <Icon size={18} />
-                      </a>
-                    );
-                  })}
+
+                {/* Socials */}
+                <div className="p-6 bg-brand-card/50 rounded-[32px] border border-brand-border/30 space-y-4">
+                  <div className="flex items-center gap-2 text-brand-primary">
+                    <Sparkles size={18} />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Connect</span>
+                  </div>
+                  <div className="flex gap-3">
+                    {['github', 'linkedin', 'twitter', 'instagram'].map(platform => {
+                      const Icons = { github: Github, linkedin: Linkedin, twitter: Twitter, instagram: Instagram };
+                      const Icon = Icons[platform];
+                      const link = profileFriend.socials?.[platform];
+                      return (
+                        <a 
+                          key={platform}
+                          href={link ? (link.startsWith('http') ? link : `https://${platform}.com/${link}`) : '#'}
+                          target={link ? "_blank" : "_self"}
+                          rel="noopener noreferrer"
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${link ? 'bg-brand-surface text-brand-text hover:bg-brand-primary hover:text-white border-brand-primary/30' : 'bg-brand-surface/30 text-brand-text-dim pointer-events-none opacity-30'} border`}
+                        >
+                          <Icon size={18} />
+                        </a>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>

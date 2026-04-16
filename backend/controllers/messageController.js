@@ -103,7 +103,7 @@ export const sendMessage = asyncHandler(async (req, res) => {
         text: populated.content,
         type: populated.type,
         fileData: populated.file_data,
-        room_id: roomId,
+        roomId: roomId,
         isRead: false,
         timestamp: populated.createdAt
     };
@@ -153,7 +153,7 @@ export const markAsRead = asyncHandler(async (req, res) => {
         import('../utils/socket.js').then(({ emitToRoom }) => {
             emitToRoom(roomId, 'messages_read', {
                 roomId: roomId,
-                reader_id: userId,
+                readerId: userId,
                 readAt: new Date()
             });
         });

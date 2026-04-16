@@ -219,7 +219,7 @@ export const deleteRoom = asyncHandler(async (req, res) => {
 
     // Cascade: delete all messages in this room
     const { default: Message } = await import('../models/Message.js');
-    await Message.deleteMany({ room_id: room._id });
+    await Message.deleteMany({ roomId: room._id });
 
     await room.deleteOne();
     return res.sendSuccess(null, 200, 'Room deleted');

@@ -9,6 +9,7 @@ const Header = ({
     toggleModal,
     openModal,
     unreadCount,
+    unreadMessagesCount,
     currentUser,
     theme,
     toggleTheme
@@ -29,19 +30,27 @@ const Header = ({
                     ) : (
                         <button
                             onClick={() => toggleModal('menu')}
-                            className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-brand-text-dim hover:text-brand-text hover:bg-brand-muted/20 rounded-2xl transition-all text-xl md:text-2xl"
+                            className="relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-brand-text-dim hover:text-brand-text hover:bg-brand-muted/20 rounded-2xl transition-all text-xl md:text-2xl"
                             title="Menu"
                         >
                             ☰
+                            {unreadMessagesCount > 0 && (
+                                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-danger rounded-full border-2 border-brand-surface animate-pulse"></span>
+                            )}
                         </button>
                     )}
 
                     <button
                         onClick={() => openModal('friends')}
-                        className="flex w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 items-center justify-center text-brand-text-dim hover:text-brand-text hover:bg-brand-muted/20 rounded-xl sm:rounded-2xl transition-all"
+                        className="relative flex w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 items-center justify-center text-brand-text-dim hover:text-brand-text hover:bg-brand-muted/20 rounded-xl sm:rounded-2xl transition-all"
                         title="Friends"
                     >
                         <UserPlus size={16} className="sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
+                        {unreadMessagesCount > 0 && (
+                            <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-brand-danger border-2 border-brand-surface rounded-full flex items-center justify-center text-[6px] sm:text-[8px] font-black text-white shadow-lg animate-pulse">
+                                {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                            </span>
+                        )}
                     </button>
 
                     <button

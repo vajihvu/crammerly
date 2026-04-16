@@ -166,24 +166,47 @@ export const VideoCallProvider = ({ children }) => {
         cleanupCall();
     }, [cleanupCall]);
 
-    // Initialize Socket
+    // Initialize Socket — poll until socket is available to avoid race condition
+    // where AuthContext hasn't initialized the socket yet when this effect runs.
     useEffect(() => {
-        const s = getSocket();
-        if (!s) return;
-        socket.current = s;
+        let intervalId;
+        let currentSocket = null;
 
-        s.on('call:incoming', handleIncomingCall);
-        s.on('call:accepted', handleCallAccepted);
-        s.on('call:declined', handleCallDeclined);
-        s.on('call:signal', handleSignal);
-        s.on('call:ended', handleCallEnded);
+        const registerListeners = (s) => {
+            currentSocket = s;
+            socket.current = s;
+            s.on('call:incoming', handleIncomingCall);
+            s.on('call:accepted', handleCallAccepted);
+            s.on('call:declined', handleCallDeclined);
+            s.on('call:signal', handleSignal);
+            s.on('call:ended', handleCallEnded);
+        };
+
+        const tryConnect = () => {
+            const s = getSocket();
+            if (s) {
+                if (intervalId) clearInterval(intervalId);
+                registerListeners(s);
+            }
+        };
+
+        // Try immediately first
+        tryConnect();
+
+        // If socket wasn't ready, poll every 500ms until it is
+        if (!currentSocket) {
+            intervalId = setInterval(tryConnect, 500);
+        }
 
         return () => {
-            s.off('call:incoming', handleIncomingCall);
-            s.off('call:accepted', handleCallAccepted);
-            s.off('call:declined', handleCallDeclined);
-            s.off('call:signal', handleSignal);
-            s.off('call:ended', handleCallEnded);
+            if (intervalId) clearInterval(intervalId);
+            if (currentSocket) {
+                currentSocket.off('call:incoming', handleIncomingCall);
+                currentSocket.off('call:accepted', handleCallAccepted);
+                currentSocket.off('call:declined', handleCallDeclined);
+                currentSocket.off('call:signal', handleSignal);
+                currentSocket.off('call:ended', handleCallEnded);
+            }
         };
     }, [user?.token, handleIncomingCall, handleCallAccepted, handleCallDeclined, handleSignal, handleCallEnded]);
 

@@ -74,8 +74,8 @@ const roomSchema = new mongoose.Schema({
 // Generate code for private rooms
 roomSchema.pre('save', async function () {
     if (this.privacy === 'Private' && !this.code) {
-        // High entropy 8-character secure code
-        this.code = crypto.randomBytes(4).toString('hex').toUpperCase();
+        // High entropy 6-character secure code
+        this.code = crypto.randomBytes(3).toString('hex').toUpperCase();
     }
 });
 

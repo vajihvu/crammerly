@@ -24,7 +24,7 @@ import {
   BookOpen
 } from 'lucide-react';
 
-function MenuButton({ icon, label, onClick, variant = 'default', expanded = false, hasSubmenu = false }) {
+function MenuButton({ icon, label, onClick, variant = 'default', expanded = false, hasSubmenu = false, badge = null }) {
   return (
     <button
       onClick={onClick}
@@ -34,15 +34,25 @@ function MenuButton({ icon, label, onClick, variant = 'default', expanded = fals
         } ${expanded ? 'bg-brand-muted/10' : ''}`}
     >
       <div className="flex items-center gap-3">
-        <div className={`transition-transform duration-200 group-hover:scale-110 ${variant === 'danger' ? 'text-brand-danger' : 'text-brand-muted group-hover:text-brand-primary'}`}>
+        <div className={`transition-transform duration-200 group-hover:scale-110 relative ${variant === 'danger' ? 'text-brand-danger' : 'text-brand-muted group-hover:text-brand-primary'}`}>
           {icon}
+          {badge !== null && badge > 0 && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-brand-danger rounded-full border-2 border-brand-surface animate-in zoom-in duration-300"></span>
+          )}
         </div>
         <span className="text-[13px] font-medium tracking-tight whitespace-nowrap">{label}</span>
       </div>
       {hasSubmenu ? (
         <ChevronDown size={14} className={`transition-transform duration-300 ${expanded ? 'rotate-180' : ''} text-brand-muted`} />
       ) : (
-        <ChevronRight size={14} className="opacity-0 group-hover:opacity-40 transition-all -translate-x-1 group-hover:translate-x-0" />
+        <div className="flex items-center gap-2">
+            {badge !== null && badge > 0 && (
+                <span className="bg-brand-danger/10 text-brand-danger text-[10px] font-black px-1.5 py-0.5 rounded-full">
+                    {badge > 99 ? '99+' : badge}
+                </span>
+            )}
+            <ChevronRight size={14} className="opacity-0 group-hover:opacity-40 transition-all -translate-x-1 group-hover:translate-x-0" />
+        </div>
       )}
     </button>
   );
@@ -62,6 +72,7 @@ function MenuSidebar({
   currentUser,
   theme,
   setTheme,
+  unreadMessagesCount,
   handleSignOut
 }) {
   const [showAppearanceModal, setShowAppearanceModal] = useState(false);
@@ -207,7 +218,7 @@ function MenuSidebar({
             </div>
             <div className="md:hidden space-y-1">
               <MenuButton icon={<Search size={20} />} label="Find Rooms" onClick={() => { setShowMenu(false); setShowSearchModal(); }} />
-              <MenuButton icon={<Users size={20} />} label="Friends" onClick={() => { setShowMenu(false); setShowFriendsModal(); }} />
+              <MenuButton icon={<Users size={20} />} label="Friends" onClick={() => { setShowMenu(false); setShowFriendsModal(); }} badge={unreadMessagesCount} />
             </div>
             <MenuButton icon={<Settings size={20} />} label="Settings" onClick={() => { setShowMenu(false); setShowSettingsModal(); }} />
             <div className="md:hidden">

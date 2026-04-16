@@ -4,7 +4,7 @@ import { useUI } from '../../context/UIContext';
 import { useAuth } from '../../context/AuthContext';
 
 function SocketListener() {
-    const { addToast } = useUI();
+    const { addToast, incrementUnreadMessages } = useUI();
     const { user } = useAuth();
 
     useEffect(() => {
@@ -20,7 +20,10 @@ function SocketListener() {
             // Don't show toast if it's from current user (shouldn't happen on this event)
             if (msg.senderId === user.user?._id || msg.senderId === user._id) return;
             
-            addToast(`New message from ${msg.senderName || 'a friend'}`, 'info');
+            // Increment global unread count
+            incrementUnreadMessages();
+            
+            addToast(`📩 ${msg.senderName || 'A friend'}: ${msg.text?.substring(0, 30)}${msg.text?.length > 30 ? '...' : ''}`, 'info');
         };
 
         socket.on('new_notification', handleNewNotification);

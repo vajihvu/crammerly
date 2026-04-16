@@ -17,7 +17,7 @@ const JoinByInvite = () => {
                 setTimeout(() => navigate('/', { replace: true }), 1500);
             } catch (err) {
                 setStatus('error');
-                const msg = err.response?.data?.message || 'Failed to join room';
+                const msg = err.response?.data?.error?.message || err.response?.data?.message || 'Failed to join room';
                 setErrorMsg(msg);
             }
         };

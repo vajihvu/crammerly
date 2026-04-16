@@ -9,6 +9,7 @@ const UIContext = createContext();
 export const UIProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
     const [globalLoading, setGlobalLoading] = useState(false);
+    const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
     const addToast = useCallback((message, type = 'info', duration = 5000) => {
         const id = Date.now();
@@ -22,6 +23,14 @@ export const UIProvider = ({ children }) => {
 
     const setLoading = useCallback((loading) => {
         setGlobalLoading(loading);
+    }, []);
+
+    const incrementUnreadMessages = useCallback(() => {
+        setUnreadMessagesCount(prev => prev + 1);
+    }, []);
+
+    const resetUnreadMessages = useCallback(() => {
+        setUnreadMessagesCount(0);
     }, []);
 
     useEffect(() => {
@@ -48,8 +57,11 @@ export const UIProvider = ({ children }) => {
         addToast,
         removeToast,
         loading: globalLoading,
-        setLoading
-    }), [toasts, addToast, removeToast, globalLoading, setLoading]);
+        setLoading,
+        unreadMessagesCount,
+        incrementUnreadMessages,
+        resetUnreadMessages
+    }), [toasts, addToast, removeToast, globalLoading, setLoading, unreadMessagesCount, incrementUnreadMessages, resetUnreadMessages]);
 
     return (
         <UIContext.Provider value={value}>
