@@ -31,7 +31,7 @@ const envSchema = z.object({
     CLIENT_URL: z.string()
         .transform(val => val.split(',').map(url => url.trim()))
         .pipe(z.array(z.string().url("Each CLIENT_URL must be a valid URL"))),
-    COOKIE_DOMAIN: z.string().min(1, "COOKIE_DOMAIN is required to prevent cross-site session leakage"),
+    COOKIE_DOMAIN: z.string().optional().describe("Domain for cookie (optional, usually omitted for cross-origin setups)"),
 
 
     // SMTP Credentials (Required for registration & pass recovery)
