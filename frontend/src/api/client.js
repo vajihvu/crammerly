@@ -161,8 +161,8 @@ client.interceptors.response.use(
             || error.message
             || 'An unexpected error occurred';
 
-        // Don't show toast if silenced
-        if (!originalRequest.silent) {
+        // Don't show toast if silenced or if it's a 401 (we handle 401s via auth redirects, except login which can be handled explicitly by the login caller)
+        if (!originalRequest.silent && error.response?.status !== 401) {
             emit(apiEvents.ERROR, {
                 message: errorMessage,
                 status: error.response?.status,
