@@ -20,6 +20,7 @@ const config = {
     isDevelopment: import.meta.env.DEV,
     nodeEnv: import.meta.env.MODE,
     googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+    giphyApiKey: import.meta.env.VITE_GIPHY_API_KEY || 'cw6S767E6c91sVfF50A9499824fF9',
 };
 
 export default config;

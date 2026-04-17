@@ -1,7 +1,7 @@
 import React from 'react';
 import { PhoneCall, MessageCircle } from 'lucide-react';
 
-const FriendItem = ({ friend, onChat, onCall, onProfile }) => (
+const FriendItem = ({ friend, unreadCount, onChat, onCall, onProfile }) => (
     <div
         onClick={() => onProfile && onProfile(friend)}
         className="group bg-brand-card hover:bg-brand-surface p-4 sm:p-5 rounded-[24px] sm:rounded-[28px] flex items-center justify-between transition-all cursor-pointer border border-brand-border/30 hover:border-brand-primary/50 shadow-lg"
@@ -20,7 +20,14 @@ const FriendItem = ({ friend, onChat, onCall, onProfile }) => (
                 <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 sm:border-4 border-brand-bg rounded-full ${friend.isOnline ? 'bg-brand-success' : 'bg-brand-muted'}`}></div>
             </div>
             <div className="font-inter min-w-0">
-                <h4 className="text-sm font-bold text-brand-text group-hover:text-brand-primary transition-colors tracking-tight uppercase truncate">{friend.name || friend.username}</h4>
+                <div className="flex flex-row items-center gap-2 mb-0.5">
+                    <h4 className="text-sm font-bold text-brand-text group-hover:text-brand-primary transition-colors tracking-tight uppercase truncate">{friend.name || friend.username}</h4>
+                    {unreadCount > 0 && (
+                        <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-brand-danger text-white text-[9px] font-black rounded-full animate-bounce shadow-sm">
+                            {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                    )}
+                </div>
                 <div className="flex items-center gap-1.5">
                     <span className={`w-1 h-1 rounded-full ${friend.isOnline ? 'bg-brand-success' : 'bg-brand-muted'}`}></span>
                     <p className={`text-[8px] uppercase font-semibold tracking-widest transition-colors ${friend.isOnline ? 'text-brand-success' : 'text-brand-text-dim'}`}>

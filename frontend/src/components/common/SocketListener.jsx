@@ -33,7 +33,7 @@ function SocketListener() {
             socket.off('new_notification', handleNewNotification);
             socket.off('new_message', handleNewMessage);
         };
-    }, [user, addToast]);
+    }, [user, addToast, incrementUnreadMessages]);
 
     return null; // This component has no UI, it just listens
 }

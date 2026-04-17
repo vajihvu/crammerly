@@ -179,6 +179,17 @@ export default function Crammerly() {
     return () => { document.body.style.overflow = 'unset'; };
   }, [isAnyModalOpen]);
 
+  // ── Global API Event Listeners ──
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      console.warn('🚨 Global Unauthorized Event: Logging out...');
+      handleAuthLogout();
+    };
+
+    window.addEventListener('api:unauthorized', handleUnauthorized);
+    return () => window.removeEventListener('api:unauthorized', handleUnauthorized);
+  }, [handleAuthLogout]);
+
   // ── Track recent activity ──
   const trackActivity = React.useCallback((activity) => {
     setRecentActivity(prev => {

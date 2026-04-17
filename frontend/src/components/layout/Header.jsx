@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bell, Lightbulb, Calendar as CalendarIcon, ChevronLeft, LogOut, UserPlus } from 'lucide-react';
+import { Bell, Lightbulb, Calendar as CalendarIcon, ChevronLeft, LogOut, UserPlus, Search } from 'lucide-react';
 import NotificationsDropdown from '../NotificationsDropdown';
 
 const Header = ({
@@ -15,7 +15,10 @@ const Header = ({
     toggleTheme
 }) => {
     return (
-        <header className={`sticky top-0 z-[110] w-full bg-brand-surface border-b border-brand-border/20 shadow-sm opacity-100 transition-all ${(modals.profile || modals.friends || modals.calendar) ? 'hidden' : modals.floating ? 'hidden sm:block' : 'block'}`}>
+        <header 
+            className={`sticky top-0 z-[110] w-full bg-brand-surface border-b border-brand-border/20 shadow-sm opacity-100 transition-all ${(modals.profile || modals.friends || modals.calendar) ? 'hidden' : modals.floating ? 'hidden sm:block' : 'block'}`}
+            style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
+        >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-4 relative z-10 !bg-brand-surface">
                 {/* Left Actions */}
                 <div className="flex items-center gap-1 md:gap-3 flex-1">
@@ -77,6 +80,16 @@ const Header = ({
                             title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                         >
                             <Lightbulb size={16} className="sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
+                        </button>
+                    </div>
+
+                    <div className="relative">
+                        <button
+                            onClick={() => openModal('search')}
+                            className="relative w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl sm:rounded-2xl transition-all text-brand-text-dim hover:text-brand-text hover:bg-brand-muted/10"
+                            title="Search Rooms"
+                        >
+                            <Search size={16} className="sm:w-4.5 sm:h-4.5 md:w-5 md:h-5" />
                         </button>
                     </div>
 

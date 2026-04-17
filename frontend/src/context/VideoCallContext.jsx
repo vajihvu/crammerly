@@ -78,8 +78,19 @@ export const VideoCallProvider = ({ children }) => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ 
                 video: type === 'video', 
-                audio: true 
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true
+                }
             });
+            
+            // Validate audio track exists
+            if (stream.getAudioTracks().length === 0) {
+                console.warn('Microphone access granted, but no audio track received.');
+                addToast('Warning: No audio track detected from your microphone', 'warning');
+            }
+
             setLocalStream(stream);
             return stream;
         } catch (err) {

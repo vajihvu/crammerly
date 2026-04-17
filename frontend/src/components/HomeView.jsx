@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Users, Plus, Trash2, EyeOff, Search } from 'lucide-react';
 import { RoomGridSkeleton, NetworkError } from './ui/Skeletons';
 
-function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, onCreateRoom, onRoomClick, onDeleteRoom, onJoinByCode, onSearchClick, recentActivity = [] }) {
+function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, onCreateRoom, onRoomClick, onDeleteRoom, onJoinByCode, recentActivity = [] }) {
   const [activeGenre, setActiveGenre] = useState('All');
   const [activeStatus, setActiveStatus] = useState('Active Now');
   const [isGenreDropdownOpen, setIsGenreDropdownOpen] = useState(false);
@@ -95,16 +95,9 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-[1000] text-brand-text tracking-tighter uppercase leading-none">
             STUDY <span className="text-brand-primary">ROOMS</span>
           </h2>
-          <button
-            onClick={onSearchClick}
-            className="p-2 sm:p-3 bg-brand-surface hover:bg-brand-card text-brand-text rounded-2xl border border-brand-border/50 shadow-sm transition-all hover:scale-110 active:scale-95 group shrink-0 sm:hidden"
-            title="Search Rooms"
-          >
-            <Search size={22} className="text-brand-primary group-hover:scale-110 transition-transform" />
-          </button>
         </div>
 
-        <div className="flex flex-row gap-3 sm:gap-4 w-full lg:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full lg:w-auto">
           <button
             onClick={onCreateRoom}
             className="flex-1 lg:flex-none flex flex-row sm:flex-col items-center justify-center gap-2 sm:gap-3 p-3 sm:p-6 bg-brand-surface hover:bg-brand-card text-brand-text rounded-2xl sm:rounded-[32px] shadow-2xl transition-all hover:-translate-y-1 active:scale-95 group border border-brand-border/10"
@@ -157,10 +150,11 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
       <div className="w-full">
         <div className="space-y-8 flex flex-col w-full">
           {/* Genre / Category Filter Dropdown */}
-          <div className="relative z-50 w-max">
+          <div className="relative z-50 flex justify-center w-full mt-2">
+            <div className="relative w-max">
             <button
               onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}
-              className="px-6 py-3 rounded-full text-sm font-black border transition-all uppercase tracking-wider font-sans whitespace-nowrap bg-brand-text border-brand-text text-brand-bg shadow-md scale-105 flex items-center gap-2"
+              className="px-6 py-3 rounded-full text-sm font-black border transition-all uppercase tracking-wider font-sans whitespace-nowrap bg-brand-text border-brand-text text-brand-bg shadow-md active:scale-95 flex items-center gap-2"
             >
               {activeGenre === 'All' ? 'ALL GENRES' : activeGenre}
               <span className="text-[10px] ml-1">▼</span>
@@ -229,6 +223,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                 </div>
               </>
             )}
+            </div>
           </div>
 
           <div className="space-y-6 flex-1 flex flex-col">
@@ -252,13 +247,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                 ))}
               </div>
               <div className="hidden md:flex flex-1 items-center justify-center px-4 max-w-lg mx-auto">
-                <button
-                  onClick={onSearchClick}
-                  className="w-full flex items-center gap-3 px-6 py-2.5 bg-brand-bg/80 border-2 border-brand-border rounded-full text-brand-text-dim hover:text-brand-text hover:border-brand-primary transition-all group text-left shadow-md"
-                >
-                  <Search size={16} className="text-brand-primary shrink-0 transition-transform group-hover:scale-110" />
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100 transition-opacity">Search For Rooms</span>
-                </button>
+                {/* Search moved to main Header */}
               </div>
 
               {displayedRooms.length > 0 && (
@@ -334,7 +323,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                         <span className="text-xs font-black text-brand-text-dim ml-1 uppercase tracking-tighter font-sans">{Array.isArray(room.members) ? room.members.length : 0} / 80</span>
                       </div>
                       {(!(room.scheduleDate) || (room.scheduleDate) <= today || room.creatorId === currentUser.id) && (
-                        <button className="px-6 py-2.5 bg-brand-primary hover:bg-brand-primary/90 text-brand-bg rounded-xl text-[10px] font-[1000] uppercase tracking-widest shadow-accent transition-all group-hover:scale-105 font-sans">Join Room</button>
+                        <button className="w-full mt-2 px-6 py-3 bg-brand-primary hover:bg-brand-primary/90 text-brand-bg rounded-xl text-xs font-[1000] uppercase tracking-widest shadow-accent transition-all active:scale-95 font-sans">Join Room</button>
                       )}
                     </div>
                   </div>

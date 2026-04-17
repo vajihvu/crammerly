@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import env from '../../config/env';
 import { useVideoCall } from '../../context/VideoCallContext';
 import { X, UserPlus, MessageCircle, Video, Paperclip, Smile, Send, Mic, Search, FileText, ArrowLeft, PhoneCall, Sticker, User, Sparkles, Check, TrendingUp, Loader, Bell, UserCheck, ShieldClose, Play, Pause, Headphones, Github, Linkedin, Twitter, Instagram, GraduationCap, Code2, Heart } from 'lucide-react';
 import { FriendListSkeleton } from '../ui/Skeletons';
@@ -183,9 +184,17 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       setIsLoadingGifs(true);
       (async () => {
         try {
-          const res = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=cw6S767E6c91sVfF50A9499824fF9&limit=20&rating=g`);
+          const res = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${env.giphyApiKey}&limit=20&rating=g`);
+          if (res.status === 401) {
+            console.warn('Giphy API Key is invalid or rate-limited.');
+            if (!cancelled) setGifs([]);
+            return;
+          }
           const data = await res.json();
           if (!cancelled) setGifs(data.data || []);
+        } catch (err) {
+          console.error('Giphy trending failed:', err);
+          if (!cancelled) setGifs([]);
         } finally {
           if (!cancelled) setIsLoadingGifs(false);
         }
@@ -197,9 +206,17 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     setIsLoadingGifs(true);
     const timer = setTimeout(async () => {
       try {
-        const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=cw6S767E6c91sVfF50A9499824fF9&q=${gifSearch}&limit=20&offset=0&rating=g&lang=en`);
+        const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${env.giphyApiKey}&q=${gifSearch}&limit=20&offset=0&rating=g&lang=en`);
+        if (res.status === 401) {
+          console.warn('Giphy API Key is invalid or rate-limited.');
+          setGifs([]);
+          return;
+        }
         const data = await res.json();
         setGifs(data.data || []);
+      } catch (err) {
+        console.error('Giphy search failed:', err);
+        setGifs([]);
       } finally {
         setIsLoadingGifs(false);
       }
@@ -225,6 +242,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
   const [lastSearchedId, setLastSearchedId] = useState('');
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [profileFriend, setProfileFriend] = useState(null);
+  const [unreadCounts, setUnreadCounts] = useState({});
 
   // Initial Data Load
   useEffect(() => {
@@ -244,10 +262,6 @@ function FriendsModal({ currentUser, onClose, addToast }) {
         setSuggestedUsers(suggestionsData);
       } catch (_err) {
         console.error('Failed to load friends/notifications:', _err);
-        // Only show error toast if it's NOT a 401. 401 is handled by global logout.
-        if (addToast && _err?.response?.status !== 401) {
-          addToast('Failed to load your social data', 'danger');
-        }
       } finally {
         setLoadingFriends(false);
       }
@@ -293,6 +307,11 @@ function FriendsModal({ currentUser, onClose, addToast }) {
           // If we are currently looking at this chat, mark it as read
           if (selectedFriend && selectedFriend.dmRoomId === msg.roomId && activeView === 'chat') {
             messagesApi.markAsRead(msg.roomId).catch(() => {});
+          } else {
+            setUnreadCounts(prev => ({
+              ...prev,
+              [friendId]: (prev[friendId] || 0) + 1
+            }));
           }
         }
       };
@@ -402,6 +421,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
   const openChat = (friend, mode = 'text') => {
     // If we're in profile view and click message, or from list
     setSelectedFriend(friend);
+    setUnreadCounts(prev => ({ ...prev, [friend._id || friend.id]: 0 }));
     if (mode === 'video' || mode === 'voice') {
       initiateCall({
         id: friend._id || friend.id,
@@ -420,6 +440,27 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     setActiveView('profile');
   };
 
+  const appendOptimisticMessage = (savedMsg) => {
+    if (!selectedFriend) return;
+    const friendId = selectedFriend._id || selectedFriend.id;
+    
+    // Map to frontend message format
+    const formattedMsg = {
+      ...savedMsg,
+      sender: 'me',
+      time: new Date(savedMsg.timestamp || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setChatHistory(prev => {
+      const hists = prev[friendId] || [];
+      if (hists.some(m => (m.id === savedMsg.id || m._id === savedMsg._id))) return prev;
+      return {
+        ...prev,
+        [friendId]: [...hists, formattedMsg]
+      };
+    });
+  };
+
   const handleSendMessage = async () => {
     if (!message.trim() || !selectedFriend) return;
     const content = message.trim();
@@ -428,10 +469,11 @@ function FriendsModal({ currentUser, onClose, addToast }) {
 
     try {
       if (selectedFriend.dmRoomId) {
-        await messagesApi.send(selectedFriend.dmRoomId, { content });
+        const msg = await messagesApi.send(selectedFriend.dmRoomId, { content });
+        appendOptimisticMessage(msg);
       }
     } catch {
-      if (addToast) addToast('Failed to send message', 'danger');
+      // Handled globally
     }
   };
 
@@ -440,7 +482,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     const gifUrl = gif.images.fixed_height.url;
     
     try {
-      await messagesApi.send(selectedFriend.dmRoomId, { 
+      const msg = await messagesApi.send(selectedFriend.dmRoomId, { 
         content: "[GIF]",
         type: 'gif',
         fileData: { 
@@ -449,10 +491,11 @@ function FriendsModal({ currentUser, onClose, addToast }) {
           size: 0 
         }
       });
+      appendOptimisticMessage(msg);
       setShowEmojiPicker(false);
       setGifSearch('');
     } catch {
-      if (addToast) addToast('Failed to send GIF', 'danger');
+      // Handled globally
     }
   };
 
@@ -460,7 +503,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     if (!selectedFriend || !selectedFriend.dmRoomId) return;
     
     try {
-      await messagesApi.send(selectedFriend.dmRoomId, { 
+      const msg = await messagesApi.send(selectedFriend.dmRoomId, { 
         content: "[Sticker]",
         type: 'sticker',
         fileData: { 
@@ -469,9 +512,10 @@ function FriendsModal({ currentUser, onClose, addToast }) {
           size: 0
         }
       });
+      appendOptimisticMessage(msg);
       setShowEmojiPicker(false);
     } catch {
-      if (addToast) addToast('Failed to send sticker', 'danger');
+      // Handled globally
     }
   };
 
@@ -520,7 +564,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
           reader.onloadend = async () => {
             const base64Audio = reader.result;
             if (selectedFriend?.dmRoomId) {
-              await messagesApi.send(selectedFriend.dmRoomId, {
+              const msg = await messagesApi.send(selectedFriend.dmRoomId, {
                 content: 'Voice Message',
                 type: 'voice',
                 fileData: { 
@@ -529,6 +573,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                   mimeType: actualMimeType 
                 }
               });
+              appendOptimisticMessage(msg);
               if (addToast) addToast('Voice note sent!', 'success');
             }
           };
@@ -558,7 +603,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
         const uploadedFile = await messagesApi.uploadFile(file);
         
         // 2. Send message with the returned URL
-        await messagesApi.send(selectedFriend.dmRoomId, {
+        const msg = await messagesApi.send(selectedFriend.dmRoomId, {
           content: `Sent file: ${file.name}`,
           type: uploadedFile.mimeType?.startsWith('image/') ? 'image' : 'file',
           fileData: { 
@@ -568,6 +613,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
             mimeType: uploadedFile.mimeType
           }
         });
+        appendOptimisticMessage(msg);
         
         if (addToast) addToast('File sent successfully!', 'success');
       } catch (err) {
@@ -605,8 +651,8 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       await friendsApi.sendRequest(user._id || user.id);
       setPendingRequests(prev => new Set([...prev, user._id || user.id]));
       if (addToast) addToast('Request sent!', 'success');
-    } catch (err) {
-      if (addToast) addToast(err.response?.data?.message || 'Failed to send request', 'danger');
+    } catch {
+      // Handled globally
     }
   };
 
@@ -615,8 +661,8 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       await friendsApi.sendRequest(user._id || user.id);
       setPendingRequests(prev => new Set([...prev, user._id || user.id]));
       if (addToast) addToast('Request sent!', 'success');
-    } catch (err) {
-      if (addToast) addToast(err.response?.data?.message || 'Failed to send request', 'danger');
+    } catch {
+      // Handled globally
     }
   };
 
@@ -630,7 +676,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       const friendsList = Array.isArray(data) ? data : (data?.data && Array.isArray(data.data)) ? data.data : [];
       setFriends(friendsList);
     } catch {
-      if (addToast) addToast('Failed to accept request', 'danger');
+      // Handled globally
     }
   };
 
@@ -640,13 +686,18 @@ function FriendsModal({ currentUser, onClose, addToast }) {
       setNotifications(prev => (Array.isArray(prev) ? prev : []).filter(n => n.id !== notif.id));
       if (addToast) addToast('Request declined', 'info');
     } catch {
-      if (addToast) addToast('Failed to decline request', 'danger');
+      // Handled globally
     }
   };
 
-  const filteredSuggestions = (Array.isArray(suggestedUsers) ? suggestedUsers : []).filter(u => 
-    !(Array.isArray(friends) ? friends : []).some(f => (f._id || f.id) === (u._id || u.id))
-  );
+  const filteredSuggestions = (Array.isArray(suggestedUsers) ? suggestedUsers : []).filter(u => {
+    const userId = u._id || u.id;
+    const isFriend = (Array.isArray(friends) ? friends : []).some(f => (f._id || f.id) === userId);
+    const hasIncomingRequest = (Array.isArray(notifications) ? notifications : []).some(n => 
+      n.type === 'FRIEND_REQUEST' && (n.sender?._id || n.sender?.id) === userId
+    );
+    return !isFriend && !hasIncomingRequest;
+  });
 
 
   const handleSuggestionMessageClick = (user) => {
@@ -1189,6 +1240,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                             <FriendItem
                               key={friend._id || friend.id}
                               friend={friend}
+                              unreadCount={unreadCounts[friend._id || friend.id] || 0}
                               onChat={() => openChat(friend)}
                               onCall={() => openChat(friend, 'voice')}
                               onProfile={() => handleShowProfile(friend)}

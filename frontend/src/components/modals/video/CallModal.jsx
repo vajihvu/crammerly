@@ -45,14 +45,13 @@ const CallModal = () => {
             <div className="relative w-full h-[90vh] md:h-auto max-w-4xl md:aspect-video bg-zinc-900 rounded-3xl md:rounded-[32px] overflow-hidden shadow-2xl flex flex-col border border-zinc-800 scale-in-center">
                 
                 {/* Video Container */}
-                <div className="relative flex-1 bg-black group">
-                    {/* Remote Video / Voice Placeholder */}
+                <div className="relative flex-1 bg-black group min-h-0">
                     {/* Remote Video / Voice Placeholder */}
                     <video
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
-                        className={`w-full h-full object-contain transition-opacity duration-700 ${callState === 'active' && remoteStream && callType === 'video' ? 'opacity-100' : 'opacity-0 absolute'}`}
+                        className={`absolute inset-0 w-full h-full object-contain transition-opacity duration-700 ${callState === 'active' && remoteStream && callType === 'video' ? 'opacity-100 z-10' : 'opacity-0 -z-10'}`}
                     />
 
                     {(callState !== 'active' || !remoteStream || callType === 'voice') && (
@@ -93,7 +92,7 @@ const CallModal = () => {
                                     autoPlay
                                     playsInline
                                     muted
-                                    className="w-full h-full object-cover mirror"
+                                    className="w-full h-full object-contain mirror"
                                 />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-zinc-800">
@@ -112,7 +111,7 @@ const CallModal = () => {
                     </div>
 
                     {/* Call Controls Bar (Moved inside relative container for guaranteed visibility) */}
-                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 sm:gap-6 px-4 sm:px-8 py-3 sm:py-4 bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-[32px] sm:rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 duration-700 w-[90%] sm:w-auto overflow-hidden">
+                    <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-[200] flex items-center justify-center ${callState === 'incoming' ? 'gap-10 sm:gap-16' : 'gap-4 sm:gap-6'} px-4 sm:px-8 py-3 sm:py-4 bg-zinc-900/90 backdrop-blur-3xl border border-white/20 rounded-[32px] sm:rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.6)] w-[90%] sm:w-auto transition-all duration-300`}>
                         {callState === 'incoming' ? (
                             <>
                                 <button
