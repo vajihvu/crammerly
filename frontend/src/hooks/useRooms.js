@@ -190,16 +190,13 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
             const response = await roomsApi.join(room.id, code);
             // Unified success check: response must exist and not have success: false
             if (!response || response.success === false) {
-                const msg = response?.message || 'Failed to join room';
-                addToast(msg, 'danger');
+                // If the API call succeeded but returned a fail status (rare), 
+                // we might want a toast, but usually the backend returns 4xx/5xx for failures
+                // which is handled by the global interceptor.
                 return false;
             }
-        } catch (error) {
-            if (error.response?.status !== 401) {
-                console.error('Failed to join room:', error);
-                const msg = error.response?.data?.message || error.message || 'Failed to join room';
-                addToast(msg, 'danger');
-            }
+        } catch {
+            // Error handled globally by client.js interceptor (shows toast with backend message)
             return false;
         }
 
@@ -220,13 +217,12 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
         try {
             const roomData = await roomsApi.getByCode(code);
             if (roomData && roomData.id) {
-                return await joinRoom(roomData);
+                // IMPORTANT: Must pass the code here so joinRoom can send it to the backend
+                return await joinRoom(roomData, code);
             }
             return false;
-        } catch (error) {
-            console.error('Failed to join by code:', error);
-            const msg = error.response?.data?.message || 'Invalid room code';
-            addToast(msg, 'danger');
+        } catch {
+            // Error handled globally by client.js interceptor
             return false;
         }
     };

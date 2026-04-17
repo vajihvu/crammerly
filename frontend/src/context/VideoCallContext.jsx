@@ -34,6 +34,23 @@ export const VideoCallProvider = ({ children }) => {
     useEffect(() => { localStreamRef.current = localStream; }, [localStream]);
     useEffect(() => { callStateRef.current = callState; }, [callState]);
 
+    // Sync media tracks with state
+    useEffect(() => {
+        if (localStream) {
+            localStream.getAudioTracks().forEach(track => {
+                track.enabled = !isMuted;
+            });
+        }
+    }, [isMuted, localStream]);
+
+    useEffect(() => {
+        if (localStream) {
+            localStream.getVideoTracks().forEach(track => {
+                track.enabled = !isCamOff;
+            });
+        }
+    }, [isCamOff, localStream]);
+
     // Cleanup WebRTC
     const cleanupCall = useCallback(() => {
         if (peerConnection.current) {
@@ -279,17 +296,11 @@ export const VideoCallProvider = ({ children }) => {
     };
 
     const toggleMute = () => {
-        if (localStream) {
-            localStream.getAudioTracks().forEach(track => track.enabled = !isMuted);
-            setIsMuted(!isMuted);
-        }
+        setIsMuted(prev => !prev);
     };
 
     const toggleCamera = () => {
-        if (localStream) {
-            localStream.getVideoTracks().forEach(track => track.enabled = !isCamOff);
-            setIsCamOff(!isCamOff);
-        }
+        setIsCamOff(prev => !prev);
     };
 
     return (

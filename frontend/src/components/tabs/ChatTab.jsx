@@ -323,7 +323,11 @@ function ChatTab({ room, currentUser, addToast }) {
                 )}
 
                 {msg.type === 'sticker' && (
-                  <div className="text-6xl">{msg.text}</div>
+                  msg.fileData?.url ? (
+                    <img src={msg.fileData.url} alt="sticker" className="w-32 h-32 rounded-lg mb-2" />
+                  ) : (
+                    <div className="text-6xl">{msg.text}</div>
+                  )
                 )}
 
                 {msg.type === 'voice' ? (

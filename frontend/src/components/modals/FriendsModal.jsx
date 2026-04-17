@@ -441,6 +441,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     
     try {
       await messagesApi.send(selectedFriend.dmRoomId, { 
+        content: "[GIF]",
         type: 'gif',
         fileData: { 
           url: gifUrl, 
@@ -460,6 +461,7 @@ function FriendsModal({ currentUser, onClose, addToast }) {
     
     try {
       await messagesApi.send(selectedFriend.dmRoomId, { 
+        content: "[Sticker]",
         type: 'sticker',
         fileData: { 
           url: stickerUrl, 
@@ -768,6 +770,8 @@ function FriendsModal({ currentUser, onClose, addToast }) {
                             <AudioMessage url={msg.fileData?.url} isMe={msg.sender === 'me'} />
                           ) : msg.type === 'text' ? (
                             <MessageContent text={msg.content || msg.text} />
+                          ) : msg.type === 'sticker' && !msg.fileData?.url ? (
+                            <div className="text-5xl py-2">{msg.content || msg.text}</div>
                           ) : null}
                           
                           {msg.type === 'file' && (

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useVideoCall } from '../../../context/VideoCallContext';
-import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff, Maximize, Minimize, User } from 'lucide-react';
+import { Phone, PhoneOff, Mic, MicOff, Video, VideoOff, Maximize, Minimize, User, Volume2, VolumeX } from 'lucide-react';
 
 const CallModal = () => {
     const {
@@ -14,9 +14,10 @@ const CallModal = () => {
         acceptCall,
         declineCall,
         endCall,
-        toggleMute,
-        toggleCamera
+        toggleMute
     } = useVideoCall();
+    
+    const [isSpeakerOff, setIsSpeakerOff] = React.useState(false);
 
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
@@ -51,7 +52,7 @@ const CallModal = () => {
                         ref={remoteVideoRef}
                         autoPlay
                         playsInline
-                        className={`w-full h-full object-cover transition-opacity duration-700 ${callState === 'active' && remoteStream && callType === 'video' ? 'opacity-100' : 'opacity-0 absolute'}`}
+                        className={`w-full h-full object-contain transition-opacity duration-700 ${callState === 'active' && remoteStream && callType === 'video' ? 'opacity-100' : 'opacity-0 absolute'}`}
                     />
 
                     {(callState !== 'active' || !remoteStream || callType === 'voice') && (
@@ -85,7 +86,7 @@ const CallModal = () => {
 
                     {/* Local Video (Picture-in-Picture) - only for video calls */}
                     {callType === 'video' && (
-                        <div className={`absolute bottom-6 right-6 w-48 aspect-video bg-zinc-800 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl transition-all duration-500 ${callState === 'active' ? 'opacity-100' : 'opacity-40'}`}>
+                        <div className={`absolute top-6 right-6 w-32 sm:w-48 aspect-video bg-zinc-800 rounded-2xl overflow-hidden border-2 border-white/10 shadow-2xl transition-all duration-500 ${callState === 'active' ? 'opacity-100' : 'opacity-40'}`}>
                             {localStream && !isCamOff ? (
                                 <video
                                     ref={localVideoRef}
@@ -103,58 +104,66 @@ const CallModal = () => {
                     )}
 
                     {/* Top Overlay Controls */}
-                    <div className="absolute top-6 left-6 flex items-center gap-2">
+                    <div className="absolute top-6 left-6 z-50 flex items-center gap-2">
                         <div className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-white/80">SECURE P2P</span>
                         </div>
                     </div>
-                </div>
 
-                {/* Call Controls Bar */}
-                <div className="h-24 bg-zinc-900 border-t border-zinc-800 flex items-center justify-center gap-8 px-8">
-                    {callState === 'incoming' ? (
-                        <>
-                            <button
-                                onClick={acceptCall}
-                                className="w-16 h-16 rounded-full bg-green-500 hover:bg-green-600 flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all group"
-                            >
-                                <Phone className="w-8 h-8 text-white fill-current" />
-                            </button>
-                            <button
-                                onClick={declineCall}
-                                className="w-16 h-16 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
-                            >
-                                <PhoneOff className="w-8 h-8 text-white fill-current" />
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <button
-                                onClick={toggleMute}
-                                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md transition-all ${isMuted ? 'bg-red-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
-                            >
-                                {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-                            </button>
-                            
-                            <button
-                                onClick={toggleCamera}
-                                className={`w-14 h-14 rounded-full flex items-center justify-center shadow-md transition-all ${isCamOff ? 'bg-red-500 text-white' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`}
-                            >
-                                {isCamOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
-                            </button>
+                    {/* Call Controls Bar (Moved inside relative container for guaranteed visibility) */}
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-4 sm:gap-6 px-4 sm:px-8 py-3 sm:py-4 bg-zinc-900/80 backdrop-blur-2xl border border-white/10 rounded-[32px] sm:rounded-[40px] shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom-10 duration-700 w-[90%] sm:w-auto overflow-hidden">
+                        {callState === 'incoming' ? (
+                            <>
+                                <button
+                                    onClick={acceptCall}
+                                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-green-500 hover:bg-green-400 text-white flex items-center justify-center shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:scale-110 active:scale-95 transition-all group"
+                                >
+                                    <Phone size={24} className="sm:w-7 sm:h-7 fill-current" />
+                                </button>
+                                <button
+                                    onClick={declineCall}
+                                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-500 hover:bg-red-400 text-white flex items-center justify-center shadow-[0_0_20px_rgba(239,68,68,0.3)] hover:scale-110 active:scale-95 transition-all"
+                                >
+                                    <PhoneOff size={24} className="sm:w-7 sm:h-7 fill-current" />
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={toggleMute}
+                                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex flex-col items-center justify-center transition-all ${isMuted ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                                >
+                                    {isMuted ? <MicOff size={18} className="sm:w-5 sm:h-5" /> : <Mic size={18} className="sm:w-5 sm:h-5" />}
+                                    <span className="text-[6px] sm:text-[7px] font-black uppercase mt-1 tracking-widest opacity-60">Mute</span>
+                                </button>
+                                
+                                <button
+                                    onClick={() => {
+                                        if (remoteVideoRef.current) {
+                                            remoteVideoRef.current.muted = !isSpeakerOff;
+                                            setIsSpeakerOff(!isSpeakerOff);
+                                        }
+                                    }}
+                                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex flex-col items-center justify-center transition-all ${isSpeakerOff ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                                >
+                                    {isSpeakerOff ? <VolumeX size={18} className="sm:w-5 sm:h-5" /> : <Volume2 size={18} className="sm:w-5 sm:h-5" />}
+                                    <span className="text-[6px] sm:text-[7px] font-black uppercase mt-1 tracking-widest opacity-60">Speaker</span>
+                                </button>
 
-                            <div className="w-px h-10 bg-zinc-800" />
-
-                            <button
-                                onClick={endCall}
-                                className="px-8 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white font-black uppercase text-xs tracking-widest shadow-lg shadow-red-900/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
-                            >
-                                <PhoneOff className="w-5 h-5 fill-current" />
-                                End Call
-                            </button>
-                        </>
-                    )}
+                                <button
+                                    onClick={endCall}
+                                    className="px-4 sm:px-8 h-12 sm:h-14 rounded-full bg-red-600 hover:bg-red-500 text-white font-black uppercase text-[8px] sm:text-[10px] tracking-[0.2em] shadow-[0_10px_30px_rgba(220,38,38,0.4)] hover:scale-105 active:scale-95 transition-all flex items-center gap-2 sm:gap-3 ml-1 sm:ml-2 border border-white/10"
+                                >
+                                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-white/20 flex items-center justify-center">
+                                        <PhoneOff size={12} className="sm:w-4 sm:h-4 fill-current" />
+                                    </div>
+                                    <span className="hidden xs:inline">End Session</span>
+                                    <span className="xs:hidden">End</span>
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
 

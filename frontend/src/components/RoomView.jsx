@@ -230,7 +230,7 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
   );
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="flex-1 flex flex-col min-h-0 overflow-y-auto lg:overflow-hidden custom-scrollbar">
       {/* Mobile: Collapsible room info toggle */}
       <div className="lg:hidden shrink-0 mb-2">
         <button
