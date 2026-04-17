@@ -279,6 +279,18 @@ export const initSocket = (server) => {
         });
     });
 
+    // Periodically broadcast public stats (active users) every 30 seconds
+    setInterval(() => {
+        try {
+            if (io) {
+                const activeCount = io.sockets.sockets.size;
+                io.emit('stats_update', { activeUsers: activeCount });
+            }
+        } catch (err) {
+            logger.error(`Error broadcasting stats: ${err.message}`);
+        }
+    }, 30000);
+
     return io;
 };
 

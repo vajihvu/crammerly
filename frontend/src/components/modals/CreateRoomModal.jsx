@@ -40,17 +40,17 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
         <>
             <div className="fixed inset-0 bg-brand-bg/80 backdrop-blur-xl z-[100]" aria-hidden="true"></div>
             <div className="fixed inset-0 flex items-center justify-center p-4 z-[200]" onClick={onClose}>
-                <div className="bg-brand-surface rounded-[24px] w-full max-w-sm border border-brand-border/30 shadow-2xl animate-in zoom-in-95 duration-500 relative font-sans flex flex-col" onClick={(e) => e.stopPropagation()}>
+                <div className="bg-brand-surface rounded-[32px] w-full max-w-md border border-brand-border/30 shadow-premium animate-in zoom-in-95 duration-500 relative font-sans flex flex-col" onClick={(e) => e.stopPropagation()}>
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-primary/40 via-brand-text/10 to-brand-primary/40"></div>
 
                     {/* Header */}
                     <div className="px-5 sm:px-6 py-4 border-b border-brand-border/30 bg-brand-surface/50 backdrop-blur-xl flex items-center justify-between shrink-0 relative z-10">
-                        <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-brand-text text-brand-bg rounded-xl flex items-center justify-center shadow-lg">
-                                <Plus size={16} />
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 sm:w-11 sm:h-11 bg-brand-text text-brand-bg rounded-2xl flex items-center justify-center shadow-accent overflow-hidden">
+                                <Plus size={20} strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-bold text-brand-text uppercase tracking-tighter">NEW ROOM</h3>
+                                <h3 className="text-xl sm:text-2xl font-[1000] text-brand-text uppercase tracking-tighter leading-tight font-sans">NEW <span className="text-brand-primary">ROOM</span></h3>
                             </div>
                         </div>
                         <button onClick={onClose} className="p-1.5 text-brand-text-dim hover:text-brand-danger hover:bg-brand-bg rounded-full transition-all">
@@ -58,7 +58,7 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                         </button>
                     </div>
 
-                    <div className="px-5 sm:px-6 pt-4 pb-5 space-y-3 flex-1 relative">
+                    <div className="px-5 sm:px-8 pt-6 pb-8 space-y-5 flex-1 relative">
                         <div className="absolute -top-12 -left-12 w-48 h-48 bg-brand-primary/5 blur-[80px] rounded-full pointer-events-none"></div>
                         <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-brand-secondary/5 blur-[80px] rounded-full pointer-events-none"></div>
 
@@ -70,26 +70,26 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                                         placeholder="Room Name"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-brand-bg border-[2px] border-brand-border/30 rounded-xl text-sm font-bold text-brand-text focus:border-brand-primary/50 focus:outline-none focus:bg-brand-card transition-all placeholder:text-brand-text/30 font-sans"
+                                        className="w-full px-5 py-3.5 bg-brand-bg border-[2px] border-brand-border/30 rounded-2xl text-base font-bold text-brand-text focus:border-brand-primary/50 focus:outline-none focus:bg-brand-card transition-all placeholder:text-brand-text/30 font-sans shadow-sm"
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-[1.2fr_0.8fr] gap-4">
                                     <input
                                         type="text"
                                         placeholder="My study goal..."
                                         value={task}
                                         onChange={(e) => setTask(e.target.value)}
-                                        className="w-full px-4 py-2.5 bg-brand-bg border-[2px] border-brand-border/30 rounded-xl text-sm font-bold text-brand-text focus:border-brand-primary/50 focus:outline-none focus:bg-brand-card transition-all placeholder:text-brand-text/30 font-sans"
+                                        className="w-full px-5 py-3.5 bg-brand-bg border-[2px] border-brand-border/30 rounded-2xl text-sm font-bold text-brand-text focus:border-brand-primary/50 focus:outline-none focus:bg-brand-card transition-all placeholder:text-brand-text/30 font-sans"
                                     />
 
                                     {/* Custom Topic Dropdown */}
                                     <div className="relative">
                                         <button
                                             onClick={() => setIsTopicOpen(!isTopicOpen)}
-                                            className="w-full px-4 py-2.5 bg-brand-bg border-[2px] border-brand-border/30 rounded-xl text-sm font-bold text-brand-text flex items-center justify-between hover:border-brand-primary/30 transition-all font-sans"
+                                            className="w-full px-5 py-3.5 bg-brand-bg border-[2px] border-brand-border/30 rounded-2xl text-sm font-bold text-brand-text flex items-center justify-between hover:border-brand-primary/50 transition-all font-sans relative pr-10"
                                         >
                                             <span className={topic ? 'opacity-100' : 'opacity-40'}>{topic || 'Subject'}</span>
-                                            <ChevronDown size={18} className={`transition-transform duration-300 ${isTopicOpen ? 'rotate-180' : ''}`} />
+                                            <ChevronDown size={18} className={`absolute right-4 transition-transform duration-300 ${isTopicOpen ? 'rotate-180 text-brand-primary' : 'text-brand-text-dim'}`} />
                                         </button>
 
                                         {isTopicOpen && (
@@ -113,9 +113,9 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                             </div>
 
                             {/* Privacy Toggle */}
-                            <div className="pt-1">
-                                <label className="text-[9px] font-black text-brand-text-dim uppercase tracking-[0.2em] block mb-2 pl-1">Who can join?</label>
-                                <div className="bg-brand-bg p-1 rounded-xl border border-brand-border/30 grid grid-cols-2 gap-1">
+                            <div className="pt-2">
+                                <label className="text-[10px] font-black text-brand-primary uppercase tracking-[0.25em] block mb-3 pl-1">Who can join?</label>
+                                <div className="bg-brand-bg p-1.5 rounded-2xl border border-brand-border/30 grid grid-cols-2 gap-1.5 shadow-inner">
                                     {['Public', 'Private'].map((type) => (
                                         <button
                                             key={type}
@@ -132,17 +132,17 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                             </div>
 
                             {/* Custom Schedule UI */}
-                            <div className="pt-1">
-                                <label className="text-[9px] font-black text-brand-text-dim uppercase tracking-[0.2em] block mb-2 pl-1">Start Time (Optional)</label>
-                                <div className="grid grid-cols-2 gap-3">
+                            <div className="pt-2">
+                                <label className="text-[10px] font-black text-brand-primary uppercase tracking-[0.25em] block mb-3 pl-1">Start Time (Optional)</label>
+                                <div className="grid grid-cols-2 gap-4">
                                     {/* Custom Date Picker */}
                                     <div className="relative">
                                         <button
                                             onClick={() => setIsDateOpen(!isDateOpen)}
-                                            className="w-full px-3 py-2.5 bg-brand-bg border-[2px] border-brand-border/30 rounded-xl flex items-center gap-2 hover:border-brand-primary/30 transition-all font-sans"
+                                            className="w-full px-4 py-3 bg-brand-bg border-[2px] border-brand-border/30 rounded-2xl flex items-center gap-3 hover:border-brand-primary/50 transition-all font-sans"
                                         >
-                                            <Calendar size={14} className="text-brand-primary shrink-0" />
-                                            <span className={`text-xs font-bold ${scheduleDate ? 'text-brand-text' : 'text-brand-text/40'}`}>
+                                            <Calendar size={16} className="text-brand-primary shrink-0" />
+                                            <span className={`text-[13px] font-bold ${scheduleDate ? 'text-brand-text' : 'text-brand-text/40'}`}>
                                                 {scheduleDate ? (() => {
                                                     const [y, m, d] = scheduleDate.split('-');
                                                     return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -191,10 +191,10 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                                     <div className="relative">
                                         <button
                                             onClick={() => setIsTimeOpen(!isTimeOpen)}
-                                            className="w-full px-3 py-2.5 bg-brand-bg border-[2px] border-brand-border/30 rounded-xl flex items-center gap-2 hover:border-brand-primary/30 transition-all font-sans"
+                                            className="w-full px-4 py-3 bg-brand-bg border-[2px] border-brand-border/30 rounded-2xl flex items-center gap-3 hover:border-brand-primary/50 transition-all font-sans"
                                         >
-                                            <Clock size={14} className="text-brand-primary shrink-0" />
-                                            <span className={`text-xs font-bold ${scheduleTime ? 'text-brand-text' : 'text-brand-text/40'}`}>
+                                            <Clock size={16} className="text-brand-primary shrink-0" />
+                                            <span className={`text-[13px] font-bold ${scheduleTime ? 'text-brand-text' : 'text-brand-text/40'}`}>
                                                 {scheduleTime || 'Select Time'}
                                             </span>
                                         </button>
@@ -225,13 +225,13 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                             <div className="flex items-center justify-between mt-4 gap-3">
                                 <button
                                     onClick={onClose}
-                                    className="flex-1 py-2.5 text-brand-text-dim font-black text-[10px] uppercase tracking-[0.2em] hover:text-brand-text transition-all text-center font-sans"
+                                    className="flex-1 py-3 text-brand-text-dim font-black text-xs uppercase tracking-[0.25em] hover:text-brand-text transition-all text-center font-sans active:scale-95"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleCreate}
-                                    className="flex-[2] py-2.5 bg-brand-text text-brand-bg rounded-xl font-[1000] text-[10px] uppercase tracking-[0.1em] shadow-xl hover:bg-black hover:-translate-y-1 transition-all active:scale-95 font-sans ring-2 ring-brand-bg"
+                                    className="flex-[2] py-3.5 bg-brand-text text-brand-bg rounded-2xl font-[1000] text-xs uppercase tracking-[0.1em] shadow-accent hover:bg-black hover:-translate-y-1 transition-all active:scale-95 font-sans ring-2 ring-brand-bg"
                                 >
                                     CREATE ROOM
                                 </button>

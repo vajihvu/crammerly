@@ -1,14 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { X, Info, Globe, Twitter, Github, Heart, Code2 } from 'lucide-react';
+import { statsApi } from '../../api';
+import { getSocket } from '../../utils/socket';
 
 function AboutModal({ onClose }) {
-    const [activeUsers, setActiveUsers] = useState(1402391);
+    const [stats, setStats] = useState({ 
+        activeUsers: 1402391, 
+        countries: '180+',
+        totalUsers: 0 
+    });
     
     useEffect(() => {
-        const interval = setInterval(() => {
-            setActiveUsers(prev => prev + Math.floor(Math.random() * 5) - 1);
-        }, 3000);
-        return () => clearInterval(interval);
+        // 1. Fetch initial public stats
+        const fetchInitialStats = async () => {
+            try {
+                const res = await statsApi.getPublicStats();
+                if (res.success) {
+                    setStats(res.data);
+                }
+            } catch (err) {
+                console.error('Failed to fetch stats:', err);
+            }
+        };
+        fetchInitialStats();
+
+        // 2. Listen for real-time socket updates
+        const socket = getSocket();
+        if (socket) {
+            const handleStatsUpdate = (data) => {
+                setStats(prev => ({
+                    ...prev,
+                    activeUsers: data.activeUsers
+                }));
+            };
+            socket.on('stats_update', handleStatsUpdate);
+            return () => socket.off('stats_update', handleStatsUpdate);
+        }
     }, []);
 
     return (
@@ -38,11 +65,11 @@ function AboutModal({ onClose }) {
                 <div className="grid grid-cols-2 gap-2 mb-6 md:mb-8 w-full">
                     <div className="p-3 bg-brand-bg/40 rounded-[20px] border border-brand-border/20">
                         <p className="text-[8px] md:text-[9px] font-black text-brand-primary uppercase tracking-widest mb-0.5 flex items-center justify-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-brand-success animate-pulse shadow-[0_0_8px_rgba(201,181,156,0.6)]"></span> Users Active</p>
-                        <p className="text-md md:text-lg font-[1000] text-brand-text tracking-tighter flex items-center justify-center gap-1">{activeUsers.toLocaleString()}</p>
+                        <p className="text-md md:text-lg font-[1000] text-brand-text tracking-tighter flex items-center justify-center gap-1">{stats.activeUsers.toLocaleString()}</p>
                     </div>
                     <div className="p-3 bg-brand-bg/40 rounded-[20px] border border-brand-border/20">
                         <p className="text-[8px] md:text-[9px] font-black text-brand-primary uppercase tracking-widest mb-0.5">Countries</p>
-                        <p className="text-md md:text-lg font-[1000] text-brand-text tracking-tighter">180+</p>
+                        <p className="text-md md:text-lg font-[1000] text-brand-text tracking-tighter">{stats.countries}</p>
                     </div>
                 </div>
 

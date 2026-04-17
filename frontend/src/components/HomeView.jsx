@@ -90,9 +90,9 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Header & Main Actions */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mt-8 sm:mt-12 mb-4 sm:mb-6 pl-6 pr-4">
-        <div className="flex items-center justify-between w-full lg:w-auto gap-4">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-[1000] text-brand-text tracking-tighter uppercase leading-none">
+      <div className="flex flex-col lg:flex-row justify-between items-center lg:items-center gap-4 mt-8 sm:mt-12 mb-4 sm:mb-6 px-6">
+        <div className="flex items-center justify-center lg:justify-start w-full lg:w-auto gap-4 text-center lg:text-left">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-[1000] text-brand-text tracking-tighter uppercase leading-none w-full lg:w-auto">
             STUDY <span className="text-brand-primary">ROOMS</span>
           </h2>
         </div>
@@ -150,7 +150,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
       <div className="w-full">
         <div className="space-y-8 flex flex-col w-full">
           {/* Genre / Category Filter Dropdown */}
-          <div className="relative z-50 flex justify-center w-full mt-2">
+          <div className="relative z-50 flex justify-start w-full mt-2 pl-6">
             <div className="relative w-max">
             <button
               onClick={() => setIsGenreDropdownOpen(!isGenreDropdownOpen)}

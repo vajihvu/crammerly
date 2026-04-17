@@ -10,6 +10,7 @@ import bugRoutes from './bugRoutes.js';
 import friendsRoutes from './friendsRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
 import adminRoutes from './adminRoutes.js';
+import statsRoutes from './statsRoutes.js';
 
 const router = express.Router();
 
@@ -30,5 +31,6 @@ router.use('/bugs', bugRoutes);
 router.use('/friends', friendsRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/admin', adminRoutes);
+router.use('/stats', statsRoutes);
 
 export default router;
