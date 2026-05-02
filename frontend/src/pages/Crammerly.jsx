@@ -8,7 +8,7 @@ import { useFocusSession } from '../hooks/useFocusSession';
 import { Sparkles } from 'lucide-react';
 
 import HomeView from '../components/HomeView';
-import RoomView from '../components/RoomView';
+const RoomView = lazy(() => import('../components/RoomView'));
 import MenuSidebar from '../components/MenuSidebar';
 import NotificationsDropdown from '../components/NotificationsDropdown';
 import ModalPortal from '../components/ModalPortal';
@@ -344,6 +344,7 @@ export default function Crammerly() {
             />
           )}
           {isInRoom && currentRoom && authUser && (
+            <Suspense fallback={<div className="flex-1 flex items-center justify-center"><Sparkles className="text-brand-primary animate-spin-slow" size={32} /></div>}>
             <RoomView
               room={currentRoom}
               currentUser={currentUser}
@@ -358,6 +359,7 @@ export default function Crammerly() {
               onStartFocus={startFocusSession}
               onEndFocus={endFocusSession}
             />
+            </Suspense>
           )}
         </div>
       </main>

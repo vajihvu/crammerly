@@ -12,6 +12,8 @@ import { bugsApi } from './bugs';
 import aiApi from './ai';
 import { adminApi } from './admin';
 import { statsApi } from './stats';
+import { tasksApi } from './tasks';
+import { resourcesApi } from './resources';
 import client from './client';
 
 export {
@@ -30,6 +32,8 @@ export {
     aiApi,
     adminApi,
     statsApi,
+    tasksApi,
+    resourcesApi,
 };
 
 // Default export as a unified object if preferred
@@ -48,6 +52,8 @@ export default {
     ai: aiApi,
     admin: adminApi,
     stats: statsApi,
+    tasks: tasksApi,
+    resources: resourcesApi,
     client,
 };
 

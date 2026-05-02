@@ -7,6 +7,8 @@ export const createRoomSchema = z.object({
     task: z.string().optional(),
     schedule_date: z.string().optional(),
     schedule_time: z.string().optional(),
+    roomType: z.enum(['Study', 'Project']).optional().default('Study'),
+    description: z.string().max(1000).optional().default(''),
 });
 
 export const updateProgressSchema = z.object({

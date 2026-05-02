@@ -1,9 +1,15 @@
-import zxcvbn from 'zxcvbn';
+let zxcvbnModule = null;
 
-export const getPasswordStrength = (password, userInputs = []) => {
-    if (!password) return { score: 0, label: 'Empty', color: 'bg-brand-border' };
+export const getPasswordStrength = async (password, userInputs = []) => {
+    if (!password) return { score: 0, label: 'Empty', color: 'bg-brand-border', width: '0%', feedback: { warning: '', suggestions: [] } };
 
-    const result = zxcvbn(password, userInputs);
+    // Lazy-load zxcvbn (~800KB) only when actually needed
+    if (!zxcvbnModule) {
+        const mod = await import('zxcvbn');
+        zxcvbnModule = mod.default || mod;
+    }
+
+    const result = zxcvbnModule(password, userInputs);
 
     const strengths = [
         { label: 'Very Weak', color: 'bg-brand-danger', width: '20%' },

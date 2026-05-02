@@ -143,6 +143,17 @@ app.use(helmet({
 app.use(express.json({ limit: '5mb' }));
 app.use(cookieParser());
 
+// 3a. Response Compression (gzip/brotli) — reduces API payload sizes by ~70%
+import compression from 'compression';
+app.use(compression({
+    level: 6,                     // Good balance of speed vs compression ratio
+    threshold: 1024,              // Only compress responses > 1KB
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) return false;
+        return compression.filter(req, res);
+    }
+}));
+
 // 4. Rate Limiting (Distributed with Redis)
 app.use('/api', apiLimiter);
 

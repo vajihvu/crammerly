@@ -1,6 +1,6 @@
 // src/components/HomeView.jsx
 import React, { useState } from 'react';
-import { Users, Plus, Trash2, EyeOff, Search } from 'lucide-react';
+import { Users, Plus, Trash2, EyeOff, Search, LayoutGrid } from 'lucide-react';
 import { RoomGridSkeleton, NetworkError } from './ui/Skeletons';
 
 function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, onCreateRoom, onRoomClick, onDeleteRoom, onJoinByCode, recentActivity = [] }) {
@@ -59,7 +59,7 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
     ? currentUser.interests
     : ['General Study', 'Skill Building'];
 
-  const statusTabs = ['Active Now', 'My Rooms', 'Scheduled'];
+  const statusTabs = ['Active Now', 'My Rooms', 'Projects', 'Scheduled'];
 
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -79,6 +79,9 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
       const isCreator = room.creatorId === currentUser.id;
       const isMember = Array.isArray(room.members) && room.members.some(m => (m.id === currentUser.id || m.profile_id === currentUser.id));
       return isCreator || isMember;
+    }
+    if (activeStatus === 'Projects') {
+      return room.roomType === 'Project';
     }
     if (activeStatus === 'Scheduled') {
       // Only show rooms that are scheduled for a future date (not today)
@@ -308,9 +311,14 @@ function HomeView({ rooms, loadingRooms, roomsError, onRetryRooms, currentUser, 
                       </button>
                     </div>
                     <div className="space-y-4 relative">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <span className="px-3 py-1 bg-brand-primary/15 rounded-lg text-[10px] font-black text-brand-primary uppercase tracking-widest font-sans">{room.topic}</span>
                         <span className="px-3 py-1 bg-brand-secondary/15 rounded-lg text-[10px] font-black text-brand-secondary uppercase tracking-widest font-sans">{room.privacy}</span>
+                        {room.roomType === 'Project' && (
+                          <span className="px-3 py-1 bg-violet-500/15 rounded-lg text-[10px] font-black text-violet-400 uppercase tracking-widest font-sans flex items-center gap-1">
+                            <LayoutGrid size={10} />Project
+                          </span>
+                        )}
                       </div>
                       <div className="flex justify-between items-center pt-4 border-t border-brand-border/50">
                         <div className="flex -space-x-2">

@@ -145,7 +145,7 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
     }, [loadRooms, authUser, addToast, skip]); // currentRoom handled by Ref to avoid loop
 
     // ── Create room (requires auth) ──
-    const createRoom = async (roomName, task, topic, privacy, scheduleDate, scheduleTime) => {
+    const createRoom = async (roomName, task, topic, privacy, scheduleDate, scheduleTime, roomType, description) => {
         if (!authUser) {
             addToast('Please sign in to create a room', 'error');
             return false;
@@ -155,7 +155,9 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
             name: roomName, task, topic,
             privacy: privacy || 'Public',
             scheduleDate: scheduleDate || null,
-            scheduleTime: scheduleTime || null
+            scheduleTime: scheduleTime || null,
+            roomType: roomType || 'Study',
+            description: description || ''
         };
 
         try {
@@ -246,11 +248,17 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
                 message: `Are you sure you want to permanently delete "${room.name}"? All members will be removed and notified.`,
                 onConfirm: async () => {
                     try {
-                        if (authUser) await roomsApi.delete(room.id);
+                        const hasSession = !!localStorage.getItem('userInfo');
+                        if (authUser && hasSession) await roomsApi.delete(room.id);
                         if (currentRoom?.id === room.id) leaveRoom();
                         setRooms(prev => prev.filter(r => r.id !== room.id));
                         addToast('Room deleted successfully', 'success');
                     } catch (error) {
+                        if (error.response?.status === 401 || error.response?.status === 500) {
+                            if (currentRoom?.id === room.id) leaveRoom();
+                            setRooms(prev => prev.filter(r => r.id !== room.id));
+                            return;
+                        }
                         console.error('Failed to delete room:', error);
                         addToast('Failed to delete room', 'error');
                     }
@@ -264,7 +272,9 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
                 message: `Are you sure you want to leave "${room.name}"?`,
                 onConfirm: async () => {
                     try {
-                        if (authUser) await roomsApi.leave(room.id);
+                        // Only call the API if the session is still alive
+                        const hasSession = !!localStorage.getItem('userInfo');
+                        if (authUser && hasSession) await roomsApi.leave(room.id);
                         if (currentRoom?.id === room.id) leaveRoom();
                         setRooms(prev => prev.map(r => {
                             if (r.id === room.id) {
@@ -274,6 +284,11 @@ export function useRooms({ authUser, currentUser, addToast, openConfirm, skip = 
                         }));
                         addToast('Left room successfully', 'success');
                     } catch (error) {
+                        // If session expired mid-action, clean up locally instead of showing an error
+                        if (error.response?.status === 401 || error.response?.status === 500) {
+                            if (currentRoom?.id === room.id) leaveRoom();
+                            return;
+                        }
                         console.error('Failed to leave room:', error);
                         addToast('Failed to leave room', 'error');
                     }

@@ -40,6 +40,15 @@ smoke_results*.txt
 bom.json
 backend/check_db.js
 
+# Lint & build output artifacts
+**/eslint.json
+**/eslint_err.txt
+**/eslint_output.txt
+**/lint_output*.txt
+**/build_err*.txt
+*_lint.log
+*_lint_quiet.log
+
 # Database
 mongodb_data/
 

@@ -34,25 +34,31 @@ export const getAllRooms = asyncHandler(async (req, res) => {
         .populate('creatorId', 'name avatar')
         .populate('members.user', 'name avatar')
         .sort({ createdAt: -1 })
-        .limit(limit);
+        .limit(limit)
+        .lean();
 
     const formattedRooms = rooms.map(room => ({
         id: room._id,
         name: room.name,
         task: room.task,
         topic: room.topic,
+        description: room.description || '',
+        roomType: room.roomType || 'Study',
         privacy: room.privacy,
         code: (room.privacy === 'Public' || room.creatorId?.toString() === req.user._id.toString() || room.members.some(m => m.user?._id?.toString() === req.user._id.toString())) ? room.code : undefined,
         creatorId: room.creatorId?._id,
         scheduleDate: room.scheduleDate,
         scheduleTime: room.scheduleTime,
-        members: room.members.map(m => ({
-            id: m.user?._id,
-            name: m.user?.name || 'Anonymous',
-            avatar: m.user?.avatar || null,
-            isAdmin: m.isAdmin || false,
-            progress: m.progress || []
-        }))
+        members: room.members
+            .filter(m => m.user && m.user._id) // Exclude ghost members (deleted accounts)
+            .map(m => ({
+                id: m.user._id,
+                name: m.user.name || 'Anonymous',
+                avatar: m.user.avatar || null,
+                isAdmin: m.isAdmin || false,
+                role: m.role || '',
+                progress: m.progress || []
+            }))
     }));
 
     const hasMore = rooms.length === limit;
@@ -69,13 +75,15 @@ export const getAllRooms = asyncHandler(async (req, res) => {
  * @route   POST /api/v1/rooms
  */
 export const createRoom = asyncHandler(async (req, res) => {
-    const { name, task, topic, privacy, scheduleDate, scheduleTime } = req.body;
+    const { name, task, topic, privacy, scheduleDate, scheduleTime, roomType, description } = req.body;
 
     const room = await Room.create({
         name,
         task,
         topic,
+        description: description || '',
         privacy,
+        roomType: roomType || 'Study',
         scheduleDate: scheduleDate,
         scheduleTime: scheduleTime,
         creatorId: req.user._id,
@@ -87,6 +95,8 @@ export const createRoom = asyncHandler(async (req, res) => {
         name: room.name,
         task: room.task,
         topic: room.topic,
+        description: room.description || '',
+        roomType: room.roomType || 'Study',
         privacy: room.privacy,
         code: room.code,
         creatorId: room.creatorId,
@@ -94,7 +104,8 @@ export const createRoom = asyncHandler(async (req, res) => {
         scheduleTime: room.scheduleTime,
         members: room.members.map(m => ({
             id: m.user,
-            name: req.user.name || 'Anonymous', // Current user's name
+            name: req.user.name || 'Anonymous',
+            role: m.role || '',
             progress: m.progress || []
         }))
     };
@@ -217,9 +228,15 @@ export const deleteRoom = asyncHandler(async (req, res) => {
         });
     });
 
-    // Cascade: delete all messages in this room
+    // Cascade: delete all messages, tasks, and resources in this room
     const { default: Message } = await import('../models/Message.js');
-    await Message.deleteMany({ roomId: room._id });
+    const { default: TaskCard } = await import('../models/TaskCard.js');
+    const { default: Resource } = await import('../models/Resource.js');
+    await Promise.all([
+        Message.deleteMany({ roomId: room._id }),
+        TaskCard.deleteMany({ roomId: room._id }),
+        Resource.deleteMany({ roomId: room._id })
+    ]);
 
     await room.deleteOne();
     return res.sendSuccess(null, 200, 'Room deleted');

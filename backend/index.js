@@ -7,6 +7,7 @@ import { performancePlugin } from './middleware/performancePlugin.js';
 import { startMaintenanceScheduler } from './utils/maintenanceService.js';
 import { initSocket } from './utils/socket.js';
 import { initBackgroundJobs } from './utils/scheduler.js';
+import { startDeadlineWorker, stopDeadlineWorker } from './workers/deadlineWorker.js';
 import './workers/cleanupWorker.js'; // Start worker
 
 // ── Global crash guards ───────────────────────────────────────────────────────
@@ -125,6 +126,9 @@ const startServer = async () => {
     // Initialize background jobs (non-blocking to server startup)
     initBackgroundJobs();
 
+    // Start deadline reminder worker for project channels
+    startDeadlineWorker();
+
     // Graceful Shutdown Handler
     const shutdown = async (signal) => {
         logger.info(`Termination signal (${signal}) received. Starting graceful shutdown...`);
@@ -136,6 +140,7 @@ const startServer = async () => {
                     resolve();
                 });
             });
+            stopDeadlineWorker();
         }
 
         try {

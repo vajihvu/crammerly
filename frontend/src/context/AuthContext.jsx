@@ -45,23 +45,31 @@ export const AuthProvider = ({ children }) => {
     const sessionVerified = !loading;
 
     const logout = useCallback(async (skipServerLogOut = false) => {
+        // Capture refresh token BEFORE clearing storage so the server logout can still revoke the session
+        let refreshToken = null;
+        try {
+            const stored = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            refreshToken = stored.refreshToken;
+        } catch { /* ignore */ }
+
         localStorage.removeItem('userInfo');
         setUser(null);
         disconnectSocket();
 
-        if (!skipServerLogOut) {
+        if (!skipServerLogOut && refreshToken) {
             try {
                 await authApi.logout(); // revoke server-side session
             } catch {
-                // Ignore logout errors
+                // Ignore logout errors — session may already be expired
             }
         }
     }, []);
 
     useEffect(() => {
-        // Listen for global unauthorized events
+        // Listen for global unauthorized events (session expired, token refresh failed)
         const handleUnauthorized = () => {
-            logout(true);
+            console.warn('🚨 Global Unauthorized Event: Logging out...');
+            logout(true); // Skip server logout — the session is already dead server-side
         };
 
         window.addEventListener(apiEvents.UNAUTHORIZED, handleUnauthorized);

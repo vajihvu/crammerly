@@ -10,11 +10,11 @@ const notificationSchema = new mongoose.Schema({
     from: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true
+        required: false
     },
     type: {
         type: String,
-        enum: ['FRIEND_REQUEST', 'FRIEND_ACCEPT', 'ROOM_INVITE', 'GENERIC'],
+        enum: ['FRIEND_REQUEST', 'FRIEND_ACCEPT', 'ROOM_INVITE', 'DEADLINE_REMINDER', 'GENERIC'],
         required: true
     },
     content: {

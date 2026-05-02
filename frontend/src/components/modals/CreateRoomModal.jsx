@@ -1,6 +1,6 @@
 // src/components/modals/CreateRoomModal.jsx
 import React, { useState } from 'react';
-import { Plus, X, ChevronDown, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, X, ChevronDown, Calendar, Clock, ChevronLeft, ChevronRight, LayoutGrid, BookOpen } from 'lucide-react';
 
 const GENRES = ['IT', 'Law', 'Math', 'Medicine', 'Languages', 'Coding', 'Editing', 'Film Making', 'Design', 'Business', 'Quiet Study', 'Music', 'Game Dev', 'Architecture', 'Marketing', 'Exam Prep', 'Interview Prep', 'Reading', 'Brainstorming', 'Psychology', 'History', 'Electronics', 'Mechanical', 'Robotics', 'AI', 'Civil Eng', 'Aerospace', 'Chemical Eng', 'Data Science', 'Cybersecurity', 'VLSI'];
 
@@ -11,6 +11,8 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
     const [privacy, setPrivacy] = useState('Public');
     const [scheduleDate, setScheduleDate] = useState('');
     const [scheduleTime, setScheduleTime] = useState('');
+    const [roomType, setRoomType] = useState('Study');
+    const [description, setDescription] = useState('');
     const [isTopicOpen, setIsTopicOpen] = useState(false);
     const [isDateOpen, setIsDateOpen] = useState(false);
     const [isTimeOpen, setIsTimeOpen] = useState(false);
@@ -32,7 +34,7 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
             if (addToast) addToast('Please fill all required fields', 'danger');
             return;
         }
-        onCreateRoom(name, task, topic, privacy, scheduleDate, scheduleTime);
+        onCreateRoom(name, task, topic, privacy, scheduleDate, scheduleTime, roomType, description);
         onClose();
     };
 
@@ -47,10 +49,10 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                     <div className="px-5 sm:px-6 py-4 border-b border-brand-border/30 bg-brand-surface/50 backdrop-blur-xl flex items-center justify-between shrink-0 relative z-10">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 sm:w-11 sm:h-11 bg-brand-text text-brand-bg rounded-2xl flex items-center justify-center shadow-accent overflow-hidden">
-                                <Plus size={20} strokeWidth={2.5} />
+                                {roomType === 'Project' ? <LayoutGrid size={20} strokeWidth={2.5} /> : <Plus size={20} strokeWidth={2.5} />}
                             </div>
                             <div>
-                                <h3 className="text-xl sm:text-2xl font-[1000] text-brand-text uppercase tracking-tighter leading-tight font-sans">NEW <span className="text-brand-primary">ROOM</span></h3>
+                                <h3 className="text-xl sm:text-2xl font-[1000] text-brand-text uppercase tracking-tighter leading-tight font-sans">NEW <span className="text-brand-primary">{roomType === 'Project' ? 'PROJECT' : 'ROOM'}</span></h3>
                             </div>
                         </div>
                         <button onClick={onClose} className="p-1.5 text-brand-text-dim hover:text-brand-danger hover:bg-brand-bg rounded-full transition-all">
@@ -111,6 +113,45 @@ function CreateRoomModal({ onClose, onCreateRoom, addToast }) {
                                     </div>
                                 </div>
                             </div>
+
+                            {/* Room Type Toggle */}
+                            <div className="pt-2">
+                                <label className="text-[10px] font-black text-brand-primary uppercase tracking-[0.25em] block mb-3 pl-1">Room Type</label>
+                                <div className="bg-brand-bg p-1.5 rounded-2xl border border-brand-border/30 grid grid-cols-2 gap-1.5 shadow-inner">
+                                    {['Study', 'Project'].map((type) => (
+                                        <button
+                                            key={type}
+                                            onClick={() => setRoomType(type)}
+                                            className={`py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${roomType === type
+                                                ? 'bg-brand-text text-brand-bg shadow-md scale-[1.02]'
+                                                : 'text-brand-text-dim hover:text-brand-text hover:bg-brand-bg/50'
+                                                }`}
+                                        >
+                                            {type === 'Project' && <LayoutGrid size={12} />}
+                                            {type === 'Project' ? 'Project Channel' : 'Study Room'}
+                                        </button>
+                                    ))}
+                                </div>
+                                {roomType === 'Project' && (
+                                    <p className="text-[9px] text-brand-primary/60 mt-2 pl-1 font-bold">
+                                        📋 Includes task board, roles & resource library
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Description (Project only) */}
+                            {roomType === 'Project' && (
+                                <div className="pt-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <textarea
+                                        placeholder="Project description (optional)..."
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        className="w-full px-5 py-3 bg-brand-bg border-[2px] border-brand-border/30 rounded-2xl text-sm font-bold text-brand-text focus:border-brand-primary/50 focus:outline-none focus:bg-brand-card transition-all placeholder:text-brand-text/30 font-sans resize-none"
+                                        rows={2}
+                                        maxLength={1000}
+                                    />
+                                </div>
+                            )}
 
                             {/* Privacy Toggle */}
                             <div className="pt-2">

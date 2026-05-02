@@ -123,7 +123,7 @@ router.post('/refresh', refreshLimiter, csrfGuard, refreshAccessToken);
  *       200:
  *         description: Logged out
  */
-router.post('/logout', protect, csrfGuard, logoutUser);
+router.post('/logout', csrfGuard, logoutUser);
 
 router.post('/logout-all', protect, csrfGuard, logoutAllDevices);
 

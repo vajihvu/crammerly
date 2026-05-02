@@ -11,7 +11,13 @@ const roomMemberSchema = new mongoose.Schema({
         task: String,
         time: { type: Date, default: Date.now }
     }],
-    isAdmin: { type: Boolean, default: false }
+    isAdmin: { type: Boolean, default: false },
+    role: {
+        type: String,
+        trim: true,
+        maxlength: [50, 'Role cannot exceed 50 characters'],
+        default: ''
+    }
 }, { _id: false });
 
 const roomSchema = new mongoose.Schema({
@@ -29,6 +35,12 @@ const roomSchema = new mongoose.Schema({
     topic: {
         type: String,
         default: 'General'
+    },
+    description: {
+        type: String,
+        trim: true,
+        maxlength: [1000, 'Room description cannot exceed 1000 characters'],
+        default: ''
     },
     privacy: {
         type: String,
@@ -60,7 +72,7 @@ const roomSchema = new mongoose.Schema({
     },
     roomType: {
         type: String,
-        enum: ['Study', 'DM'],
+        enum: ['Study', 'Project', 'DM'],
         default: 'Study'
     },
     isDM: {

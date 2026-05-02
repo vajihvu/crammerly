@@ -709,6 +709,47 @@ export const deleteAccount = asyncHandler(async (req, res) => {
         import('../models/Message.js').then(m => m.default),
     ]);
 
+    const Room = (await import('../models/Room.js')).default;
+    const FriendRequest = (await import('../models/FriendRequest.js')).default;
+
+    // 1. Remove user from all rooms they are a member of (but not creator)
+    await Room.updateMany(
+        { 'members.user': userId, creatorId: { $ne: userId } },
+        { $pull: { members: { user: userId } } }
+    );
+
+    // 2. Delete all rooms they created (and their messages)
+    const ownedRooms = await Room.find({ creatorId: userId }).select('_id');
+    const ownedRoomIds = ownedRooms.map(r => r._id);
+    if (ownedRoomIds.length > 0) {
+        await Message.deleteMany({ roomId: { $in: ownedRoomIds } });
+        await Room.deleteMany({ creatorId: userId });
+    }
+
+    // 3. Remove from friends lists
+    await User.updateMany(
+        { friends: userId },
+        { $pull: { friends: userId } }
+    );
+
+    // 4. Clean up friend requests
+    await FriendRequest.deleteMany({
+        $or: [{ from: userId }, { to: userId }]
+    });
+
+    // 5. Clean up project tasks and resources
+    const TaskCard = (await import('../models/TaskCard.js')).default;
+    const ResourceModel = (await import('../models/Resource.js')).default;
+
+    // Delete tasks they created, unassign from tasks they were assigned to
+    await TaskCard.deleteMany({ createdBy: userId });
+    await TaskCard.updateMany(
+        { assignee: userId },
+        { $set: { assignee: null } }
+    );
+    await ResourceModel.deleteMany({ addedBy: userId });
+
+    // 6. Delete user's own data
     await Promise.all([
         Session.deleteMany({ user: userId }),
         Todo.deleteMany({ userId }),

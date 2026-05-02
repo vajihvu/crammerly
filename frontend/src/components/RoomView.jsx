@@ -1,12 +1,15 @@
 // src/components/RoomView.jsx
 import React from 'react';
-import { Users, Trash2, EyeOff, MessageCircle, Video, Bot, TrendingUp, ChevronLeft, Settings2, Check, X, Clock, ChevronDown, Link2, Shield, LogOut } from 'lucide-react';
+import { Users, Trash2, EyeOff, MessageCircle, Video, Bot, TrendingUp, ChevronLeft, Settings2, Check, X, Clock, ChevronDown, Link2, Shield, LogOut, LayoutGrid, BookOpen } from 'lucide-react';
 import { roomsApi } from '../api/rooms';
+import { tasksApi } from '../api/tasks';
 
 import ChatTab from './tabs/ChatTab';
 import VideoTab from './tabs/VideoTab';
 import AITutorTab from './tabs/AITutorTab';
 import ProgressTab from './tabs/ProgressTab';
+import BoardTab from './tabs/BoardTab';
+import LibraryTab from './tabs/LibraryTab';
 
 function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoom, activeTab, setActiveTab, addToast }) {
   const [isEditing, setIsEditing] = React.useState(false);
@@ -15,11 +18,28 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
   const [isMembersExpanded, setIsMembersExpanded] = React.useState(false);
   const [linkCopied, setLinkCopied] = React.useState(false);
   const [addingAdmin, setAddingAdmin] = React.useState(null);
+  const [editingRole, setEditingRole] = React.useState(null);
 
   if (!room || !room.members) return null;
 
   const currentMember = (room.members || []).find(m => (m.id || m.profile_id) === currentUser.id);
   const isOwner = room.creatorId === currentUser.id;
+  const isProject = room.roomType === 'Project';
+
+  const PROJECT_ROLES = ['Editor', 'Presenter', 'Researcher', 'Designer', 'Developer', 'Writer', 'Lead', 'Tester'];
+
+  const handleAssignRole = async (memberId, role) => {
+    try {
+      await tasksApi.assignRole(room.id, memberId, role);
+      // Update local state
+      const mem = room.members.find(m => m.id === memberId);
+      if (mem) mem.role = role;
+      setEditingRole(null);
+      if (addToast) addToast('Role updated!', 'success');
+    } catch (e) {
+      if (addToast) addToast(e.response?.data?.message || 'Failed to assign role', 'error');
+    }
+  };
 
   const handleToggleAdmin = async (memberId) => {
     setAddingAdmin(memberId);
@@ -200,8 +220,9 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
 
         <div className={`overflow-hidden transition-all duration-300 ${isMembersExpanded ? 'max-h-[500px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}>
           <div className="space-y-1.5">
-            {(room.members || []).map((member, idx) => {
-              const isAdmin = member.isAdmin || member.id === room.creatorId;
+            {(room.members || []).filter(m => m.id).map((member, idx) => {
+              const isCreator = member.id === room.creatorId;
+              const isAdmin = member.isAdmin && !isCreator;
               return (
                 <div key={idx} className="flex items-center gap-2 p-1.5 bg-brand-bg/50 rounded-lg border border-brand-border/30">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-sm transition-transform hover:scale-110 ${idx % 3 === 0 ? 'bg-brand-primary' : idx % 3 === 1 ? 'bg-brand-secondary' : 'bg-brand-tertiary'}`}>
@@ -209,15 +230,38 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-xs text-brand-text truncate">{member.name}</p>
-                    <p className="text-[10px] text-brand-text-dim">{member.progress?.length || 0} tasks</p>
+                    {isProject && member.role ? (
+                      <p className="text-[9px] font-black uppercase tracking-wider text-brand-primary">{member.role}</p>
+                    ) : (
+                      <p className="text-[10px] text-brand-text-dim">{member.progress?.length || 0} tasks</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {isAdmin && <span className="text-[9px] bg-brand-primary text-white px-1.5 py-0.5 rounded font-black tracking-wider uppercase border border-brand-primary">Admin</span>}
+                    {isCreator && <span className="text-[9px] bg-brand-primary text-white px-1.5 py-0.5 rounded font-black tracking-wider uppercase border border-brand-primary">Owner</span>}
+                    {isAdmin && <span className="text-[9px] bg-brand-secondary text-white px-1.5 py-0.5 rounded font-black tracking-wider uppercase border border-brand-secondary">Admin</span>}
                     {member.id === currentUser.id && <span className="text-[10px] bg-brand-muted/40 text-brand-text px-1.5 py-0.5 rounded border border-brand-border">You</span>}
-                    {isOwner && member.id !== currentUser.id && (
-                      <button onClick={() => handleToggleAdmin(member.id)} title={isAdmin ? "Remove Admin" : "Make Admin"} className={`p-1 rounded transition-all ${isAdmin ? 'text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20' : 'text-brand-muted hover:text-brand-primary hover:bg-brand-primary/10'}`}>
+                    {isOwner && member.id !== currentUser.id && !isProject && (
+                      <button onClick={() => handleToggleAdmin(member.id)} title={member.isAdmin ? "Remove Admin" : "Make Admin"} className={`p-1 rounded transition-all ${member.isAdmin ? 'text-brand-primary bg-brand-primary/10 hover:bg-brand-primary/20' : 'text-brand-muted hover:text-brand-primary hover:bg-brand-primary/10'}`}>
                         <Shield size={14} className={addingAdmin === member.id ? "animate-pulse" : ""} />
                       </button>
+                    )}
+                    {isProject && isOwner && member.id !== currentUser.id && (
+                      <div className="relative">
+                        <button onClick={() => setEditingRole(editingRole === member.id ? null : member.id)} className="p-1 rounded text-brand-muted hover:text-brand-primary hover:bg-brand-primary/10 transition-all" title="Assign Role">
+                          <Shield size={14} />
+                        </button>
+                        {editingRole === member.id && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setEditingRole(null)} />
+                            <div className="absolute right-0 top-full mt-1 w-36 bg-brand-surface border border-brand-border rounded-xl shadow-xl z-50 py-1 animate-in fade-in zoom-in-95 duration-150">
+                              {PROJECT_ROLES.map(r => (
+                                <button key={r} onClick={() => handleAssignRole(member.id, r)} className={`w-full px-3 py-1.5 text-left text-[10px] font-black uppercase tracking-wider transition-all hover:bg-brand-primary/10 ${member.role === r ? 'text-brand-primary' : 'text-brand-text-dim hover:text-brand-primary'}`}>{r}</button>
+                              ))}
+                              {member.role && <button onClick={() => handleAssignRole(member.id, '')} className="w-full px-3 py-1.5 text-left text-[10px] font-black uppercase tracking-wider text-red-400 hover:bg-red-500/10">Clear Role</button>}
+                            </div>
+                          </>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -267,18 +311,20 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
         {/* Tab content */}
         <div className="lg:col-span-2 flex flex-col min-h-0">
           <div className="bg-brand-card rounded-2xl p-1 mb-3 border border-brand-border flex overflow-x-auto no-scrollbar gap-0.5 sm:gap-2 shrink-0">
-            {['chat', 'video', 'ai', 'progress'].map(tab => (
+            {(isProject ? ['chat', 'board', 'library', 'video', 'ai'] : ['chat', 'video', 'ai', 'progress']).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                 className={`flex-1 min-w-[60px] sm:min-w-[100px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all ${activeTab === tab ? 'bg-brand-primary text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text hover:bg-brand-surface/50'}`}
+                 className={`flex-1 min-w-[60px] sm:min-w-[80px] flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 sm:py-2.5 rounded-xl transition-all ${activeTab === tab ? 'bg-brand-primary text-brand-bg shadow-lg' : 'text-brand-text-dim hover:text-brand-text hover:bg-brand-surface/50'}`}
               >
                 {tab === 'chat' && <MessageCircle size={16} className="sm:w-5 sm:h-5" />}
+                {tab === 'board' && <LayoutGrid size={16} className="sm:w-5 sm:h-5" />}
+                {tab === 'library' && <BookOpen size={16} className="sm:w-5 sm:h-5" />}
                 {tab === 'video' && <Video size={16} className="sm:w-5 sm:h-5" />}
                 {tab === 'ai' && <Bot size={16} className="sm:w-5 sm:h-5" />}
                 {tab === 'progress' && <TrendingUp size={16} className="sm:w-5 sm:h-5" />}
                 <span className="font-bold text-[9px] sm:text-sm capitalize">
-                  {tab === 'ai' ? 'AI Assistant' : tab}
+                  {tab === 'ai' ? 'AI' : tab === 'board' ? 'Board' : tab === 'library' ? 'Library' : tab}
                 </span>
               </button>
             ))}
@@ -286,6 +332,8 @@ function RoomView({ room, currentUser, onMarkProgress, onDeleteRoom, onUpdateRoo
 
           <div className="flex-1 min-h-0 overflow-hidden">
             {activeTab === 'chat' && <ChatTab room={room} currentUser={currentUser} addToast={addToast} />}
+            {activeTab === 'board' && <BoardTab room={room} currentUser={currentUser} addToast={addToast} />}
+            {activeTab === 'library' && <LibraryTab room={room} currentUser={currentUser} addToast={addToast} />}
             {activeTab === 'video' && <VideoTab room={room} currentUser={currentUser} addToast={addToast} onUpdateRoom={onUpdateRoom} />}
             {activeTab === 'ai' && <AITutorTab room={room} />}
             {activeTab === 'progress' && <ProgressTab room={room} currentUser={currentUser} currentMember={currentMember} onMarkProgress={onMarkProgress} />}
