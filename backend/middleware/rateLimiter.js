@@ -117,7 +117,7 @@ export const aiLimiter = rateLimit({
         return req.ip; 
     },
     skip: (req) => config.isTest || (req.user && req.user.role === 'admin'),
-    validate: { xForwardedForHeader: false }, // Avoid the IP warning if we trust the environment
+    validate: { xForwardedForHeader: false, default: true, ip: false }, // Avoid the IP warning if we trust the environment
     message: {
         success: false,
         error: {
