@@ -37,7 +37,7 @@ const ALLOWED_ORIGINS = new Set([
 ]);
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin && (ALLOWED_ORIGINS.has(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com') || origin.endsWith('.fly.dev') || origin.endsWith('.koyeb.app') || origin.endsWith('.crammerly.app') || origin === 'https://crammerly.app')) {
+    if (origin && (ALLOWED_ORIGINS.has(origin) || origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com') || origin.endsWith('.fly.dev') || origin.endsWith('.koyeb.app') || origin.endsWith('.zeabur.app') || origin.endsWith('.crammerly.app') || origin === 'https://crammerly.app')) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');

@@ -17,7 +17,7 @@ export const initSocket = (server) => {
                 // Exact match against configured CLIENT_URLs
                 if (config.clientUrls.includes(origin)) return callback(null, true);
                 // Wildcard subdomain matching (mirrors app.js manual CORS middleware)
-                if (origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com') || origin.endsWith('.fly.dev') || origin.endsWith('.koyeb.app') || origin.endsWith('.crammerly.app') || origin === 'https://crammerly.app') {
+                if (origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com') || origin.endsWith('.fly.dev') || origin.endsWith('.koyeb.app') || origin.endsWith('.zeabur.app') || origin.endsWith('.crammerly.app') || origin === 'https://crammerly.app') {
                     return callback(null, true);
                 }
                 callback(new Error('Socket.io CORS: origin not allowed'));
