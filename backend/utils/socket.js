@@ -11,7 +11,17 @@ let io;
 export const initSocket = (server) => {
     io = new Server(server, {
         cors: {
-            origin: config.clientUrls,
+            origin: (origin, callback) => {
+                // Allow requests with no origin (e.g. server-to-server, health checks)
+                if (!origin) return callback(null, true);
+                // Exact match against configured CLIENT_URLs
+                if (config.clientUrls.includes(origin)) return callback(null, true);
+                // Wildcard subdomain matching (mirrors app.js manual CORS middleware)
+                if (origin.endsWith('.vercel.app') || origin.endsWith('.onrender.com') || origin.endsWith('.fly.dev') || origin.endsWith('.koyeb.app') || origin.endsWith('.crammerly.app') || origin === 'https://crammerly.app') {
+                    return callback(null, true);
+                }
+                callback(new Error('Socket.io CORS: origin not allowed'));
+            },
             methods: ['GET', 'POST'],
             credentials: true
         }
